@@ -48,6 +48,6 @@ return [
     ],
 
     // Paths a website page can never use (the admin, Laravel's own endpoints)
-    'reserved' => ['admin', 'site', 'shared', 'admin-assets', 'css', 'js', 'contact', 'up', 'storage', 'amp', 'survey', 'checkout', 'myaccount'],
+    'reserved' => ['admin', 'site', 'shared', 'admin-assets', 'css', 'js', 'contact', 'up', 'storage', 'amp', 'survey', 'checkout', 'myaccount', 'shop'],
 
 ];

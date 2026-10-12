@@ -63,6 +63,7 @@ return [
                     ['Visitors', 'lando.visitors'],
                     ['Blocked Areas', 'lando.blocked.areas'],
                     ['Blocked IPs', 'lando.blocked.ips'],
+                    ['Cookie Consents', 'lando.consents'],
                 ],
                 'Pages' => [
                     ['List Pages', 'lando.pages.index'],

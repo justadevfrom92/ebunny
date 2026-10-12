@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\MyAccount;
+use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SignupController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\SitePageController;
@@ -21,6 +22,7 @@ Route::get('/shared/config/brand.js', [SiteController::class, 'brand']);
 Route::get('/shared/config/catalog.js', [SiteController::class, 'catalog']);
 Route::get('/site/session', [SiteController::class, 'session'])->middleware('throttle:120,1');
 Route::post('/site/ping', [SiteController::class, 'ping'])->middleware('throttle:30,1');
+Route::post('/site/consent', [SiteController::class, 'consent'])->middleware('throttle:20,1');
 Route::post('/contact', [SiteController::class, 'contact'])->middleware('throttle:10,1');
 Route::get('/site/components', [SitePageController::class, 'components']);
 
@@ -75,6 +77,9 @@ Route::prefix('myaccount')->name('myaccount.')->group(function () {
         Route::post('chat/person', [MyAccount\ChatController::class, 'person'])->middleware('throttle:10,1')->name('chat.person');
     });
 });
+
+// Shop: a sample product catalog with filters and sorts
+Route::get('shop', [ShopController::class, 'index'])->name('shop');
 
 // Website sign-up (the original /checkout flow)
 // Customer surveys (built in Rodeo → Surveys)
@@ -216,6 +221,7 @@ Route::prefix('admin')->group(function () {
             Route::get('/', [Admin\Lando\DashboardController::class, 'dashboard'])->name('dashboard');
             Route::get('health', [Admin\Lando\DashboardController::class, 'health'])->name('health');
             Route::get('visitors', [Admin\Lando\DashboardController::class, 'visitors'])->name('visitors');
+            Route::get('cookie-consents', [Admin\Lando\ConsentController::class, 'index'])->name('consents');
             foreach (['ips', 'areas'] as $kind) {
                 Route::controller(Admin\Lando\BlockedController::class)->prefix('blocked-'.$kind)->name('blocked.'.$kind)->group(function () {
                     Route::get('/', 'index');

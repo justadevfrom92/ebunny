@@ -63,7 +63,7 @@
       '</ul></div>' +
       '</div>' +
       '<div class="footer-bottom"><span>&copy; ' + year + ' ' + esc(B.name) + '. All rights reserved. PUCT Cert. No. ' + esc(B.puct) + '</span>' +
-      '<nav><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Your Rights as a Customer</a><a href="#">Accessibility</a><button type="button" class="admin-btn" data-admin>Admin</button></nav></div>' +
+      '<nav><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Your Rights as a Customer</a><a href="#">Accessibility</a><button type="button" class="link-btn" data-cookies>Cookie Settings</button><button type="button" class="admin-btn" data-admin>Admin</button></nav></div>' +
       '</div></footer>'
     );
   }
@@ -106,6 +106,42 @@
         fetch(ET.root + 'site/ping?v=' + s.visit, { method: 'POST', credentials: 'same-origin', headers: { 'X-CSRF-TOKEN': s.csrf, Accept: 'application/json' } }).catch(function () {});
       }, 60000);
     }
+  });
+
+  /* ---------- Cookie banner ---------- */
+  // Asks once per browser (or per signed-in customer, on any device); every choice is stored in
+  // Laravel (Lando → Site → Cookie Consents). "Cookie Settings" in the footer opens it again.
+  ET.consent = null;
+  function cookieBanner(current) {
+    var old = document.getElementById('cookie-banner'); if (old) old.remove();
+    var c = current || { analytics: false, marketing: false };
+    var el = document.createElement('section');
+    el.id = 'cookie-banner'; el.className = 'cookie-banner'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Cookie choices');
+    el.innerHTML = '<div class="wrap"><div class="cb-text"><h2>We use cookies</h2><p>Necessary cookies keep the site and My Account working. With your OK we also use analytics cookies to see how the site is used, and marketing cookies to show you relevant offers. You can change this any time from Cookie Settings at the bottom of every page.</p>' +
+      '<form class="cb-choose" hidden><label class="check"><input type="checkbox" checked disabled> Necessary <small>always on</small></label>' +
+      '<label class="check"><input type="checkbox" name="analytics"' + (c.analytics ? ' checked' : '') + '> Analytics</label>' +
+      '<label class="check"><input type="checkbox" name="marketing"' + (c.marketing ? ' checked' : '') + '> Marketing</label></form></div>' +
+      '<div class="cb-actions"><button type="button" class="btn" data-c="all">Accept All</button><button type="button" class="btn btn-outline" data-c="necessary">Necessary Only</button>' +
+      '<button type="button" class="link-btn" data-c="choose">Choose</button><button type="button" class="btn btn-outline" data-c="custom" hidden>Save My Choices</button></div></div>';
+    document.body.appendChild(el);
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-c]'); if (!b) return;
+      if (b.dataset.c === 'choose') { el.querySelector('.cb-choose').hidden = false; el.querySelector('[data-c=custom]').hidden = false; b.hidden = true; return; }
+      var f = el.querySelector('.cb-choose');
+      var body = { choice: b.dataset.c, analytics: f.analytics.checked, marketing: f.marketing.checked, page: location.pathname };
+      loadSession().then(function (s) {
+        return fetch(ET.root + 'site/consent', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': s.csrf }, body: JSON.stringify(body) });
+      }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+        if (j) { ET.consent = j.consent; document.dispatchEvent(new CustomEvent('et:consent', { detail: j.consent })); }
+        el.remove();
+      }).catch(function () { el.remove(); });
+    });
+    el.querySelector('[data-c=all]').focus({ preventScroll: true });
+  }
+  loadSession().then(function (s) {
+    if (s.blocked) return;
+    ET.consent = s.consent || null;
+    if (!s.consent) ET.ready(function () { cookieBanner(null); });
   });
 
   /* ---------- Admin sign-in prompt ---------- */
@@ -439,6 +475,7 @@
     });
     document.addEventListener('click', function (e) {
       if (e.target.closest('[data-admin]')) { e.preventDefault(); openAdmin(); }
+      if (e.target.closest('[data-cookies]')) { e.preventDefault(); cookieBanner(ET.consent); }
     });
 
     initZipForms();

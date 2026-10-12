@@ -23,6 +23,7 @@ return [
         ['plans.html', 'Plans'],
         ['build-your-own-plan.html', 'Build Your Own Plan'],
         ['business.html', 'Business'],
+        ['shop', 'Shop'],
         ['contact-us.html', 'Contact Us'],
     ],
 ];

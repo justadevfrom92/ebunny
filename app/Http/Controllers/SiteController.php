@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\ContactMessage;
+use App\Models\CookieConsent;
 use App\Models\SiteVisit;
 use App\Services\Catalog;
 use App\Support\SiteTraffic;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 
 /** The few things the static website needs from Laravel. */
 class SiteController extends Controller
@@ -45,9 +47,40 @@ class SiteController extends Controller
             'visit' => $visit && ! $block ? $visit->id : null,
             // The static pages hide themselves when the visitor is blocked
             'blocked' => $block ? ['message' => $block->message ?: 'This page isn\'t available.'] : null,
+            // The cookie banner shows until this browser (or this signed-in customer) has chosen
+            'consent' => ($k = CookieConsent::current($request, $visit?->visitor ?? self::visitor($request))) ? ['analytics' => $k->analytics, 'marketing' => $k->marketing, 'choice' => $k->choice] : null,
         ])->header('Cache-Control', 'no-store');
 
         return $visit ? $response->withCookie(cookie(SiteTraffic::COOKIE, $visit->visitor, 60 * 24 * 365)) : $response;
+    }
+
+    /** This browser's visitor id (the et_vid cookie), when it has one. */
+    private static function visitor(Request $request): ?string
+    {
+        $v = $request->cookie(SiteTraffic::COOKIE);
+
+        return is_string($v) && preg_match('/^[a-zA-Z0-9]{20,40}$/', $v) ? $v : null;
+    }
+
+    /**
+     * The cookie banner's answer: Accept all, Necessary only, or chosen categories. Stored for the
+     * browser and, when someone is signed in, for that customer or employee too.
+     */
+    public function consent(Request $request): JsonResponse
+    {
+        $data = $request->validate(['choice' => ['required', 'in:all,necessary,custom'], 'analytics' => ['boolean'], 'marketing' => ['boolean'], 'page' => ['nullable', 'string', 'max:250']]);
+        $visitor = self::visitor($request) ?? Str::random(32);
+        [$analytics, $marketing] = match ($data['choice']) {
+            'all' => [true, true],
+            'necessary' => [false, false],
+            default => [(bool) ($data['analytics'] ?? false), (bool) ($data['marketing'] ?? false)],
+        };
+        CookieConsent::create(['visitor' => $visitor, 'customer_id' => auth('customer')->id(), 'user_id' => auth('web')->id(), 'choice' => $data['choice'],
+            'analytics' => $analytics, 'marketing' => $marketing, 'policy_version' => CookieConsent::POLICY_VERSION, 'ip' => $request->ip(),
+            'user_agent' => Str::limit((string) $request->userAgent(), 245, ''), 'page' => $data['page'] ?? null, 'created_at' => now()]);
+
+        return response()->json(['consent' => ['analytics' => $analytics, 'marketing' => $marketing, 'choice' => $data['choice']]])
+            ->withCookie(cookie(SiteTraffic::COOKIE, $visitor, 60 * 24 * 365));
     }
 
     /** The open page's heartbeat, so Lando can show who is on the site now. */
