@@ -1,6 +1,6 @@
 /*
   One script tag loads everything a page needs:
-    <script src="shared/boot.js" data-then="js/main.js"></script>
+    <script src="/shared/boot.js" data-then="/frontend/js/main.js"></script>
   The shared config and helpers load first (in order), then the page's own
   files listed in data-then (paths relative to the page).
 */

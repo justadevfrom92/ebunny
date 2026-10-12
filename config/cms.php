@@ -18,7 +18,7 @@ return [
         'bottom' => 'Bottom of page (above the footer)',
     ],
 
-    // Built-in pages: page path => file in public/. Their layout is in the file;
+    // Built-in pages: page path => file in public/frontend/. Their layout is in the file;
     // Lando adds components to their top and bottom zones.
     'files' => [
         '/' => 'index.html',
@@ -48,6 +48,6 @@ return [
     ],
 
     // Paths a website page can never use (the admin, Laravel's own endpoints)
-    'reserved' => ['admin', 'site', 'shared', 'admin-assets', 'css', 'js', 'contact', 'up', 'storage', 'amp', 'survey', 'checkout', 'myaccount', 'shop'],
+    'reserved' => ['admin', 'site', 'shared', 'frontend', 'backend', 'contact', 'up', 'storage', 'amp', 'survey', 'checkout', 'myaccount', 'shop'],
 
 ];

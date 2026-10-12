@@ -56,7 +56,7 @@
                             <td class="mono"><span data-value>{{ $v['value'] }}</span>@if ($v['value'] !== $v['resolved'])<div class="muted">= {{ $v['resolved'] }}</div>@endif</td>
                             <td class="muted">{{ $files[$v['file']] }}</td>
                             <td class="num">{{ $v['count'] }}</td>
-                            <td>@if ($v['count'])<details class="sg-uses"><summary>{{ collect($v['uses'])->keys()->map(fn ($f) => ['shared/css/tokens.css' => 'Shared', 'admin-assets/admin.css' => 'Admin', 'css/style.css' => 'Website'][$f])->implode(' + ') }}</summary>
+                            <td>@if ($v['count'])<details class="sg-uses"><summary>{{ collect($v['uses'])->keys()->map(fn ($f) => ['shared/css/tokens.css' => 'Shared', 'backend/admin.css' => 'Admin', 'frontend/css/style.css' => 'Website'][$f])->implode(' + ') }}</summary>
                                 @foreach ($v['uses'] as $f => $sels)<b>{{ $files[$f] }}</b><ul>@foreach (array_unique($sels) as $s)<li class="mono">{{ $s }}</li>@endforeach</ul>@endforeach
                             </details>@else<span class="muted">not used yet</span>@endif</td>
                         </tr>
@@ -67,7 +67,7 @@
 
         {{-- Components built from the variables; picking a color above repaints these --}}
         <div data-pane="components" hidden>
-            <div class="panel-head"><h2>Admin Apps</h2><span class="muted">admin-assets/admin.css · click a variable to jump to it</span></div>
+            <div class="panel-head"><h2>Admin Apps</h2><span class="muted">public/backend/admin.css · click a variable to jump to it</span></div>
             <div class="panel-body sg-comp">
                 @foreach ($admin as $c)
                     <div class="panel"><div class="panel-head"><h3 style="margin:0">{{ $c['title'] }}</h3></div><div class="panel-body">
@@ -77,10 +77,10 @@
                 @endforeach
                 <div class="panel"><div class="panel-head"><h3 style="margin:0">Multi-select</h3></div><div class="panel-body">
                     @include('backend.partials.multiselect', ['id' => 'sg-multi', 'name' => 'sg[]', 'label' => 'Sample', 'options' => ['Submitted', 'Good - On Flow', 'Dropped - Churned'], 'selected' => ['Good - On Flow']])
-                    @include('backend.lando._chips', ['names' => \App\Support\StyleSheets::varsFor(['.multi'], 'admin-assets/admin.css')])
+                    @include('backend.lando._chips', ['names' => \App\Support\StyleSheets::varsFor(['.multi'], 'backend/admin.css')])
                 </div></div>
             </div>
-            <div class="panel-head"><h2>Website</h2><span class="muted">css/style.css · shown in frames so the website's own styles apply</span></div>
+            <div class="panel-head"><h2>Website</h2><span class="muted">public/frontend/css/style.css · shown in frames so the website's own styles apply</span></div>
             <div class="panel-body sg-comp">
                 @foreach ($site as $i => $c)
                     <div class="panel"><div class="panel-head"><h3 style="margin:0">{{ $c['title'] }}</h3></div><div class="panel-body">
@@ -129,7 +129,7 @@
     </div>
 
     {{-- The website stylesheet, for the website component frames --}}
-    <script type="text/plain" id="sg-site-css">{!! str_replace('</', '<\/', file_get_contents(public_path('shared/css/tokens.css'))."\n".preg_replace('/@import[^;]+tokens\.css[^;]*;/', '', file_get_contents(public_path('css/style.css')))) !!}</script>
+    <script type="text/plain" id="sg-site-css">{!! str_replace('</', '<\/', file_get_contents(public_path('shared/css/tokens.css'))."\n".preg_replace('/@import[^;]+tokens\.css[^;]*;/', '', file_get_contents(public_path('frontend/css/style.css')))) !!}</script>
     <script>
     (function () {
         var root = document.documentElement, changed = {};

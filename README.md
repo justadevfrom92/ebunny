@@ -38,7 +38,9 @@ Other commands: `php artisan test` (feature tests), `php artisan migrate:fresh -
 ## How it fits together
 
 ```
-public/                    the website (static pages) + admin-assets/ (admin CSS and JS)
+public/
+  frontend/                the website: built-in pages (index.html, plans.html …), css/style.css, js/main.js
+  backend/                 the admin portal's admin.css and admin.js
   shared/boot.js           one <script> per page; loads brand.js, catalog.js and core.js
   shared/css/tokens.css    brand, text and status colors and fonts for the website AND the admin (see Lando → Style Guide)
 config/brand.php           company name, phone, PUCT number, website nav  → /shared/config/brand.js

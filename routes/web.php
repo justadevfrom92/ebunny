@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Route;
 | data they load and handles the contact form.
 */
 Route::get('/', [SiteController::class, 'home']);
+// The built-in website pages live in public/frontend/ and keep their addresses (/plans.html …)
+Route::get('{page}.html', [SiteController::class, 'file'])->whereIn('page', ['index', 'plans', 'build-your-own-plan', 'business', 'contact-us']);
 Route::get('/shared/config/brand.js', [SiteController::class, 'brand']);
 Route::get('/shared/config/catalog.js', [SiteController::class, 'catalog']);
 Route::get('/site/session', [SiteController::class, 'session'])->middleware('throttle:120,1');

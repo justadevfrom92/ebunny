@@ -46,8 +46,8 @@ class StyleController extends Controller
             'groups' => $vars->groupBy('group')->sortBy(fn ($g, $k) => array_search($k, ['Brand colors', 'Status colors', 'App colors', 'Fonts', 'Sizes & effects'])),
             'literals' => StyleSheets::literals(),
             'files' => StyleSheets::FILES,
-            'admin' => $chips(self::ADMIN, 'admin-assets/admin.css'),
-            'site' => $chips(self::SITE, 'css/style.css'),
+            'admin' => $chips(self::ADMIN, 'backend/admin.css'),
+            'site' => $chips(self::SITE, 'frontend/css/style.css'),
         ]);
     }
 }

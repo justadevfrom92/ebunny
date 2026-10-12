@@ -35,7 +35,7 @@ class SitePageController extends Controller
             return redirect($page->redirect, 301);
         }
         if ($page->file) {
-            return response()->file(public_path($page->file));
+            return response()->file(public_path('frontend/'.$page->file));
         }
 
         // Hard Cache: keep the finished HTML; it refreshes whenever the page or any content block is saved (or after an hour)

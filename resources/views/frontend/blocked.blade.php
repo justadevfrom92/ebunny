@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Not available | {{ config('brand.name') }}</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/frontend/css/style.css">
 </head>
 <body>
   <main class="section"><div class="wrap" style="max-width:640px;text-align:center;padding:80px 0">

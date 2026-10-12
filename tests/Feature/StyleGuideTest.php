@@ -20,8 +20,8 @@ class StyleGuideTest extends TestCase
         $this->assertSame('#102247', $vars['--navy']['value']);
         $this->assertSame('shared/css/tokens.css', $vars['--ok']['file']);       // status colors are shared by the website and admin
         $this->assertSame('#EDF4F7', $vars['--page']['resolved']);             // aliases resolve to the color they point at
-        $this->assertArrayHasKey('css/style.css', $vars['--ok']['uses']);
-        $this->assertContains('--cyan', StyleSheets::varsFor(['.btn'], 'admin-assets/admin.css'));
+        $this->assertArrayHasKey('frontend/css/style.css', $vars['--ok']['uses']);
+        $this->assertContains('--cyan', StyleSheets::varsFor(['.btn'], 'backend/admin.css'));
 
         $this->actingAs(User::where('email', 'admin@example.com')->firstOrFail());
         $this->get(route('lando.styles'))->assertOk()

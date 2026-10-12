@@ -18,7 +18,13 @@ class SiteController extends Controller
 {
     public function home()
     {
-        return response()->file(public_path('index.html'));
+        return response()->file(public_path('frontend/index.html'));
+    }
+
+    /** /plans.html and the other built-in pages, from public/frontend/. */
+    public function file(string $page)
+    {
+        return response()->file(public_path('frontend/'.$page.'.html'));
     }
 
     /** /shared/config/brand.js — from config/brand.php */

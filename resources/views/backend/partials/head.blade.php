@@ -3,6 +3,6 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <link rel="icon" href="/shared/img/logo-mark.svg">
-<link rel="stylesheet" href="/admin-assets/admin.css">
-<script src="/admin-assets/admin.js" defer></script>
+<link rel="stylesheet" href="/backend/admin.css">
+<script src="/backend/admin.js" defer></script>
 @yield('head')

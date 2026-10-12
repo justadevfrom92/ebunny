@@ -14,8 +14,8 @@ class StyleSheets
     /** path under public/ => who uses it */
     public const FILES = [
         'shared/css/tokens.css' => 'Shared (website + every admin app)',
-        'admin-assets/admin.css' => 'Admin apps',
-        'css/style.css' => 'Website',
+        'backend/admin.css' => 'Admin apps',
+        'frontend/css/style.css' => 'Website',
     ];
 
     private const COLOR = '/#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)/';

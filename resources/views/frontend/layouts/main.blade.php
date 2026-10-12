@@ -10,8 +10,8 @@
   <title>@hasSection('full-title')@yield('full-title')@else@yield('title') | {{ $siteName ?? config('brand.name') }}@endif</title>
   <meta name="csrf-token" content="{{ csrf_token() }}">
   @yield('head')
-  <link rel="stylesheet" href="/css/style.css">
-  <script src="/shared/boot.js" data-then="/js/main.js"></script>
+  <link rel="stylesheet" href="/frontend/css/style.css">
+  <script src="/shared/boot.js" data-then="/frontend/js/main.js"></script>
 </head>
 <body @yield('body-attrs')>
   <div id="site-header"></div>
