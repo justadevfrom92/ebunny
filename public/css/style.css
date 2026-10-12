@@ -590,4 +590,4 @@ fieldset.field { border: 0; padding: 0; }
 .test-customer small { color: #6b7280; font-size: .78rem; }
 .ma-test-switch { padding: 10px 20px 14px; border-bottom: 1px solid rgba(255,255,255,.15); display: grid; gap: 4px; }
 .ma-test-switch label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; opacity: .75; }
-.ma-test-switch select { padding: 6px 8px; border-radius: 6px; border: 1px dashed #f0b429; background: #fff8e6; color: #3a2a00; font: inherit; font-size: .85rem; }
+.ma-test-switch select { width: 100%; max-width: 100%; min-width: 0; padding: 6px 8px; border-radius: 6px; border: 1px dashed #f0b429; background: #fff8e6; color: #3a2a00; font: inherit; font-size: .85rem; }

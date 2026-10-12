@@ -198,13 +198,14 @@ return [
         ],
         'deputy' => [
             'name' => 'Deputy',
-            'desc' => 'AI agents on open-weight models (Qwen, Kimi, DeepSeek, Llama…): which model each agent runs on, their conversations and transcripts, and testing.',
+            'desc' => 'AI agents on open-weight models (Qwen, Kimi, DeepSeek, Llama…): texts and the My Account chat with take-over by a person, scheduled automations, models and testing.',
             'icon' => 'bolt',
             'home' => 'deputy.dashboard',
             'menu' => [
                 'AI Agents' => [
                     ['Dashboard', 'deputy.dashboard'],
-                    ['Conversations', 'deputy.conversations'],
+                    ['Conversations', 'deputy.conversations', 'ai_waiting'],
+                    ['Automations', 'deputy.automations'],
                 ],
                 'Setup' => [
                     ['Agents', 'deputy.agents'],

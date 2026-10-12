@@ -66,6 +66,10 @@ Route::prefix('myaccount')->name('myaccount.')->group(function () {
         Route::post('rewards', [MyAccount\PortalController::class, 'redeem'])->name('rewards.redeem');
         Route::get('refer-a-friend', [MyAccount\PortalController::class, 'refer'])->name('refer');
         Route::get('message-center', [MyAccount\PortalController::class, 'messages'])->name('messages');
+        // The chat bubble (bottom right): the bot answers until a person takes over
+        Route::get('chat', [MyAccount\ChatController::class, 'show'])->middleware('throttle:120,1')->name('chat');
+        Route::post('chat', [MyAccount\ChatController::class, 'send'])->middleware('throttle:20,1')->name('chat.send');
+        Route::post('chat/person', [MyAccount\ChatController::class, 'person'])->middleware('throttle:10,1')->name('chat.person');
     });
 });
 
@@ -390,6 +394,12 @@ Route::prefix('admin')->group(function () {
             Route::get('/', 'dashboard')->name('dashboard');
             Route::get('conversations', 'conversations')->name('conversations');
             Route::get('conversations/{conversation}', 'conversation')->name('conversations.show');
+            Route::post('conversations/{conversation}/take-over', 'takeOver')->name('conversations.take');
+            Route::post('conversations/{conversation}/reply', 'reply')->middleware('throttle:60,1')->name('conversations.reply');
+            Route::post('conversations/{conversation}/hand-back', 'handBack')->name('conversations.handback');
+            Route::post('conversations/{conversation}/close', 'close')->name('conversations.close');
+            Route::post('conversations/{conversation}/call', 'call')->middleware('throttle:20,1')->name('conversations.call');
+            Route::get('automations', 'automations')->name('automations');
             Route::get('agents', 'agents')->name('agents');
             Route::get('agents/new', 'agentForm')->name('agents.create');
             Route::post('agents', 'saveAgent')->name('agents.store');

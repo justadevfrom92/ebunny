@@ -131,7 +131,10 @@ table input.neg { color: var(--red); }
 .field textarea { min-height: 120px; resize: vertical; }
 .field.grow { flex: 1; min-width: 180px; }
 .form-grid { display: grid; grid-template-columns: 180px 1fr; gap: 12px 16px; align-items: center; }
-.form-grid > label { color: var(--muted); font-size: .85rem; }
+.form-grid > label, .form-grid > .label { color: var(--muted); font-size: .85rem; }
+.form-grid > .label { align-self: start; padding-top: 10px; }
+.form-grid [hidden] { display: none; }
+.pick-table tbody tr { cursor: pointer; } .pick-table td:first-child { width: 36px; } .pick-table label { cursor: pointer; font-weight: 600; }
 .form-grid input, .form-grid select, .form-grid textarea { padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; width: 100%; max-width: 480px; }
 .form-grid input[type=checkbox], .form-grid input[type=radio] { width: auto; padding: 0; }
 .form-grid textarea { max-width: none; min-height: 260px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .85rem; }
@@ -455,6 +458,11 @@ a.report-card h3 { margin-bottom: 4px; }
 @media (max-width: 900px) { .search-layout { grid-template-columns: minmax(0, 1fr); } .search-side { position: static; } }
 .transcript p { margin: 0 0 10px; line-height: 1.5; padding: 8px 12px; border-radius: 8px; background: var(--row); max-width: 85%; }
 .transcript p.agent { background: var(--info-bg); margin-left: auto; }
+.transcript p.person { background: var(--ok-bg); margin-left: auto; }
+.transcript p.system { background: none; max-width: none; text-align: center; font-size: .82rem; color: var(--muted); padding: 2px 0; }
+.transcript { max-height: 520px; overflow-y: auto; }
+.reply-box { display: grid; gap: 8px; border-top: 1px solid var(--line); }
+.reply-box textarea { width: 100%; font: inherit; }
 .row-alert td { background: var(--warn-bg); }
 /* Rodeo → Emails → category form: tick the templates in a category */
 .check-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px 14px; max-height: 320px; overflow: auto; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; }

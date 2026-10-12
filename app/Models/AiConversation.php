@@ -5,14 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/** One conversation an AI agent had (a call, text thread, chat, email or test), with its transcript. */
+/**
+ * One conversation with a customer by text or in the My Account chat (or an agent test), with its transcript.
+ * Live ones say who is answering now: the bot, nobody yet (waiting for a person), or a person.
+ */
 class AiConversation extends Model
 {
     protected $guarded = ['id'];
 
     protected function casts(): array
     {
-        return ['started_at' => 'datetime'];
+        return ['started_at' => 'datetime', 'last_message_at' => 'datetime'];
     }
 
     public function agent(): BelongsTo
@@ -38,6 +41,27 @@ class AiConversation extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function isLive(): bool
+    {
+        return $this->status !== 'closed';
+    }
+
+    /** Adds "Speaker: text" to the transcript (one line; newlines become spaces). */
+    public function say(string $who, string $text): void
+    {
+        $line = $who.': '.trim(preg_replace('/\s+/', ' ', $text));
+        $this->transcript = ltrim($this->transcript."\n".$line, "\n");
+        $this->last_message_at = now();
+        $this->duration_sec = max(0, (int) $this->started_at->diffInSeconds(now()));
+        $this->save();
+    }
+
+    /** People who answered show as "Name (agent)"; the AI is "Bot". */
+    public static function speakerFor(User $user): string
+    {
+        return $user->name.' (agent)';
     }
 
     /** [[speaker, text], …] from "Speaker: text" lines. */

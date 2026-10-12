@@ -96,9 +96,9 @@ class DeputyAndConfigTest extends TestCase
         $c = AiConversation::whereNotNull('customer_id')->firstOrFail();
         $this->get(route('deputy.dashboard'))->assertOk()->assertSee('Model by Agent')->assertSee('Kimi K2 Instruct')->assertSee('Qwen3 8B')->assertDontSee('claude');
         $this->get(route('deputy.conversations'))->assertOk()->assertSee('Search Conversations');
-        $this->get(route('deputy.conversations', ['outcome' => 'handed_off', 'channel' => 'phone']))->assertOk();
+        $this->get(route('deputy.conversations', ['outcome' => 'handed_off', 'channel' => 'sms']))->assertOk();
         $this->get(route('deputy.conversations.show', $c))->assertOk()->assertSee('Transcript')->assertSee($c->customer->account);
-        $this->get(route('deputy.agents'))->assertOk()->assertSee('Phone Agent');
+        $this->get(route('deputy.agents'))->assertOk()->assertSee('Text Responder');
         $this->get(route('deputy.agents.create'))->assertOk()->assertSee('Temperature');
         $this->get(route('deputy.models'))->assertOk()->assertSee('qwen3:8b')->assertSee('moonshotai/Kimi-K2-Instruct');
         $this->get(route('deputy.models.create'))->assertOk();
@@ -179,7 +179,7 @@ class DeputyAndConfigTest extends TestCase
         $this->get(route('deputy.agents'))->assertOk();
         $snap = TableSnapshot::where('kind', 'page')->where('key', '/admin/deputy/agents')->firstOrFail();
         $this->assertSame('deputy', $snap->app);
-        $this->assertStringContainsString('Phone Agent', $snap->html);
+        $this->assertStringContainsString('Text Responder', $snap->html);
         $this->assertStringNotContainsString('<a ', $snap->html);
         $this->assertStringNotContainsString('<form', $snap->html);
         // Unchanged page: no second copy
@@ -199,7 +199,7 @@ class DeputyAndConfigTest extends TestCase
 
         $this->get(route('sheriff.cache'))->assertOk()->assertSee('/admin/deputy/agents');
         $this->get(route('sheriff.cache', ['kind' => 'record']))->assertOk()->assertSee('ai_models');
-        $this->get(route('sheriff.cache.show', $snap))->assertOk()->assertSee('Phone Agent');
+        $this->get(route('sheriff.cache.show', $snap))->assertOk()->assertSee('Text Responder');
         $this->get(route('sheriff.cache.show', $rec))->assertOk()->assertSee('gemma2:9b');
         // Users table copies never include passwords
         User::create(['name' => 'New Person', 'email' => 'new@example.com', 'password' => 'secret-pass', 'role_id' => $this->admin()->role_id, 'active' => true]);

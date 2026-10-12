@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Admin\Deputy;
 
 use App\Http\Controllers\Controller;
 use App\Models\AiAgent;
+use App\Models\AiAutomationRun;
 use App\Models\AiConversation;
 use App\Models\AiModel;
 use App\Services\Deputy\AgentRunner;
+use App\Services\Deputy\LiveConversation;
+use Cron\CronExpression;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,15 +19,16 @@ use Illuminate\View\View;
 
 /**
  * Deputy — AI agents on open-weight models. Which model each agent runs on (downloaded to
- * the local server or hosted behind an OpenAI-compatible API), every conversation the agents
- * had with a transcript, and a place to test an agent.
+ * the local server or hosted behind an OpenAI-compatible API); conversations with customers by
+ * text and in the My Account chat, where a person can take over, reply or call; automations
+ * that run on a schedule to fix issues; and a place to test an agent.
  */
 class DeputyController extends Controller
 {
     public function dashboard(): View
     {
         $since = today()->subDays(29);
-        $stats = fn ($q) => $q->where('started_at', '>=', $since)->where('channel', '!=', 'test');
+        $stats = fn ($q) => $q->where('started_at', '>=', $since)->whereIn('channel', ['sms', 'chat']);
         $byAgent = $stats(AiConversation::query())->selectRaw("ai_agent_id, count(*) as n, sum(input_tokens + output_tokens) as tokens, avg(duration_sec) as avg_sec,
                 sum(case when outcome = 'resolved' then 1 else 0 end) as resolved, sum(case when outcome = 'handed_off' then 1 else 0 end) as handed")
             ->groupBy('ai_agent_id')->get()->keyBy('ai_agent_id');
@@ -42,44 +46,115 @@ class DeputyController extends Controller
             'tokens' => $byAgent->sum('tokens'),
             'local' => AiModel::where('provider', 'local')->count(),
             'ready' => ['hosted' => filled(config('admin.integrations.open_models.env.OPEN_MODELS_URL')), 'local' => filled(config('admin.integrations.local_models.env.LOCAL_MODELS_URL'))],
-            'recent' => AiConversation::with(['agent', 'model', 'customer'])->latest('started_at')->limit(8)->get(),
+            'live' => AiConversation::whereIn('status', ['waiting', 'agent', 'bot'])->selectRaw('status, count(*) as n')->groupBy('status')->pluck('n', 'status'),
+            'runs' => AiAutomationRun::where('started_at', '>=', today()->subDays(6))->selectRaw('ai_agent_id, count(*) as n, sum(fixed) as fixed, sum(flagged) as flagged, sum(case when status = \'failed\' then 1 else 0 end) as failed, sum(input_tokens + output_tokens) as tokens')
+                ->groupBy('ai_agent_id')->get()->keyBy('ai_agent_id'),
+            'recent' => AiConversation::with(['agent', 'model', 'customer'])->whereIn('channel', ['sms', 'chat'])->latest('started_at')->limit(8)->get(),
         ]);
     }
 
     // ---------- Conversations ----------
 
+    /**
+     * Conversations: texts and My Account chats. Live ones sit on top in their own tables (waiting
+     * for a person, then being answered); the search below covers every conversation.
+     */
     public function conversations(Request $request): View
     {
         $f = $request->only(['start', 'end', 'account', 'agent', 'model', 'channel', 'outcome', 'topic']);
-        $q = AiConversation::with(['agent', 'model', 'customer', 'handedTo'])
+        $q = AiConversation::with(['agent', 'model', 'customer', 'handedTo', 'user'])
+            ->when(($f['channel'] ?? null) === 'test', fn ($q) => $q->where('channel', 'test'), fn ($q) => $q->whereIn('channel', ['sms', 'chat']))
             ->when($f['start'] ?? null, fn ($q, $d) => $q->whereDate('started_at', '>=', $d))
             ->when($f['end'] ?? null, fn ($q, $d) => $q->whereDate('started_at', '<=', $d))
             ->when($f['account'] ?? null, fn ($q, $a) => $q->whereHas('customer', fn ($c) => $c->where('account', 'like', trim($a).'%')))
             ->when($f['agent'] ?? null, fn ($q, $a) => $q->where('ai_agent_id', $a))
             ->when($f['model'] ?? null, fn ($q, $m) => $q->where('ai_model_id', $m))
-            ->when($f['channel'] ?? null, fn ($q, $c) => $q->where('channel', $c))
+            ->when(in_array($f['channel'] ?? null, ['sms', 'chat'], true), fn ($q) => $q->where('channel', $f['channel']))
             ->when($f['outcome'] ?? null, fn ($q, $o) => $q->where('outcome', $o))
             ->when($f['topic'] ?? null, fn ($q, $t) => $q->where('topic', $t));
+        $live = fn (array $statuses) => AiConversation::with(['agent', 'customer', 'handedTo'])->whereIn('status', $statuses)->oldest('last_message_at')->get();
 
         return view('admin.deputy.conversations', [
             'f' => $f,
+            'waiting' => $live(['waiting']),
+            'answering' => $live(['agent', 'bot']),
             'conversations' => $q->latest('started_at')->latest('id')->paginate(50)->withQueryString(),
-            'agents' => AiAgent::orderBy('name')->get(['id', 'name']),
+            'agents' => AiAgent::whereIn('activity', config('deputy.conversation_activities'))->orderBy('name')->get(['id', 'name']),
             'models' => AiModel::orderBy('name')->get(['id', 'name']),
-            'topics' => AiConversation::distinct()->orderBy('topic')->pluck('topic'),
+            'topics' => AiConversation::whereIn('channel', ['sms', 'chat'])->distinct()->orderBy('topic')->pluck('topic'),
         ]);
     }
 
-    public function conversation(AiConversation $conversation): View
+    /** One conversation. While it's live the page asks for ?part=live every few seconds and swaps in new messages. */
+    public function conversation(Request $request, AiConversation $conversation): View
     {
-        return view('admin.deputy.conversation', ['c' => $conversation->load(['agent', 'model', 'customer', 'handedTo', 'user'])]);
+        $c = $conversation->load(['agent', 'model', 'customer', 'handedTo', 'user']);
+
+        return view($request->query('part') === 'live' ? 'admin.deputy._live' : 'admin.deputy.conversation', ['c' => $c]);
+    }
+
+    public function takeOver(Request $request, AiConversation $conversation, LiveConversation $live): RedirectResponse
+    {
+        $live->takeOver($conversation, $request->user());
+
+        return redirect()->route('deputy.conversations.show', $conversation)->with('status', 'You have this conversation. The bot will stay quiet until you hand it back.');
+    }
+
+    public function reply(Request $request, AiConversation $conversation, LiveConversation $live): RedirectResponse
+    {
+        abort_unless($conversation->isLive(), 422, 'This conversation is closed.');
+        $data = $request->validate(['message' => ['required', 'string', 'max:'.($conversation->channel === 'sms' ? 480 : 2000)]]);
+        $message = $live->agentSays($conversation, $request->user(), $data['message']);
+
+        return redirect()->route('deputy.conversations.show', $conversation)->with('status', $message);
+    }
+
+    public function handBack(Request $request, AiConversation $conversation, LiveConversation $live): RedirectResponse
+    {
+        abort_unless($conversation->isLive(), 422, 'This conversation is closed.');
+        $live->handBack($conversation, $request->user());
+
+        return redirect()->route('deputy.conversations.show', $conversation)->with('status', 'The bot is answering again.');
+    }
+
+    public function close(Request $request, AiConversation $conversation, LiveConversation $live): RedirectResponse
+    {
+        abort_unless($conversation->isLive(), 422, 'This conversation is already closed.');
+        $live->close($conversation, $request->user());
+
+        return redirect()->route('deputy.conversations')->with('status', 'Conversation #'.$conversation->id.' closed.');
+    }
+
+    /** Call the customer: logged here and on the account, then the browser dials the number. */
+    public function call(Request $request, AiConversation $conversation, LiveConversation $live): RedirectResponse
+    {
+        $phone = $live->call($conversation, $request->user());
+
+        return redirect()->route('deputy.conversations.show', $conversation)->with('status', 'Calling '.$phone.'.')->with('dial', preg_replace('/[^\d+]/', '', $phone));
+    }
+
+    // ---------- Automations ----------
+
+    /** Agents that run on a schedule to fix issues in the background, and what each run did. */
+    public function automations(Request $request): View
+    {
+        $agents = AiAgent::automations()->with(['model', 'fallback'])->orderByDesc('active')->orderBy('name')->get();
+        $week = AiAutomationRun::where('started_at', '>=', today()->subDays(6))->selectRaw('ai_agent_id, count(*) as n, sum(checked) as checked, sum(fixed) as fixed, sum(flagged) as flagged, sum(case when status = \'failed\' then 1 else 0 end) as failed')
+            ->groupBy('ai_agent_id')->get()->keyBy('ai_agent_id');
+        $agent = $request->integer('agent') ?: null;
+
+        return view('admin.deputy.automations', [
+            'agents' => $agents, 'week' => $week, 'agent' => $agent,
+            'last' => AiAutomationRun::whereIn('id', AiAutomationRun::selectRaw('max(id)')->groupBy('ai_agent_id'))->get()->keyBy('ai_agent_id'),
+            'runs' => AiAutomationRun::with(['agent', 'model'])->when($agent, fn ($q) => $q->where('ai_agent_id', $agent))->latest('started_at')->latest('id')->paginate(50)->withQueryString(),
+        ]);
     }
 
     // ---------- Agents ----------
 
     public function agents(): View
     {
-        return view('admin.deputy.agents', ['agents' => AiAgent::with(['model', 'fallback'])->withCount('conversations')->withMax('conversations', 'started_at')->orderByDesc('active')->orderBy('name')->get()]);
+        return view('admin.deputy.agents', ['agents' => AiAgent::with(['model', 'fallback'])->withCount(['conversations' => fn ($q) => $q->where('channel', '!=', 'test'), 'runs'])->withMax('conversations', 'started_at')->withMax('runs', 'started_at')->orderByDesc('active')->orderBy('name')->get()]);
     }
 
     public function agentForm(?AiAgent $agent = null): View
@@ -102,8 +177,15 @@ class DeputyController extends Controller
             'max_tokens' => ['required', 'integer', 'min:256', 'max:64000'],
             'system_prompt' => ['required', 'string', 'max:20000'],
             'active' => ['nullable', 'boolean'],
+            'schedule' => ['nullable', 'string', 'max:60', fn ($a, $v, $fail) => CronExpression::isValidExpression((string) $v) || $fail('Use a cron schedule like */15 * * * * (every 15 minutes) or 0 6 * * * (6am daily).')],
         ], ['fallback_model_id.different' => 'Pick a different model as the fallback.']);
         $data['active'] = (bool) ($data['active'] ?? false);
+        // Agents that talk to customers answer as messages come in; automations need a schedule
+        if (in_array($data['activity'], config('deputy.conversation_activities'), true)) {
+            $data['schedule'] = null;
+        } elseif (blank($data['schedule'] ?? null)) {
+            return back()->withInput()->withErrors(['schedule' => 'Automations run on a schedule. Enter one, like */15 * * * *.']);
+        }
         $agent ? $agent->update($data) : AiAgent::create($data);
 
         return redirect()->route('deputy.agents')->with('status', 'Agent saved');

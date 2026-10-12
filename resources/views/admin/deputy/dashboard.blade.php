@@ -2,32 +2,40 @@
 
 @section('content')
     @include('admin.partials.page-head', ['title' => 'AI Agents', 'sub' => 'Which open-weight model each agent runs on, and how the agents are doing over the last 30 days. Downloaded models run on your local model server; hosted ones through the open models API.',
-        'actions' => '<a class="btn ghost" href="'.route('deputy.conversations').'">Conversations</a><a class="btn cyan" href="'.route('deputy.agents.create').'">New Agent</a>'])
+        'actions' => '<a class="btn ghost" href="'.route('deputy.conversations').'">Conversations</a><a class="btn ghost" href="'.route('deputy.automations').'">Automations</a><a class="btn cyan" href="'.route('deputy.agents.create').'">New Agent</a>'])
 
     @foreach (['hosted' => ['Open Models API', 'OPEN_MODELS_URL'], 'local' => ['Local Models', 'LOCAL_MODELS_URL']] as $k => [$name, $env])
         @unless ($ready[$k])<div class="banner-note" style="margin-bottom:12px"><b>{{ $name }}</b> isn't set up yet: agents on {{ $k === 'local' ? 'downloaded models' : 'hosted models' }} can't answer until <span class="mono">{{ $env }}</span> is uploaded in Sheriff → APIs → {{ $name }} → Configure.</div>@endunless
     @endforeach
 
     <div class="grid-4 stat-row">
-        <a class="stat" href="{{ route('deputy.conversations') }}"><span>Conversations</span><strong>{{ number_format($total) }}</strong><small>last 30 days, tests not counted</small></a>
-        <div class="stat"><span>Resolved by the Agent</span><strong>{{ $resolvedRate }}%</strong><small>{{ number_format($handed) }} handed to a person</small></div>
-        <div class="stat"><span>Tokens Used</span><strong>{{ number_format($tokens) }}</strong><small>input and output</small></div>
+        <a class="stat" href="{{ route('deputy.conversations') }}#needs-person"><span>Needs a Person</span><strong>{{ number_format($live['waiting'] ?? 0) }}</strong><small>{{ number_format($live['agent'] ?? 0) }} with a person, {{ number_format($live['bot'] ?? 0) }} with the bot</small></a>
+        <a class="stat" href="{{ route('deputy.conversations') }}"><span>Texts &amp; Chats</span><strong>{{ number_format($total) }}</strong><small>last 30 days</small></a>
+        <div class="stat"><span>Resolved by the Bot</span><strong>{{ $resolvedRate }}%</strong><small>{{ number_format($handed) }} handed to a person · {{ number_format($tokens) }} tokens</small></div>
         <a class="stat" href="{{ route('deputy.models') }}"><span>Models</span><strong>{{ $models->count() }}</strong><small>{{ $local }} downloaded, {{ $models->count() - $local }} hosted</small></a>
     </div>
 
     <div class="panel" style="margin-bottom:20px">
         <div class="panel-head"><h2>Model by Agent</h2><a class="btn sm ghost" href="{{ route('deputy.agents') }}">Agents</a></div>
         <div class="table-wrap"><table class="table">
-            <thead><tr><th>Agent</th><th>Model</th><th>Fallback</th><th class="num">Conversations</th><th class="num">Resolved</th><th class="num">Avg Length</th><th class="num">Tokens</th></tr></thead>
+            <thead><tr><th>Agent</th><th>Model</th><th>Fallback</th><th class="num">Conversations / Runs</th><th class="num">Resolved / Fixed</th><th class="num">Avg Length</th><th class="num">Tokens</th></tr></thead>
             <tbody>@forelse ($agents as $a)
                 @php $s = $byAgent[$a->id] ?? null; @endphp
                 <tr @class(['muted' => ! $a->active])><td><a href="{{ route('deputy.agents.edit', $a) }}"><b>{{ $a->name }}</b></a><div class="help">{{ $a->activityLabel() }} · temperature {{ rtrim(rtrim(number_format($a->temperature, 2), '0'), '.') }}{{ $a->active ? '' : ' · Paused' }} · <a href="{{ route('deputy.agents.test', $a) }}">Test</a></div></td>
                     <td>@include('admin.deputy._model', ['m' => $a->model])</td>
                     <td>@include('admin.deputy._model', ['m' => $a->fallback])</td>
-                    <td class="num">@if ($s)<a href="{{ route('deputy.conversations', ['agent' => $a->id]) }}">{{ number_format($s->n) }}</a>@else 0 @endif</td>
-                    <td class="num">{{ $s && $s->n ? round(100 * $s->resolved / $s->n).'%' : '—' }}</td>
-                    <td class="num">{{ $s ? intdiv((int) $s->avg_sec, 60).':'.str_pad((string) ((int) $s->avg_sec % 60), 2, '0', STR_PAD_LEFT) : '—' }}</td>
-                    <td class="num">{{ $s ? number_format($s->tokens) : '—' }}</td></tr>
+                    @if ($a->talksToCustomers())
+                        <td class="num">@if ($s)<a href="{{ route('deputy.conversations', ['agent' => $a->id]) }}">{{ number_format($s->n) }}</a>@else 0 @endif<div class="help">30 days</div></td>
+                        <td class="num">{{ $s && $s->n ? round(100 * $s->resolved / $s->n).'%' : '—' }}</td>
+                        <td class="num">{{ $s ? intdiv((int) $s->avg_sec, 60).':'.str_pad((string) ((int) $s->avg_sec % 60), 2, '0', STR_PAD_LEFT) : '—' }}</td>
+                        <td class="num">{{ $s ? number_format($s->tokens) : '—' }}</td>
+                    @else
+                        @php $r = $runs[$a->id] ?? null; @endphp
+                        <td class="num"><a href="{{ route('deputy.automations', ['agent' => $a->id]) }}">{{ number_format($r->n ?? 0) }} runs</a><div class="help">7 days · {{ $a->schedule ? \App\Support\Cron::describe($a->schedule) : 'no schedule' }}</div></td>
+                        <td class="num">{{ number_format($r->fixed ?? 0) }} fixed<div class="help">{{ number_format($r->flagged ?? 0) }} for a person{{ ($r->failed ?? 0) ? ' · '.$r->failed.' failed' : '' }}</div></td>
+                        <td class="num">—</td>
+                        <td class="num">{{ $r ? number_format($r->tokens) : '—' }}</td>
+                    @endif</tr>
             @empty <tr><td colspan="7" class="empty">No agents yet.</td></tr> @endforelse</tbody>
         </table></div>
     </div>

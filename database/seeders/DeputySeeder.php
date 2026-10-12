@@ -3,13 +3,14 @@
 namespace Database\Seeders;
 
 use App\Models\AiAgent;
+use App\Models\AiAutomationRun;
 use App\Models\AiConversation;
 use App\Models\AiModel;
 use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
-/** Deputy: open-weight models (hosted and downloaded), the agents on them, and 30 days of (fictional) conversations. */
+/** Deputy: open-weight models (hosted and downloaded), the agents on them, and 30 days of (fictional) text and chat conversations, and automation runs. */
 class DeputySeeder extends Seeder
 {
     public function run(): void
@@ -36,20 +37,22 @@ class DeputySeeder extends Seeder
         $base = 'You are a customer service agent for a Texas retail electricity provider. Be friendly, brief and accurate. Never guess account details; if you are unsure or the customer is upset, hand the conversation to a person.';
         $agents = [];
         foreach ([
-            ['phone', 'Phone Agent', 'phone', 'Answers the main phone line first', 'kimi', 'qwen235', 0.3, 2000, true],
-            ['sms', 'Text Responder', 'sms', 'Replies to customer texts', 'qwen8', 'llama', 0.3, 600, true],
-            ['chat', 'My Account Chat', 'chat', 'The chat bubble in My Account', 'qwen235', 'qwen8', 0.4, 1500, true],
-            ['email', 'Email Drafter', 'email', 'Drafts replies to Web Messages for a person to send', 'deepseek', 'kimi', 0.5, 3000, true],
-            ['queues', 'Queue Triage', 'queues', 'Suggests the right exception queue for new orders', 'billing', 'qwen8', 0.0, 500, true],
-            ['surveys', 'Survey Tagger', 'surveys', 'Tags survey comments by topic and mood', 'mistral', 'gptoss', 0.1, 300, true],
-            ['reports', 'Report Summarizer', 'reports', 'Writes a short summary of finished Walker reports', 'gptoss', 'qwen30', 0.3, 1500, false],
-        ] as [$k, $name, $activity, $desc, $model, $fallback, $temperature, $max, $active]) {
+            // Talk to customers: texts and the My Account chat bubble
+            ['sms', 'Text Responder', 'sms', 'Replies to customer texts', 'qwen8', 'llama', 0.3, 600, true, null],
+            ['chat', 'My Account Chat', 'chat', 'Answers the chat bubble in My Account', 'qwen235', 'qwen8', 0.4, 1500, true, null],
+            // Automations: run on a schedule to fix issues in the background
+            ['queues', 'Queue Triage', 'queues', 'Moves new orders into the right exception queue', 'billing', 'qwen8', 0.0, 500, true, '*/15 * * * *'],
+            ['enrollments', 'Enrollment Fixer', 'enrollments', 'Retries enrollments stuck waiting on ERCOT and fixes address mismatches', 'kimi', 'qwen30', 0.0, 800, true, '0 * * * *'],
+            ['payments', 'Payment Matcher', 'payments', 'Matches unapplied payments to the right account', 'billing', 'deepseek', 0.0, 500, true, '30 6 * * *'],
+            ['surveys', 'Survey Tagger', 'surveys', 'Tags survey comments by topic and mood', 'mistral', 'gptoss', 0.1, 300, true, '0 2 * * *'],
+            ['reports', 'Report Summarizer', 'reports', 'Writes a short summary of finished Walker reports', 'gptoss', 'qwen30', 0.3, 1500, false, '*/30 * * * *'],
+        ] as [$k, $name, $activity, $desc, $model, $fallback, $temperature, $max, $active, $schedule]) {
             $agents[$k] = AiAgent::create(['name' => $name, 'activity' => $activity, 'description' => $desc, 'ai_model_id' => $m[$model]->id,
                 'fallback_model_id' => $fallback ? $m[$fallback]->id : null, 'temperature' => $temperature, 'max_tokens' => $max, 'active' => $active,
-                'system_prompt' => $base."\n\nYour job: ".lcfirst($desc).'.']);
+                'schedule' => $schedule, 'system_prompt' => $base."\n\nYour job: ".lcfirst($desc).'.'.($k === 'chat' ? ' If the customer asks for a person, or you can\'t help, answer with HANDOFF on its own line.' : '')]);
         }
 
-        // Conversations, like the phone call log: issue, transcript, length, outcome and who took over
+        // Conversations: texts and My Account chats, with the issue, transcript, outcome and who took over
         $issues = [
             'High bill' => ['Why is my bill so high this month?', 'Your usage went up about 30% with the heat, and the rate is the same. I can set up a payment arrangement if that helps.'],
             'Payment arrangement' => ['Can I split this bill into two payments?', 'Yes. I can split it over your next two bills; the first half is due on the usual date.'],
@@ -60,43 +63,78 @@ class DeputySeeder extends Seeder
             'Rewards' => ['How many stars do I have?', 'You have stars ready to redeem for a bill credit or a gift card. Want me to redeem them?'],
             'Deposit' => ['Why do I need a deposit?', 'The credit check asked for a deposit. You can pay it now, or enroll in AutoPay and paperless billing to lower it.'],
         ];
-        $customers = Customer::inRandomOrder()->limit(60)->get();
+        $customers = Customer::whereNotNull('phone')->inRandomOrder()->limit(60)->get();
         $csrs = User::whereHas('role', fn ($q) => $q->where('perms', 'like', '%corral%'))->where('active', true)->get();
-        $plan = ['phone' => [70, 'Caller'], 'sms' => [60, 'Customer'], 'chat' => [55, 'Customer'], 'email' => [30, 'Customer']];
-        foreach ($plan as $k => [$count, $who]) {
+        foreach (['sms' => 90, 'chat' => 80] as $k => $count) {
             $agent = $agents[$k];
             for ($i = 0; $i < $count; $i++) {
                 $topic = array_rand($issues);
                 [$q, $a] = $issues[$topic];
                 $roll = mt_rand(1, 100);
-                $outcome = $roll <= 72 ? 'resolved' : ($roll <= 92 ? 'handed_off' : 'abandoned');
+                $outcome = $roll <= 70 ? 'resolved' : ($roll <= 92 ? 'handed_off' : 'abandoned');
                 // A few answered by the fallback model
                 $model = mt_rand(1, 12) === 1 && $agent->fallback_model_id ? $agent->fallback_model_id : $agent->ai_model_id;
                 $c = $customers->random();
-                $lines = ["Agent: Hi {$c->first_name}, thanks for reaching out. How can I help?", "$who: $q", 'Agent: Let me look at your account.', "Agent: $a"];
+                $lines = ["Bot: Hi {$c->first_name}, thanks for reaching out. How can I help?", "Customer: $q", 'Bot: Let me look at your account.', "Bot: $a"];
                 $handed = null;
                 if ($outcome === 'handed_off') {
                     $handed = $csrs->random();
-                    $lines[] = "$who: I would rather talk to a person.";
-                    $lines[] = "Agent: Of course. I am connecting you with {$handed->name} now and passing along what we covered.";
+                    $lines[] = 'Customer: I would rather talk to a person.';
+                    $lines[] = 'Bot: Of course. I am getting a person for you now and passing along what we covered.';
+                    $lines[] = 'System: '.$handed->name.' took over.';
+                    $lines[] = AiConversation::speakerFor($handed).': Hi '.$c->first_name.', I have your account open. I can help with that.';
+                    $lines[] = 'Customer: Thanks, that fixed it.';
                 } elseif ($outcome === 'resolved') {
-                    $lines[] = "$who: That works, thank you.";
-                    $lines[] = 'Agent: You are welcome. Have a great day!';
+                    $lines[] = 'Customer: That works, thank you.';
+                    $lines[] = 'Bot: You are welcome. Have a great day!';
                 }
-                $sec = $k === 'phone' ? mt_rand(60, 540) : mt_rand(20, 300);
+                $start = now()->subDays(mt_rand(0, 29))->setTime(mt_rand(7, 21), mt_rand(0, 59))->min(now()->subMinutes(mt_rand(90, 300)));
+                $sec = mt_rand(20, 600);
                 AiConversation::create(['ai_agent_id' => $agent->id, 'ai_model_id' => $model, 'customer_id' => $c->id, 'channel' => $k, 'topic' => $topic,
-                    'outcome' => $outcome, 'handed_to_id' => $handed?->id, 'transcript' => implode("\n", $lines), 'duration_sec' => $sec,
-                    'input_tokens' => mt_rand(900, 4200), 'output_tokens' => mt_rand(120, 900),
-                    'started_at' => now()->subDays(mt_rand(0, 29))->setTime(mt_rand(7, 21), mt_rand(0, 59))->min(now()->subMinutes(mt_rand(5, 90)))]);
+                    'outcome' => $outcome, 'status' => 'closed', 'handed_to_id' => $handed?->id, 'transcript' => implode("\n", $lines), 'duration_sec' => $sec,
+                    'input_tokens' => mt_rand(900, 4200), 'output_tokens' => mt_rand(120, 900), 'started_at' => $start, 'last_message_at' => $start->copy()->addSeconds($sec)]);
             }
         }
-        // Internal agents: no customer on the line
-        foreach ([['queues', 40, 'Order triage', 'System: New order 1219… has no ESIID on file.', 'Agent: Suggested queue: No ESIID. The service address matched two meters.'],
-            ['surveys', 35, 'Survey comment', 'System: Comment: "Faster answers on the phone."', 'Agent: Topic: Customer Service. Mood: mildly negative.']] as [$k, $count, $topic, $in, $out]) {
-            for ($i = 0; $i < $count; $i++) {
-                AiConversation::create(['ai_agent_id' => $agents[$k]->id, 'ai_model_id' => $agents[$k]->ai_model_id, 'channel' => 'internal', 'topic' => $topic,
-                    'outcome' => mt_rand(1, 20) === 1 ? 'failed' : 'resolved', 'transcript' => "$in\n$out", 'duration_sec' => mt_rand(1, 6),
-                    'input_tokens' => mt_rand(200, 800), 'output_tokens' => mt_rand(20, 120), 'started_at' => now()->subDays(mt_rand(0, 29))->setTime(mt_rand(0, 23), mt_rand(0, 59))->min(now()->subMinutes(10))]);
+        // Live right now: two waiting for a person, one a person is answering, two with the bot
+        foreach ([['sms', 'waiting', null, 'Payment arrangement', 4], ['chat', 'waiting', null, 'High bill', 2], ['chat', 'agent', $csrs->first(), 'Moving', 6],
+            ['sms', 'bot', null, 'Outage', 1], ['chat', 'bot', null, 'Rewards', 3]] as [$k, $status, $person, $topic, $ago]) {
+            $c = $customers->random();
+            [$q, $a] = $issues[$topic];
+            $lines = ["Bot: Hi {$c->first_name}, thanks for reaching out. How can I help?", "Customer: $q", "Bot: $a"];
+            if ($status !== 'bot') {
+                $lines[] = 'Customer: Can I talk to a person please?';
+                $lines[] = 'Bot: Of course. I am getting a person for you now. They will see everything we covered.';
+            }
+            if ($person) {
+                $lines[] = 'System: '.$person->name.' took over.';
+                $lines[] = AiConversation::speakerFor($person).': Hi '.$c->first_name.', I can help with the move. What day do you need service at the new address?';
+                $lines[] = 'Customer: The 28th.';
+            }
+            $start = now()->subMinutes($ago + 4);
+            AiConversation::create(['ai_agent_id' => $agents[$k]->id, 'ai_model_id' => $agents[$k]->ai_model_id, 'customer_id' => $c->id, 'channel' => $k, 'topic' => $topic,
+                'outcome' => $status === 'bot' ? 'resolved' : 'handed_off', 'status' => $status, 'handed_to_id' => $person?->id, 'transcript' => implode("\n", $lines),
+                'duration_sec' => 240, 'input_tokens' => mt_rand(400, 1200), 'output_tokens' => mt_rand(80, 300), 'started_at' => $start, 'last_message_at' => now()->subMinutes($ago)]);
+        }
+
+        // Automations: one run per schedule tick over the last week (capped), each with what it checked and fixed
+        foreach ([
+            'queues' => [96, 'Checked {c} new orders: {f} moved to the right queue, {g} left in Unassigned for a person.'],
+            'enrollments' => [24, 'Looked at {c} enrollments waiting on ERCOT: retried {f}, {g} need a person (address does not match the ESIID).'],
+            'payments' => [1, 'Matched {f} of {c} unapplied payments to accounts; {g} need a person.'],
+            'surveys' => [1, 'Tagged {f} of {c} new survey comments; {g} were unclear.'],
+        ] as $k => [$perDay, $text]) {
+            $agent = $agents[$k];
+            $every = intdiv(1440, $perDay);
+            for ($i = 0; $i < min(7 * $perDay, 120); $i++) {
+                $checked = mt_rand($k === 'payments' ? 4 : 1, $k === 'queues' ? 12 : 40);
+                $failed = mt_rand(1, 30) === 1;
+                $fixed = $failed ? 0 : mt_rand((int) floor($checked * .6), $checked);
+                $flagged = $failed ? 0 : $checked - $fixed;
+                AiAutomationRun::create(['ai_agent_id' => $agent->id, 'ai_model_id' => $failed ? null : $agent->ai_model_id, 'status' => $failed ? 'failed' : 'ok',
+                    'checked' => $failed ? 0 : $checked, 'fixed' => $fixed, 'flagged' => $flagged,
+                    'summary' => $failed ? 'The model did not answer (timed out after 120 seconds). Nothing was changed.' : strtr($text, ['{c}' => $checked, '{f}' => $fixed, '{g}' => $flagged]),
+                    'duration_sec' => $failed ? 120 : mt_rand(3, 90), 'input_tokens' => $failed ? 0 : $checked * mt_rand(300, 700), 'output_tokens' => $failed ? 0 : $checked * mt_rand(20, 80),
+                    'started_at' => now()->subMinutes(($i + 1) * $every)->startOfMinute()]);
             }
         }
     }
