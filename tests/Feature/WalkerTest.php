@@ -25,9 +25,18 @@ class WalkerTest extends TestCase
     public function test_home_lists_runs_by_status(): void
     {
         $this->actingAs($this->admin());
-        $this->get('/admin/walker?status=running')->assertOk()->assertSee('Emails &amp; Texts', false)->assertDontSee('Accounts Receivable Aging');
-        $this->get('/admin/walker?status=done')->assertOk()->assertSee('Accounts Receivable Aging')->assertSee('Completed');
-        $this->get('/admin/walker?status=problem')->assertOk()->assertSee('Error')->assertSee('Did not finish')->assertSee('ERCOT Transactions');
+        $html = $this->get('/admin/walker')->assertOk()->assertDontSee('class="tabs"', false)->getContent();
+        // Running on top, then Errors, then Completed, each its own table
+        $running = strpos($html, 'id="runs-running"');
+        $problem = strpos($html, 'id="runs-problem"');
+        $done = strpos($html, 'id="runs-done"');
+        $this->assertTrue($running < $problem && $problem < $done);
+        $this->assertStringContainsString('Emails &amp; Texts', substr($html, $running, $problem - $running));
+        $this->assertStringContainsString('ERCOT Transactions', substr($html, $problem, $done - $problem));
+        $this->assertStringContainsString('Did not finish', substr($html, $problem, $done - $problem));
+        $this->assertStringContainsString('Accounts Receivable Aging', substr($html, $done));
+        // The live update asks for just the tables
+        $this->get('/admin/walker?part=tables')->assertOk()->assertSee('id="runs-done"', false)->assertDontSee('<html', false);
         $this->get('/admin/walker')->assertOk()->assertSee('Report Status');
     }
 
@@ -70,7 +79,7 @@ class WalkerTest extends TestCase
         $this->from('/admin/corral/reports/notes')->get('/admin/corral/reports/notes?run=1&start=2020-01-01&output=backend')->assertRedirect();
         $run = ReportRun::where('app', 'corral')->where('report', 'notes')->latest('id')->firstOrFail();
         $this->assertSame('done', $run->status);
-        $this->get('/admin/walker?status=done')->assertSee(route('walker.runs.show', $run));
+        $this->get('/admin/walker')->assertSee(route('walker.runs.show', $run));
     }
 
     public function test_uploads_and_access(): void

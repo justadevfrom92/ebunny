@@ -100,11 +100,10 @@
       if (e.key === 'Escape') $$('[data-multi][open]').forEach(function (d) { d.open = false; d.querySelector('summary').focus(); });
     });
 
-    // Clickable table rows
-    $$('tr[data-href]').forEach(function (tr) {
-      tr.addEventListener('click', function (e) {
-        if (!e.target.closest('a, button, input, select, form')) location.href = tr.dataset.href;
-      });
+    // Clickable table rows (delegated, so rows swapped in later, like Walker's live tables, work too)
+    document.addEventListener('click', function (e) {
+      var tr = e.target.closest && e.target.closest('tr[data-href]');
+      if (tr && !e.target.closest('a, button, input, select, form')) location.href = tr.dataset.href;
     });
 
     // Selects that submit their form on change

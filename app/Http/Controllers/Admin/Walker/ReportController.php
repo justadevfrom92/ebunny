@@ -13,27 +13,29 @@ use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * Walker: reporting. Home lists every report run (from Walker and Corral) by
- * status; each run has its own page with a Rerun button; the library runs any
+ * Walker: reporting. Home lists every report run (from Walker and Corral) in
+ * Running, Errors and Completed tables; each run has its own page with a Rerun button; the library runs any
  * report in config/walker.php in the background.
  */
 class ReportController extends Controller
 {
-    public const TABS = ['running' => 'Running', 'done' => 'Completed', 'problem' => 'Errors & Did Not Finish', 'all' => 'All'];
+    /** The status page's tables, top to bottom: what's running now, what went wrong, what finished. */
+    public const TABLES = ['running' => 'Running', 'problem' => 'Errors & Did Not Finish', 'done' => 'Completed'];
 
+    /**
+     * Report Status: three tables on one page (Running, Errors, Completed). The page asks for
+     * ?part=tables every few seconds and swaps the tables in place, so runs move from Running
+     * to Errors or Completed without a reload. Each table pages on its own.
+     */
     public function home(Request $request): View
     {
-        $tab = array_key_exists($request->query('status'), self::TABS) ? $request->query('status') : 'running';
-        $counts = collect(self::TABS)->map(fn ($l, $k) => ReportRun::inState($k)->count());
-        // With nothing running, open on the latest completed runs
-        if (! $request->has('status') && $counts['running'] === 0) {
-            $tab = 'done';
-        }
-
-        return view('admin.walker.home', [
-            'tab' => $tab, 'counts' => $counts,
-            'runs' => ReportRun::inState($tab)->with('user')->latest('created_at')->latest('id')->paginate(25)->withQueryString(),
+        $tables = collect(self::TABLES)->map(fn ($label, $k) => [
+            'label' => $label,
+            'runs' => ReportRun::inState($k)->with('user')->latest('created_at')->latest('id')
+                ->paginate($k === 'running' ? 50 : 15, ['*'], $k.'_page')->appends($request->except('part', $k.'_page')),
         ]);
+
+        return view($request->query('part') === 'tables' ? 'admin.walker._tables' : 'admin.walker.home', ['tables' => $tables]);
     }
 
     public function show(ReportRun $run): View
