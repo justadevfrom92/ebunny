@@ -67,6 +67,12 @@ class AdminTest extends TestCase
             $urls[] = '/admin/'.$t[2].'/data/'.$table;
         }
         $this->get('/admin/sheriff/data/tax-rates')->assertNotFound();
+        // Fraud Indicators and CIS Note Dispositions are Finance's (Caboose), not Sheriff's
+        $this->get('/admin/caboose/data/fraud-indicators')->assertOk()->assertSee('Fraud Indicators');
+        $this->get('/admin/caboose/data/note-dispositions')->assertOk()->assertSee('CIS Note Dispositions');
+        $this->get('/admin/sheriff/data/fraud-indicators')->assertNotFound();
+        $this->get('/admin/sheriff')->assertRedirect();
+        $this->followingRedirects()->get('/admin/sheriff')->assertDontSee('Fraud Indicators');
 
         foreach ($urls as $url) {
             $this->get($url)->assertOk();

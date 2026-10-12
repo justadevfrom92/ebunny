@@ -448,7 +448,6 @@ Route::prefix('admin')->group(function () {
             Route::resource('markets', Admin\Lando\MarketController::class)->except(['show', 'destroy']);
             Route::get('jobs', [Admin\Sheriff\SystemController::class, 'jobs'])->name('jobs.index');
             Route::post('jobs/run', [Admin\Sheriff\SystemController::class, 'runJob'])->name('jobs.run');
-            $dataTables();
         });
 
         // A custom app's home page, e.g. /admin/marketing (built-in app routes above take priority)

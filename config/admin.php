@@ -143,7 +143,7 @@ return [
                     ['Receivables Aging', 'caboose.aging'],
                     ['Journal', 'caboose.journal'],
                 ],
-                'Pricing Data' => 'reference_tables',
+                'Data' => 'reference_tables',    // pricing, deposits, taxes, fraud indicators and CIS note dispositions
             ],
         ],
         'bounty' => [
@@ -236,7 +236,6 @@ return [
                     ['Add a Market', 'sheriff.markets.create'],
                 ],
                 'APIs' => 'integrations',        // one page per integration below, plus the overview
-                'Data' => 'reference_tables',    // the reference tables Sheriff owns (see reference_tables below)
             ],
         ],
     ],
@@ -301,7 +300,7 @@ return [
         'unprocessed-orders' => ['Unprocessed Orders', 'Orders waiting to be sent to the utility'],
     ],
 
-    // Sheriff → Data. Rows are stored in the reference_rows table.
+    // Rows are stored in the reference_rows table.
     // Reference data tables: key => [name, columns, the app whose menu lists it (its "Data" section)]
     'reference_tables' => [
         'deposit-thresholds' => ['Deposit Thresholds', ['Credit Score From', 'Credit Score To', 'Deposit'], 'caboose'],
@@ -314,8 +313,8 @@ return [
         'blackout-days' => ['Blackout Days', ['Date', 'Reason'], 'astro'],
         'ips' => ['IPs', ['IP Address', 'Action', 'Note'], 'lando'],
         'monthly-drawing' => ['Drawing Winners', ['Month', 'Prize', 'Winner Account', 'Drawn On'], 'bounty'],
-        'fraud-indicators' => ['Fraud Indicators', ['Rule', 'Action'], 'sheriff'],
-        'note-dispositions' => ['CIS Note Dispositions', ['Code', 'Label'], 'sheriff'],
+        'fraud-indicators' => ['Fraud Indicators', ['Rule', 'Action'], 'caboose'],
+        'note-dispositions' => ['CIS Note Dispositions', ['Code', 'Label'], 'caboose'],
     ],
 
     // Scheduled jobs (registered in routes/console.php). Run them on Linux with:
