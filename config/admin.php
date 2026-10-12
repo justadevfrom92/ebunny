@@ -252,6 +252,9 @@ return [
     'test_logins' => env('APP_ENV', 'production') !== 'production'
         && filter_var(env('ADMIN_TEST_LOGINS', true), FILTER_VALIDATE_BOOL),
 
+    // Departments admin users (employees) belong to
+    'departments' => ['Customer Service', 'Pricing', 'Marketing', 'Finance', 'AI Operations', 'IT', 'Management'],
+
     // Extra permissions a role can hold besides app access
     'permissions' => [
         'delete' => 'Permanent deletes',

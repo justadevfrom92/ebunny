@@ -402,6 +402,8 @@ Route::prefix('admin')->group(function () {
             Route::get('/', fn () => redirect()->route('sheriff.users.index'));
             Route::get('users', [Admin\Sheriff\UserController::class, 'index'])->name('users.index');
             Route::post('users', [Admin\Sheriff\UserController::class, 'store'])->name('users.store');
+            Route::get('users/new', [Admin\Sheriff\UserController::class, 'create'])->name('users.create');
+            Route::get('users/{user}/edit', [Admin\Sheriff\UserController::class, 'edit'])->name('users.edit');
             Route::patch('users/{user}', [Admin\Sheriff\UserController::class, 'update'])->name('users.update');
             Route::get('users/{user}/history', [Admin\HistoryController::class, 'user'])->name('users.history');
             Route::get('history/{item}', [Admin\HistoryController::class, 'show'])->name('history.show');

@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role_id', 'active', 'last_login_at'])]
+#[Fillable(['name', 'email', 'password', 'role_id', 'active', 'last_login_at', 'employee_id', 'title', 'department', 'manager_id', 'phone_ext', 'location', 'hired_on', 'extra_perms', 'denied_perms', 'access_note'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -32,6 +32,9 @@ class User extends Authenticatable
             'last_login_at' => 'datetime',
             'password' => 'hashed',
             'active' => 'boolean',
+            'hired_on' => 'date',
+            'extra_perms' => 'array',
+            'denied_perms' => 'array',
         ];
     }
 
@@ -45,10 +48,28 @@ class User extends Authenticatable
         return $this->belongsToMany(Customer::class, 'bookmarks')->withTimestamps();
     }
 
-    /** True when the user's role grants an admin app (corral, lando, …) or an extra right (delete, refunds). */
+    public function manager(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'manager_id');
+    }
+
+    /**
+     * True when this person may use an admin app (corral, lando, …) or a right (delete, refunds…):
+     * their role grants it or it was added for them, and it wasn't taken away from them.
+     */
     public function hasPerm(string $perm): bool
     {
-        return $this->active && in_array($perm, $this->role?->perms ?? [], true);
+        if (! $this->active || in_array($perm, $this->denied_perms ?? [], true)) {
+            return false;
+        }
+
+        return in_array($perm, $this->role?->perms ?? [], true) || in_array($perm, $this->extra_perms ?? [], true);
+    }
+
+    /** How this person's access differs from their role: [perm => 'added' | 'removed']. */
+    public function accessChanges(): array
+    {
+        return array_fill_keys($this->extra_perms ?? [], 'added') + array_fill_keys($this->denied_perms ?? [], 'removed');
     }
 
     /** The admin apps (built-in and custom) this user can open, keyed by app key. */

@@ -1,44 +1,42 @@
 @extends('admin.layouts.app')
 
 @section('content')
-    @include('admin.partials.page-head', ['title' => 'Users', 'sub' => 'Who can sign in to the admin tools.', 'actions' => '<button type="button" class="btn" data-add-user>Add User</button>'])
-    <div class="panel"><div class="table-wrap"><table>
-        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Apps</th><th>Last Sign-in</th><th>Status</th><th></th></tr></thead>
-        <tbody>@foreach ($users as $u)
-            <tr>
-                <td><b>{{ $u->name }}</b>@if ($u->is(auth()->user())) <span class="muted">(you)</span>@endif</td>
-                <td>{{ $u->email }}</td>
-                <td>
-                    <form method="post" action="{{ route('sheriff.users.update', $u) }}" class="inline">@csrf @method('patch')
-                        <select name="role_id" aria-label="Role for {{ $u->name }}" data-autosubmit @disabled($u->is(auth()->user()))>
-                            @foreach ($roles as $r)<option value="{{ $r->id }}" @selected($u->role_id === $r->id)>{{ $r->name }}</option>@endforeach
-                        </select>
-                    </form>
-                </td>
-                <td>{{ collect($u->apps())->pluck('name')->implode(', ') ?: '—' }}</td>
-                <td>{{ $u->last_login_at?->format('Y-m-d H:i') ?? 'Never' }}</td>
-                <td>@include('admin.partials.pill', $u->active ? ['text' => 'Active', 'tone' => 'ok'] : ['text' => 'Disabled'])</td>
-                <td><a class="btn sm ghost" href="{{ route('sheriff.users.history', $u) }}">History</a>
-                    @unless ($u->is(auth()->user()))
-                    <form method="post" action="{{ route('sheriff.users.update', $u) }}" class="inline">@csrf @method('patch')
-                        <input type="hidden" name="active" value="{{ $u->active ? 0 : 1 }}"><button class="btn sm ghost">{{ $u->active ? 'Disable' : 'Enable' }}</button>
-                    </form>
-                @endunless</td>
-            </tr>
-        @endforeach</tbody>
-    </table></div></div>
+    @include('admin.partials.page-head', ['title' => 'Users', 'sub' => 'Employees who sign in to the admin, by department. Access comes from each person\'s role; anything added or taken away for one person is marked.',
+        'actions' => '<a class="btn cyan" href="'.route('sheriff.users.create').'">New User</a>'])
 
-    <template id="add-user-form">
-        <form class="modal" method="post" action="{{ route('sheriff.users.store') }}" role="dialog" aria-modal="true">
-            @csrf
-            <h2>Add User</h2>
-            <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
-                <div class="field"><label for="nu-name">Name</label><input id="nu-name" name="name" required></div>
-                <div class="field"><label for="nu-email">Email</label><input id="nu-email" name="email" type="email" required></div>
-                <div class="field"><label for="nu-role">Role</label><select id="nu-role" name="role_id">@foreach ($roles as $r)<option value="{{ $r->id }}">{{ $r->name }}</option>@endforeach</select></div>
-                <div class="field"><label for="nu-pw">Temporary Password</label><input id="nu-pw" name="password" type="password" minlength="12" required autocomplete="new-password"><span class="help">At least 12 characters.</span></div>
+    <div class="stack">
+        @foreach ($groups as $department => $list)
+            <div class="panel"><div class="panel-head"><h2>{{ $department }}</h2><span class="muted">{{ $list->count() }} {{ Str::plural('person', $list->count()) }}</span></div>
+                <div class="table-wrap"><table class="table">
+                    <thead><tr><th>Employee</th><th>Role</th><th>Can Open</th><th>Rights</th><th>Manager</th><th>Last Sign-in</th><th></th></tr></thead>
+                    <tbody>@foreach ($list as $u)
+                        @php $changes = $u->accessChanges(); @endphp
+                        <tr class="click" data-href="{{ route('sheriff.users.edit', $u) }}">
+                            <td><a href="{{ route('sheriff.users.edit', $u) }}"><b>{{ $u->name }}</b></a>@if ($u->is(auth()->user())) <span class="muted">(you)</span>@endif
+                                <div class="help">{{ $u->title ?? '—' }}@if ($u->employee_id) · <span class="mono">{{ $u->employee_id }}</span>@endif</div><div class="help">{{ $u->email }}@if ($u->phone_ext) · ext {{ $u->phone_ext }}@endif</div></td>
+                            <td>{{ $u->role?->name ?? '—' }}</td>
+                            <td class="wrap">@foreach ($apps as $key => $a)
+                                    @if ($u->hasPerm($key))<span @class(['acc', 'added' => ($changes[$key] ?? null) === 'added']) title="{{ ($changes[$key] ?? null) === 'added' ? 'Added for this person' : 'From their role' }}">{{ $a['name'] }}</span>@elseif (($changes[$key] ?? null) === 'removed')<span class="acc removed" title="Their role has it; taken away for this person">{{ $a['name'] }}</span>@endif
+                                @endforeach</td>
+                            <td class="wrap">@foreach ($rights as $key => $label)
+                                    @if ($u->hasPerm($key))<span @class(['acc', 'added' => ($changes[$key] ?? null) === 'added']) title="{{ $label }}">{{ ucfirst($key) }}</span>@elseif (($changes[$key] ?? null) === 'removed')<span class="acc removed" title="{{ $label }}: taken away for this person">{{ ucfirst($key) }}</span>@endif
+                                @endforeach
+                                @if ($u->access_note)<div class="help">{{ $u->access_note }}</div>@endif</td>
+                            <td>{{ $u->manager?->name ?? '—' }}</td>
+                            <td class="nowrap">{{ $u->last_login_at?->format('n/j/Y g:i A') ?? 'Never' }}</td>
+                            <td class="actions"><a class="btn sm ghost" href="{{ route('sheriff.users.edit', $u) }}">Edit</a><a class="btn sm ghost" href="{{ route('sheriff.users.history', $u) }}">History</a></td></tr>
+                    @endforeach</tbody>
+                </table></div>
             </div>
-            <div class="actions" style="justify-content:flex-end;margin-top:16px"><button type="button" class="btn ghost" data-x>Cancel</button><button class="btn cyan">Add User</button></div>
-        </form>
-    </template>
+        @endforeach
+
+        @if ($disabled->isNotEmpty())
+            <div class="panel"><div class="panel-head"><h2>Disabled</h2><span class="muted">can't sign in</span></div>
+                <div class="table-wrap"><table class="table"><tbody>@foreach ($disabled as $u)
+                    <tr><td><b>{{ $u->name }}</b><div class="help">{{ $u->title }} · {{ $u->email }}</div></td><td>{{ $u->department ?? '—' }}</td><td>{{ $u->role?->name }}</td>
+                        <td class="actions"><form method="post" action="{{ route('sheriff.users.update', $u) }}" class="inline">@csrf @method('patch')<input type="hidden" name="active" value="1"><button class="btn sm ghost">Enable</button></form><a class="btn sm ghost" href="{{ route('sheriff.users.history', $u) }}">History</a></td></tr>
+                @endforeach</tbody></table></div>
+            </div>
+        @endif
+    </div>
 @endsection

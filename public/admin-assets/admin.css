@@ -519,3 +519,8 @@ a.report-card h3 { margin-bottom: 4px; }
 tr.row-new td { background: var(--info-bg); }
 .dp-model { white-space: normal; max-width: 26ch; }
 .dp-model small { overflow-wrap: anywhere; }
+/* Sheriff → Users: what each person can open; added/removed for one person are marked */
+.acc { display: inline-block; font-size: .75rem; padding: 1px 8px; margin: 1px 2px 1px 0; border-radius: 999px; background: var(--row); border: 1px solid var(--line); }
+.acc.added { background: var(--ok-bg); color: var(--ok); border-color: transparent; }
+.acc.added::before { content: "+ "; }
+.acc.removed { background: var(--bad-bg); color: var(--bad); border-color: transparent; text-decoration: line-through; }

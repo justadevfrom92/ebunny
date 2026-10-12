@@ -172,7 +172,9 @@ class AdminTest extends TestCase
         $this->get('/admin/astro/terms')->assertOk();
         $this->get('/admin/corral')->assertRedirect('/admin?denied=corral');
         $this->get('/admin/sheriff/users')->assertRedirect('/admin?denied=sheriff');
-        $this->get('/admin')->assertSee('No access');
+        // The launcher only shows the apps they can open
+        $this->get('/admin')->assertSee('Open Lando')->assertSee('Open Astro')->assertDontSee('Open Corral')->assertDontSee('No access');
+        $this->get('/admin?denied=corral')->assertSee("You don't have access to Corral", false);
     }
 
     public function test_refunds_and_deletes_need_their_rights(): void

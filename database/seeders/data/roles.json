@@ -42,7 +42,6 @@
   "perms": [
    "corral",
    "walker",
-   "sheriff",
    "refunds",
    "caboose"
   ]
@@ -60,8 +59,7 @@
  {
   "name": "AI Operations",
   "perms": [
-   "deputy",
-   "walker"
+   "deputy"
   ]
  }
 ]
