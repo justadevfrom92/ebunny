@@ -18,9 +18,7 @@
 
     <div class="panel" style="margin-bottom:20px">
         <div class="panel-head"><h2>Views by Day</h2><span class="muted">last 30 days</span></div>
-        <div class="panel-body">@php $top = max(1, collect($days)->max(1)); @endphp
-            <div class="sv-week" style="grid-template-columns:repeat(30,minmax(0,1fr))">@foreach ($days as [$d, $n])<div title="{{ $n }} on {{ $d->format('D n/j') }}"><span></span><b style="height:{{ round($n / $top * 80) }}%"></b>{{ $d->day % 5 === 0 ? $d->format('n/j') : '' }}</div>@endforeach</div>
-        </div>
+        <div class="panel-body"><x-bar-chart :bars="collect($days)->map(fn ($d) => ['label' => $d[0]->format('n/j'), 'value' => $d[1], 'tip' => $d[0]->format('D n/j')])" unit="views" /></div>
     </div>
 
     <div class="grid-2" style="margin-bottom:20px">

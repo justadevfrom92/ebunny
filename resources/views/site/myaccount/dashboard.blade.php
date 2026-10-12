@@ -29,7 +29,7 @@
   @if ($usage->count())
     <div class="co-card" style="margin-top:20px"><h3>Usage (kWh)</h3>
       @php $max = max(1, $usage->max('kwh')); @endphp
-      <div class="bars">@foreach ($usage as $b)<div class="bar"><span style="height:{{ round($b->kwh / $max * 100) }}%" title="{{ number_format($b->kwh) }} kWh"></span><small>{{ $b->billed_on->format('M') }}</small></div>@endforeach</div>
+      <x-bar-chart :bars="$usage->map(fn ($b) => ['label' => $b->billed_on->format('M'), 'value' => $b->kwh, 'tip' => $b->billed_on->format('F Y')])" unit="kWh" />
       <a href="{{ route('myaccount.insights') }}">Energy insights</a>
     </div>
   @endif

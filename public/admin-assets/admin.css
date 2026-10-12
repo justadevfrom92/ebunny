@@ -524,3 +524,7 @@ tr.row-new td { background: var(--info-bg); }
 .acc.added { background: var(--ok-bg); color: var(--ok); border-color: transparent; }
 .acc.added::before { content: "+ "; }
 .acc.removed { background: var(--bad-bg); color: var(--bad); border-color: transparent; text-decoration: line-through; }
+.sv-cols .v { font-size: .68rem; font-weight: 600; color: var(--ink); line-height: 1.2; }
+.sv-bar, .sv-cols > div, .hour-chart .col { outline: none; }
+.sv-bar:focus-visible, .sv-cols > div:focus-visible, .hour-chart .col:focus-visible { box-shadow: 0 0 0 2px var(--cyan); border-radius: 3px; }
+.hour-chart .col { cursor: default; }

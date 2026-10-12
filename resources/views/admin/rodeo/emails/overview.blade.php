@@ -16,9 +16,7 @@
 
     <div class="panel" style="margin-bottom:20px">
         <div class="panel-head"><h2>Emails Sent</h2><span class="muted">{{ $days <= 30 ? 'by day' : ($days <= 90 ? 'by week' : 'by month') }}</span></div>
-        <div class="panel-body">@php $top = max(1, collect($chart)->max(2)); @endphp
-            <div class="sv-week" style="grid-template-columns:repeat({{ count($chart) }},minmax(0,1fr))">@foreach ($chart as [$label, $title, $n])<div title="{{ $n }} {{ $title }}"><span>{{ $days <= 30 && count($chart) > 14 ? '' : ($n ?: '') }}</span><b style="height:{{ round($n / $top * 80) }}%"></b>{{ $label }}</div>@endforeach</div>
-        </div>
+        <div class="panel-body"><x-bar-chart :bars="collect($chart)->map(fn ($c) => ['label' => $c[0], 'value' => $c[2], 'tip' => ucfirst($c[1])])" unit="emails" /></div>
     </div>
 
     <div class="panel" style="margin-bottom:20px">
@@ -41,7 +39,7 @@
     <div class="grid-2">
         <div class="panel"><div class="panel-head"><h2>By Category</h2><a class="btn sm ghost" href="{{ route('rodeo.emails.categories') }}">Categories</a></div>
             <div class="panel-body">@php $max = max(1, $byCategory->max(1)); @endphp
-                <div class="sv-bars">@forelse ($byCategory as [$c, $n])<div class="sv-bar" style="--dot:{{ $c->color }}"><span>{{ $c->name }} <span class="muted">· {{ $c->templates_count }} {{ Str::plural('template', $c->templates_count) }}</span></span><span class="track"><span class="fill" style="width:{{ round($n / $max * 100) }}%"></span></span><span class="n">{{ number_format($n) }}</span></div>
+                <div class="sv-bars">@forelse ($byCategory as [$c, $n])<div class="sv-bar" tabindex="0" data-tip="{{ $c->name }}: {{ number_format($n) }} emails" style="--dot:{{ $c->color }}"><span>{{ $c->name }} <span class="muted">· {{ $c->templates_count }} {{ Str::plural('template', $c->templates_count) }}</span></span><span class="track"><span class="fill" style="width:{{ round($n / $max * 100) }}%"></span></span><span class="n">{{ number_format($n) }}</span></div>
                 @empty <p class="muted" style="margin:0">No categories yet.</p> @endforelse</div>
             </div>
         </div>

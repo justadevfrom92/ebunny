@@ -28,9 +28,7 @@
 
     <div class="panel" style="margin-bottom:8px">
         <div class="panel-head"><h2>Responses by Week</h2><span class="muted">last 12 weeks, all sources</span></div>
-        <div class="panel-body">@php $top = max(1, $weeks->max('count')); @endphp
-            <div class="sv-week">@foreach ($weeks as $w)<div title="{{ $w['count'] }} the week of {{ $w['label'] }}"><span>{{ $w['count'] ?: '' }}</span><b style="height:{{ round($w['count'] / $top * 80) }}%"></b>{{ $w['label'] }}</div>@endforeach</div>
-        </div>
+        <div class="panel-body"><x-bar-chart :bars="collect($weeks)->map(fn ($w) => ['label' => $w['label'], 'value' => $w['count'], 'tip' => 'Week of '.$w['label']])" unit="responses" /></div>
     </div>
 
     @forelse ($groups as $g)
@@ -49,7 +47,7 @@
                             <div class="sv-nps" title="Detractors, passives, promoters"><span class="det" style="width:{{ $b[0] / $tot * 100 }}%"></span><span class="pas" style="width:{{ $b[1] / $tot * 100 }}%"></span><span class="pro" style="width:{{ $b[2] / $tot * 100 }}%"></span></div>
                             <div class="sv-legend">@foreach ($s['bands'] as $label => $n)<span><i style="background:var(--{{ ['red', 'gold', 'ok'][$loop->index] }})"></i>{{ $label }}: {{ $n }}</span>@endforeach</div>
                             @php $mx = max(1, collect($s['rows'])->max('count')); @endphp
-                            <div class="sv-cols">@foreach ($s['rows'] as $r)<div title="{{ $r['count'] }} gave {{ $r['label'] }}"><b style="height:{{ round($r['count'] / $mx * 80) }}%;background:var(--{{ (int) $r['label'] <= 6 ? 'red' : ((int) $r['label'] <= 8 ? 'gold' : 'ok') }})"></b>{{ $r['label'] }}</div>@endforeach</div>
+                            <div class="sv-cols">@foreach ($s['rows'] as $r)<div tabindex="0" data-tip="Score {{ $r['label'] }}: {{ $r['count'] }} {{ Str::plural('response', $r['count']) }}"><span class="v">{{ $r['count'] }}</span><b style="height:{{ round($r['count'] / $mx * 80) }}%;background:var(--{{ (int) $r['label'] <= 6 ? 'red' : ((int) $r['label'] <= 8 ? 'gold' : 'ok') }})"></b>{{ $r['label'] }}</div>@endforeach</div>
                         @elseif ($q->type === 'text')
                             @forelse ($s['texts']->take(4) as $r)
                                 <div class="sv-quote">“{{ $r->answer($q) }}”<small>{{ $r->customer?->name ?? 'Anonymous' }} · {{ $r->created_at->format('M j, Y') }} · <a href="{{ route('rodeo.surveys.responses.show', $r) }}">View response</a></small></div>
@@ -57,7 +55,7 @@
                             @if ($s['texts']->count() > 4)<a href="{{ route('rodeo.surveys.responses', ['survey' => $survey->id, 'comments' => 1]) }}">All {{ $s['texts']->count() }} written answers</a>@endif
                         @else
                             @if ($q->type === 'scale' && $s['avg'])<div style="display:flex;gap:18px;align-items:center"><div><div class="sv-big" style="font-size:1.5rem">{{ $s['avg'] }} <span class="muted" style="font-size:1rem">/ {{ $s['of'] }}</span></div><div class="help">average score</div></div><div><div class="sv-big" style="font-size:1.5rem">{{ $s['top'] }}%</div><div class="help">top two answers</div></div></div>@endif
-                            <div class="sv-bars">@foreach ($s['rows'] as $r)<div class="sv-bar"><span>{{ $r['label'] }}</span><span class="track"><span class="fill" style="width:{{ $r['pct'] }}%"></span></span><span class="n">{{ $r['count'] }} · {{ $r['pct'] }}%</span></div>@endforeach</div>
+                            <div class="sv-bars">@foreach ($s['rows'] as $r)<div class="sv-bar" tabindex="0" data-tip="{{ $r['label'] }}: {{ $r['count'] ?? '' }} ({{ $r['pct'] }}%)"><span>{{ $r['label'] }}</span><span class="track"><span class="fill" style="width:{{ $r['pct'] }}%"></span></span><span class="n">{{ $r['count'] }} · {{ $r['pct'] }}%</span></div>@endforeach</div>
                             @if ($q->type === 'multi')<p class="help" style="margin:0">Percent of people who answered; they could pick more than one.</p>@endif
                         @endif
                     </div>
