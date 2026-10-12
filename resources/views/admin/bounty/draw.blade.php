@@ -3,7 +3,7 @@
 @section('crumb', 'Draw a Winner')
 
 @section('content')
-    @include('admin.partials.page-head', ['title' => 'Draw a Winner', 'sub' => 'The '.$month->format('F Y').' drawing. One entry is picked at random; the winner gets a note on their account and is saved to Sheriff → Data → Monthly Drawing.',
+    @include('admin.partials.page-head', ['title' => 'Draw a Winner', 'sub' => 'The '.$month->format('F Y').' drawing. One entry is picked at random; the winner gets a note on their account and is saved to Bounty → Drawing Winners.',
         'actions' => '<a class="btn ghost" href="'.route('bounty.drawing').'">Back to Entries</a>'])
 
     @if ($winner)

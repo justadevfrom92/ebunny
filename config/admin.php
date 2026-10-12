@@ -53,7 +53,7 @@ return [
         ],
         'lando' => [
             'name' => 'Lando',
-            'desc' => 'Website CMS: site health and visitors, pages, content blocks, plans, rates and TDSP fees.',
+            'desc' => 'Website CMS: site health and visitors, pages, page templates and content blocks.',
             'icon' => 'layout',
             'home' => 'lando.dashboard',
             'menu' => [
@@ -68,47 +68,38 @@ return [
                     ['List Pages', 'lando.pages.index'],
                     ['Add a Page', 'lando.pages.create'],
                     ['Page Templates', 'lando.templates.index'],
+                ],
+                'Content' => [
                     ['Content Blocks', 'lando.blocks.index'],
                     ['Add a Content Block', 'lando.blocks.create'],
                 ],
                 'Design' => [
                     ['Style Guide', 'lando.styles'],
                 ],
-                'Markets' => [
-                    ['View Markets', 'lando.markets.index'],
-                    ['Add a Market', 'lando.markets.create'],
-                ],
-                'Plans' => [
-                    ['View Plans', 'lando.plans.index'],
-                    ['Add a Plan', 'lando.plans.create'],
-                    ['Plan Groups', 'lando.groups.index'],
-                    ['Add a Group', 'lando.groups.create'],
-                ],
-                'Rates' => [
-                    ['View Rates', 'lando.rates.index'],
-                    ['Update Rates', 'lando.rates.edit'],
-                    ['TDSP Fees', 'lando.fees.index'],
-                ],
+                'Data' => 'reference_tables',
             ],
         ],
         'astro' => [
             'name' => 'Astro',
-            'desc' => 'Pricing: term discounts, ETFs and Build Your Own Plan products.',
+            'desc' => 'Plans and pricing: plans, plan groups, rates, TDSP fees, term discounts, ETFs and Build Your Own Plan products.',
             'icon' => 'chart',
-            'home' => 'astro.terms.edit',
+            'home' => 'astro.plans.index',
             'menu' => [
+                'Plans' => [
+                    ['View Plans', 'astro.plans.index'],
+                    ['Add a Plan', 'astro.plans.create'],
+                    ['Plan Groups', 'astro.groups.index'],
+                    ['Add a Group', 'astro.groups.create'],
+                ],
+                'Rates' => [
+                    ['View Rates', 'astro.rates.index'],
+                    ['Update Rates', 'astro.rates.edit'],
+                    ['TDSP Fees', 'astro.fees.index'],
+                ],
                 'Modifiers' => [
                     ['Term', 'astro.terms.edit'],
                     ['ETF', 'astro.etfs.edit'],
                     ['Products', 'astro.modifiers.products'],
-                ],
-                // Same plans and groups as Lando (one copy of the data and screens, Astro's own URLs); pages are Lando's only
-                'Website' => [
-                    ['Groups', 'astro.groups.index'],
-                ],
-                'Plans' => [
-                    ['Plans', 'astro.plans.index'],
-                    ['New Plan', 'astro.plans.create'],
                 ],
                 'BYOP' => [
                     ['Products', 'astro.products.index'],
@@ -116,6 +107,7 @@ return [
                 'Upload' => [
                     ['BYOP Discounts', 'astro.byop.upload'],
                 ],
+                'Data' => 'reference_tables',
             ],
         ],
         'walker' => [
@@ -150,6 +142,7 @@ return [
                     ['Receivables Aging', 'caboose.aging'],
                     ['Journal', 'caboose.journal'],
                 ],
+                'Pricing Data' => 'reference_tables',
             ],
         ],
         'bounty' => [
@@ -168,6 +161,7 @@ return [
                     ['Members', 'bounty.members'],
                     ['Monthly Drawing', 'bounty.drawing'],
                 ],
+                'Data' => 'reference_tables',
             ],
         ],
         'rodeo' => [
@@ -222,7 +216,7 @@ return [
         ],
         'sheriff' => [
             'name' => 'Sheriff',
-            'desc' => 'Settings: users, roles, API integrations, scheduled jobs and reference data.',
+            'desc' => 'Settings: employees and their access, roles, markets, API integrations and scheduled jobs.',
             'icon' => 'star',
             'home' => 'sheriff.users.index',
             'menu' => [
@@ -235,8 +229,12 @@ return [
                     ['Update Sitemap', 'sheriff.sitemap'],
                     ['Cached Tables', 'sheriff.cache'],
                 ],
+                'Markets' => [
+                    ['View Markets', 'sheriff.markets.index'],
+                    ['Add a Market', 'sheriff.markets.create'],
+                ],
                 'APIs' => 'integrations',        // one page per integration below, plus the overview
-                'Data' => 'reference_tables',    // one page per table below, plus TDSP Fees
+                'Data' => 'reference_tables',    // the reference tables Sheriff owns (see reference_tables below)
             ],
         ],
     ],
@@ -302,19 +300,20 @@ return [
     ],
 
     // Sheriff → Data. Rows are stored in the reference_rows table.
+    // Reference data tables: key => [name, columns, the app whose menu lists it (its "Data" section)]
     'reference_tables' => [
-        'deposit-thresholds' => ['Deposit Thresholds', ['Credit Score From', 'Credit Score To', 'Deposit']],
-        'max-deposits' => ['Max Deposits', ['Customer Type', 'Max Deposit']],
-        'blackout-days' => ['Blackout Days', ['Date', 'Reason']],
-        'tax-rates' => ['Tax Rates', ['City', 'Sales Tax', 'Gross Receipts', 'PUC Assessment']],
-        'interest-rates' => ['Interest Rates', ['Year', 'Deposit Interest']],
-        'bill-credits' => ['Bill Credits & Promos', ['Code', 'Description', 'Amount']],
-        'fraud-indicators' => ['Fraud Indicators', ['Rule', 'Action']],
-        'note-dispositions' => ['CIS Note Dispositions', ['Code', 'Label']],
-        'charge-codes' => ['Charge Codes', ['Code', 'Description']],
-        'ips' => ['IPs', ['IP Address', 'Action', 'Note']],
-        'monthly-drawing' => ['Monthly Drawing', ['Month', 'Prize', 'Winner Account', 'Drawn On']],
-        'rate-exports' => ['Rate Exports', ['Email', 'Customer Type', 'Markets', 'Frequency']],
+        'deposit-thresholds' => ['Deposit Thresholds', ['Credit Score From', 'Credit Score To', 'Deposit'], 'caboose'],
+        'max-deposits' => ['Max Deposits', ['Customer Type', 'Max Deposit'], 'caboose'],
+        'tax-rates' => ['Tax Rates', ['City', 'Sales Tax', 'Gross Receipts', 'PUC Assessment'], 'caboose'],
+        'interest-rates' => ['Interest Rates', ['Year', 'Deposit Interest'], 'caboose'],
+        'bill-credits' => ['Bill Credits & Promos', ['Code', 'Description', 'Amount'], 'caboose'],
+        'charge-codes' => ['Charge Codes', ['Code', 'Description'], 'caboose'],
+        'rate-exports' => ['Rate Exports', ['Email', 'Customer Type', 'Markets', 'Frequency'], 'caboose'],
+        'blackout-days' => ['Blackout Days', ['Date', 'Reason'], 'astro'],
+        'ips' => ['IPs', ['IP Address', 'Action', 'Note'], 'lando'],
+        'monthly-drawing' => ['Drawing Winners', ['Month', 'Prize', 'Winner Account', 'Drawn On'], 'bounty'],
+        'fraud-indicators' => ['Fraud Indicators', ['Rule', 'Action'], 'sheriff'],
+        'note-dispositions' => ['CIS Note Dispositions', ['Code', 'Label'], 'sheriff'],
     ],
 
     // Scheduled jobs (registered in routes/console.php). Run them on Linux with:

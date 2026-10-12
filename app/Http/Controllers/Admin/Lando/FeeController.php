@@ -10,15 +10,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-/** TDSP delivery charges by market, kept as history like rates. Also shown in Sheriff → Data. */
+/** Astro → Rates → TDSP Fees: delivery charges by market, kept as history like rates. */
 class FeeController extends Controller
 {
     public function index(Catalog $catalog): View
     {
-        // Sheriff → Data → TDSP Fees is the same screen; it posts back to whichever app opened it
-        $app = str_starts_with((string) request()->route()->getName(), 'sheriff.') ? 'sheriff' : 'lando';
-
-        return view('admin.lando.fees', ['markets' => Market::where('status', 'Active')->orderBy('name')->get(), 'fees' => $catalog->currentFees(), 'action' => route($app.'.fees.update')]);
+        return view('admin.lando.fees', ['markets' => Market::where('status', 'Active')->orderBy('name')->get(), 'fees' => $catalog->currentFees(), 'action' => route('astro.fees.update')]);
     }
 
     public function update(Request $request, Catalog $catalog): RedirectResponse

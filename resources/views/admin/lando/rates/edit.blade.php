@@ -1,13 +1,13 @@
 @extends('admin.layouts.app')
 
 @section('content')
-    <form method="post" action="{{ route('lando.rates.update') }}" style="display:flex;flex-direction:column;gap:20px">
+    <form method="post" action="{{ route('astro.rates.update') }}" style="display:flex;flex-direction:column;gap:20px">
         @csrf @method('put')
         @include('admin.partials.page-head', [
             'title' => $onePlan ? 'Update Rates: '.$onePlan->name : 'Update Rates',
             'sub' => 'Energy charges in ¢/kWh by plan and market. Changed cells are highlighted; only those are saved. '
-                .($onePlan ? '<a href="'.route('lando.rates.edit').'">Show all plans</a>'
-                    : ($showAll ? '<a href="'.route('lando.rates.edit').'">Hide inactive plans</a>' : '<a href="'.route('lando.rates.edit', ['all' => 1]).'">Show inactive plans</a>')),
+                .($onePlan ? '<a href="'.route('astro.rates.edit').'">Show all plans</a>'
+                    : ($showAll ? '<a href="'.route('astro.rates.edit').'">Hide inactive plans</a>' : '<a href="'.route('astro.rates.edit', ['all' => 1]).'">Show inactive plans</a>')),
             'actions' => '<button type="button" class="btn ghost" data-adjust>Adjust All…</button><button class="btn cyan">Save Rates</button>',
         ])
         @if ($onePlan)<input type="hidden" name="plan" value="{{ $onePlan->id }}">@endif

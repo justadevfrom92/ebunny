@@ -13,6 +13,22 @@
     });
   }
 
+  // Keep the sidebar where it was scrolled to when a link takes you to another page
+  (function () {
+    var side = $('#sidebar');
+    if (!side) return;
+    var key = 'admin-sidebar-scroll';
+    try {
+      var saved = sessionStorage.getItem(key);
+      if (saved !== null) side.scrollTop = +saved;
+      else { var on = $('.sidebar a.on'); if (on) on.scrollIntoView({ block: 'center' }); }
+    } catch (e) {}
+    function save() { try { sessionStorage.setItem(key, String(side.scrollTop)); } catch (e) {} }
+    side.addEventListener('click', save, true);
+    side.addEventListener('scroll', function () { clearTimeout(save.t); save.t = setTimeout(save, 120); });
+    window.addEventListener('pagehide', save);
+  })();
+
   function toast(msg) {
     var t = $('#toast');
     if (!t || !msg) return;

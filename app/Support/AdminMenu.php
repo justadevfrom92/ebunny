@@ -46,9 +46,8 @@ class AdminMenu
 
         foreach (config("admin.apps.$app.menu") as $heading => $items) {
             if ($items === 'reference_tables') {
-                $items = collect(config('admin.reference_tables'))
-                    ->map(fn ($t, $key) => [$t[0], 'sheriff.data.show', null, ['table' => $key]])
-                    ->push(['TDSP Fees', 'sheriff.fees.index'])->sortBy(0)->values()->all();
+                $items = collect(config('admin.reference_tables'))->filter(fn ($t) => ($t[2] ?? 'sheriff') === $app)
+                    ->map(fn ($t, $key) => [$t[0], $app.'.data.show', null, ['table' => $key]])->sortBy(0)->values()->all();
             }
             if ($items === 'integrations') {
                 $items = [['All APIs', 'sheriff.integrations.index'], ...collect(config('admin.integrations'))

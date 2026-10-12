@@ -41,8 +41,8 @@ class CmsTest extends TestCase
                 }
             }
         }
-        $this->get('/admin/lando/rates/edit?plan='.Plan::first()->id)->assertOk()->assertSee('Update Rates: ');
-        $this->get('/admin/lando/rates/edit?all=1')->assertOk()->assertSee('Hide inactive plans');
+        $this->get('/admin/astro/rates/edit?plan='.Plan::first()->id)->assertOk()->assertSee('Update Rates: ');
+        $this->get('/admin/astro/rates/edit?all=1')->assertOk()->assertSee('Hide inactive plans');
         $this->get('/admin/sheriff/integrations/nope')->assertNotFound();
     }
 
@@ -127,17 +127,17 @@ class CmsTest extends TestCase
         $this->get('/admin/lando/templates/'.$t->id.'/edit')->assertOk();
         $this->put('/admin/lando/templates/'.$t->id, ['name' => 'spring-campaign', 'description' => 'x', 'file' => '../../.env'])->assertSessionHasErrors('file');
 
-        $this->post('/admin/lando/markets', ['name' => 'TX-E-SHARYLAND', 'short' => 'Sharyland', 'description' => 'Sharyland Utilities', 'region' => 'South',
+        $this->post('/admin/sheriff/markets', ['name' => 'TX-E-SHARYLAND', 'short' => 'Sharyland', 'description' => 'Sharyland Utilities', 'region' => 'South',
             'type' => 'TDSP', 'state' => 'TX', 'commodity' => 'Electric', 'units' => 'kWh', 'status' => 'Active'])->assertRedirect();
         $m = Market::where('name', 'TX-E-SHARYLAND')->firstOrFail();
-        $this->get('/admin/lando/markets/'.$m->id.'/edit')->assertOk()->assertSee('Sharyland');
-        $this->post('/admin/lando/markets', ['name' => 'bad name'])->assertSessionHasErrors(['name', 'short']);
+        $this->get('/admin/sheriff/markets/'.$m->id.'/edit')->assertOk()->assertSee('Sharyland');
+        $this->post('/admin/sheriff/markets', ['name' => 'bad name'])->assertSessionHasErrors(['name', 'short']);
 
         [$a, $b] = Plan::where('active', true)->take(2)->pluck('id')->all();
-        $this->post('/admin/lando/groups', ['name' => 'Spring Promo', 'slug' => 'spring-promo', 'plans' => [$b, $a]])->assertRedirect('/admin/lando/groups');
+        $this->post('/admin/astro/groups', ['name' => 'Spring Promo', 'slug' => 'spring-promo', 'plans' => [$b, $a]])->assertRedirect('/admin/astro/groups');
         $g = PlanGroup::where('slug', 'spring-promo')->firstOrFail();
         $this->assertSame([$b, $a], $g->plans()->orderBy('plan_group_plan.position')->pluck('plans.id')->all());
-        $this->put('/admin/lando/groups/'.$g->id, ['name' => 'Spring', 'slug' => 'spring-promo', 'plans' => [$a]])->assertRedirect();
+        $this->put('/admin/astro/groups/'.$g->id, ['name' => 'Spring', 'slug' => 'spring-promo', 'plans' => [$a]])->assertRedirect();
         $this->assertSame([$a], $g->plans()->pluck('plans.id')->all());
 
         $page = Page::where('status', 'Published')->where('path', '!=', '/')->firstOrFail();
@@ -167,7 +167,8 @@ class CmsTest extends TestCase
         $this->actingAs($this->admin());
         $this->post('/admin/sheriff/sitemap')->assertRedirect();
         $this->get('/admin/sheriff/sitemap')->assertOk()->assertSee('sitemap.xml');
-        $this->get('/admin/sheriff/fees')->assertOk()->assertSee(route('sheriff.fees.update'));
+        $this->get('/admin/astro/fees')->assertOk()->assertSee(route('astro.fees.update'));
+        $this->get('/admin/sheriff/fees')->assertNotFound();
         $this->get('/admin/sheriff/integrations/stripe')->assertOk()->assertSee('STRIPE_SECRET')->assertDontSee((string) config('admin.integrations.stripe.env.STRIPE_SECRET') ?: 'unset-value-guard');
     }
 }

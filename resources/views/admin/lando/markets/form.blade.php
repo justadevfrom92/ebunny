@@ -6,7 +6,7 @@
     @include('admin.partials.page-head', ['title' => $market->exists ? 'Edit Market: '.$market->name : 'Add a Market',
         'sub' => $market->exists ? $market->zip_ranges_count.' zip ranges · '.$market->fees_count.' TDSP fee records' : 'After adding a market, set its TDSP fees and rates so the website can price plans there.'])
 
-    <form method="post" action="{{ $market->exists ? route('lando.markets.update', $market) : route('lando.markets.store') }}" class="panel"><div class="panel-body">
+    <form method="post" action="{{ $market->exists ? route('sheriff.markets.update', $market) : route('sheriff.markets.store') }}" class="panel"><div class="panel-body">
         @csrf @if ($market->exists) @method('put') @endif
         <div class="form-grid">
             <label for="name">Name</label><input id="name" name="name" required class="mono" value="{{ old('name', $market->name) }}" placeholder="TX-E-ONCOR">
@@ -22,6 +22,6 @@
             <label for="duns_number">DUNS Number</label><input id="duns_number" name="duns_number" class="mono" inputmode="numeric" value="{{ old('duns_number', $market->duns_number) }}">
             <label for="edi_name">EDI Name</label><input id="edi_name" name="edi_name" class="mono" value="{{ old('edi_name', $market->edi_name) }}">
         </div>
-        <div class="actions" style="margin-top:20px"><button class="btn cyan">Save Market</button><a class="btn ghost" href="{{ route('lando.markets.index') }}">Cancel</a></div>
+        <div class="actions" style="margin-top:20px"><button class="btn cyan">Save Market</button><a class="btn ghost" href="{{ route('sheriff.markets.index') }}">Cancel</a></div>
     </div></form>
 @endsection

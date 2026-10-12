@@ -26,7 +26,7 @@ class MarketController extends Controller
     {
         $market = Market::create($this->validated($request));
 
-        return redirect()->route('lando.markets.edit', $market)->with('status', 'Market added. Add its TDSP fees and rates next.');
+        return redirect()->route('sheriff.markets.edit', $market)->with('status', 'Market added. Add its TDSP fees and rates next.');
     }
 
     public function edit(Market $market): View
@@ -38,7 +38,7 @@ class MarketController extends Controller
     {
         $market->update($this->validated($request, $market));
 
-        return redirect()->route('lando.markets.index')->with('status', 'Market saved');
+        return redirect()->route('sheriff.markets.index')->with('status', 'Market saved');
     }
 
     private function validated(Request $request, ?Market $market = null): array

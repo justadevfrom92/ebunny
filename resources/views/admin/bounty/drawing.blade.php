@@ -2,7 +2,7 @@
 
 @section('content')
     @php $current = $month->isSameMonth(now()); @endphp
-    @include('admin.partials.page-head', ['title' => 'Monthly Drawing', 'sub' => 'Customers enter by redeeming the free "Monthly Drawing" offer. The winner is saved to Sheriff → Data → Monthly Drawing.',
+    @include('admin.partials.page-head', ['title' => 'Monthly Drawing', 'sub' => 'Customers enter by redeeming the free "Monthly Drawing" offer. The winner is saved to Bounty → Drawing Winners.',
         'actions' => $winner && $current ? null : '<a class="btn cyan" href="'.route('bounty.drawing.draw').'">Draw a Winner</a>'])
 
     <div class="actions" style="margin-bottom:14px">@foreach ($months as $m)<a class="btn sm {{ $m->isSameMonth($month) ? '' : 'ghost' }}" href="{{ route('bounty.drawing', $m->isSameMonth(now()) ? [] : ['month' => $m->format('Y-m')]) }}">{{ $m->format('F Y') }}</a>@endforeach</div>

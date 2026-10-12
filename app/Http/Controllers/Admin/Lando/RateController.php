@@ -97,6 +97,6 @@ class RateController extends Controller
             }
         });
 
-        return redirect()->route('lando.rates.edit', array_filter(['plan' => $request->integer('plan') ?: null]))->with('status', $changed ? $changed.' rates saved, effective '.$data['effective_on'] : 'No changes to save');
+        return redirect()->route('astro.rates.edit', array_filter(['plan' => $request->integer('plan') ?: null]))->with('status', $changed ? $changed.' rates saved, effective '.$data['effective_on'] : 'No changes to save');
     }
 }

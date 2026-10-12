@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
 @section('content')
-    <form method="post" action="{{ route('sheriff.data.update', $key) }}" style="display:flex;flex-direction:column;gap:20px">
+    <form method="post" action="{{ app_route('data.update', $key) }}" style="display:flex;flex-direction:column;gap:20px">
         @csrf @method('put')
         @include('admin.partials.page-head', ['title' => $name, 'sub' => 'Reference data used by enrollment, billing and the website. Saving replaces the table with what you see.',
             'actions' => '<button type="button" class="btn ghost" data-add-row="'.count($columns).'">Add Row</button><button class="btn cyan">Save</button>'])

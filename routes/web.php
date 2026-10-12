@@ -196,8 +196,14 @@ Route::prefix('admin')->group(function () {
             Route::delete('groups/{group}/plans/{plan}', [Admin\Lando\PlanGroupController::class, 'detach'])->name('groups.detach');
         };
 
-        // Lando — website CMS, plans and rates
-        Route::prefix('lando')->name('lando.')->middleware('app:lando')->group(function () use ($websiteScreens) {
+        // Reference data tables, each listed in the app that owns it (config admin.reference_tables)
+        $dataTables = function () {
+            Route::get('data/{table}', [Admin\Sheriff\SystemController::class, 'table'])->name('data.show');
+            Route::put('data/{table}', [Admin\Sheriff\SystemController::class, 'updateTable'])->name('data.update');
+        };
+
+        // Lando — website: dashboard, pages, page templates, content blocks
+        Route::prefix('lando')->name('lando.')->middleware('app:lando')->group(function () use ($dataTables) {
             Route::get('styles', [Admin\Lando\StyleController::class, 'index'])->name('styles');
             // Site: dashboard (Lando's home), health, visitors, blocked IPs and areas
             Route::get('/', [Admin\Lando\DashboardController::class, 'dashboard'])->name('dashboard');
@@ -215,27 +221,27 @@ Route::prefix('admin')->group(function () {
                 });
             }
             Route::get('pages/{page}/activity', [Admin\Lando\PageController::class, 'activity'])->name('pages.activity');
-            $websiteScreens();
             Route::resource('pages', Admin\Lando\PageController::class)->except('show');
             Route::post('pages/{page}/components', [Admin\Lando\PageController::class, 'addComponent'])->name('pages.components.store');
             Route::post('page-components/{component}/move', [Admin\Lando\PageController::class, 'moveComponent'])->name('pages.components.move');
             Route::delete('page-components/{component}', [Admin\Lando\PageController::class, 'removeComponent'])->name('pages.components.destroy');
             Route::post('sitemap', [Admin\Lando\PageController::class, 'sitemap'])->name('pages.sitemap');
             Route::resource('templates', Admin\Lando\TemplateController::class)->except(['show', 'destroy']);
-            Route::resource('markets', Admin\Lando\MarketController::class)->except(['show', 'destroy']);
             Route::resource('blocks', Admin\Lando\BlockController::class)->except(['show']);
             Route::get('block-categories/new', [Admin\Lando\BlockController::class, 'categoryForm'])->name('blocks.categories.create');
             Route::post('block-categories', [Admin\Lando\BlockController::class, 'addCategory'])->name('blocks.categories.store');
+            $dataTables();
+        });
+
+        // Astro — pricing modifiers
+        Route::prefix('astro')->name('astro.')->middleware('app:astro')->group(function () use ($websiteScreens, $dataTables) {
+            Route::get('/', fn () => redirect()->route('astro.plans.index'));
             Route::get('rates', [Admin\Lando\RateController::class, 'index'])->name('rates.index');
             Route::get('rates/edit', [Admin\Lando\RateController::class, 'edit'])->name('rates.edit');
             Route::put('rates', [Admin\Lando\RateController::class, 'update'])->name('rates.update');
             Route::get('fees', [Admin\Lando\FeeController::class, 'index'])->name('fees.index');
             Route::put('fees', [Admin\Lando\FeeController::class, 'update'])->name('fees.update');
-        });
-
-        // Astro — pricing modifiers
-        Route::prefix('astro')->name('astro.')->middleware('app:astro')->group(function () use ($websiteScreens) {
-            Route::get('/', fn () => redirect()->route('astro.terms.edit'));
+            $dataTables();
             Route::get('terms', [Admin\Astro\PricingController::class, 'terms'])->name('terms.edit');
             Route::put('terms', [Admin\Astro\PricingController::class, 'updateTerms'])->name('terms.update');
             Route::get('etfs', [Admin\Astro\PricingController::class, 'etfs'])->name('etfs.edit');
@@ -266,7 +272,8 @@ Route::prefix('admin')->group(function () {
         });
 
         // Caboose — finance
-        Route::prefix('caboose')->name('caboose.')->middleware('app:caboose')->controller(Admin\Caboose\FinanceController::class)->group(function () {
+        Route::prefix('caboose')->name('caboose.')->middleware('app:caboose')->controller(Admin\Caboose\FinanceController::class)->group(function () use ($dataTables) {
+            $dataTables();
             Route::get('/', 'dashboard')->name('dashboard');
             Route::get('payments', 'payments')->name('payments');
             Route::get('payments/new', 'paymentForm')->name('payments.create');
@@ -284,7 +291,8 @@ Route::prefix('admin')->group(function () {
         });
 
         // Bounty — rewards
-        Route::prefix('bounty')->name('bounty.')->middleware('app:bounty')->controller(Admin\Bounty\RewardsController::class)->group(function () {
+        Route::prefix('bounty')->name('bounty.')->middleware('app:bounty')->controller(Admin\Bounty\RewardsController::class)->group(function () use ($dataTables) {
+            $dataTables();
             Route::get('/', 'dashboard')->name('dashboard');
             Route::get('offers', 'offers')->name('offers');
             Route::put('offers', 'saveOffers')->name('offers.save');
@@ -398,7 +406,7 @@ Route::prefix('admin')->group(function () {
         });
 
         // Sheriff — users, roles, integrations, jobs, reference data
-        Route::prefix('sheriff')->name('sheriff.')->middleware('app:sheriff')->group(function () {
+        Route::prefix('sheriff')->name('sheriff.')->middleware('app:sheriff')->group(function () use ($dataTables) {
             Route::get('/', fn () => redirect()->route('sheriff.users.index'));
             Route::get('users', [Admin\Sheriff\UserController::class, 'index'])->name('users.index');
             Route::post('users', [Admin\Sheriff\UserController::class, 'store'])->name('users.store');
@@ -418,12 +426,10 @@ Route::prefix('admin')->group(function () {
             Route::post('integrations/{integration}/test', [Admin\Sheriff\IntegrationConfigController::class, 'test'])->middleware('throttle:20,1')->name('integrations.test');
             Route::get('sitemap', [Admin\Sheriff\SystemController::class, 'sitemap'])->name('sitemap');
             Route::post('sitemap', [Admin\Lando\PageController::class, 'sitemap'])->name('sitemap.run');
-            Route::get('fees', [Admin\Lando\FeeController::class, 'index'])->name('fees.index');
-            Route::put('fees', [Admin\Lando\FeeController::class, 'update'])->name('fees.update');
+            Route::resource('markets', Admin\Lando\MarketController::class)->except(['show', 'destroy']);
             Route::get('jobs', [Admin\Sheriff\SystemController::class, 'jobs'])->name('jobs.index');
             Route::post('jobs/run', [Admin\Sheriff\SystemController::class, 'runJob'])->name('jobs.run');
-            Route::get('data/{table}', [Admin\Sheriff\SystemController::class, 'table'])->name('data.show');
-            Route::put('data/{table}', [Admin\Sheriff\SystemController::class, 'updateTable'])->name('data.update');
+            $dataTables();
         });
 
         // A custom app's home page, e.g. /admin/marketing (built-in app routes above take priority)

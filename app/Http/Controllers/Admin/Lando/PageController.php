@@ -33,23 +33,11 @@ class PageController extends Controller
         return Site::find($request->integer('site')) ?? Site::orderBy('id')->firstOrFail();
     }
 
-    /** Site structure as a tree built from page paths */
+    /** Every page of the site as a table, by path (sub-pages sit under their parent). */
     public function index(Request $request): View
     {
         $site = $this->site($request);
-        $tree = [];
-        foreach ($site->pages()->with('template')->withCount('components')->orderBy('path')->get() as $page) {
-            $parts = $page->path === '/' ? ['/'] : explode('/', $page->path);
-            $node = &$tree;
-            foreach ($parts as $i => $part) {
-                $node[$part] ??= ['page' => null, 'children' => []];
-                if ($i === count($parts) - 1) {
-                    $node[$part]['page'] = $page;
-                }
-                $node = &$node[$part]['children'];
-            }
-            unset($node);
-        }
+        $pages = $site->pages()->with('template')->withCount('components')->orderBy('path')->get();
 
         // Per page: views in the last 7 days, visitors on it now, and admins editing it
         $ids = $site->pages()->pluck('id');
@@ -60,7 +48,7 @@ class PageController extends Controller
             'blocked' => SiteBlock::where('type', 'area')->inForce()->get(),
         ];
 
-        return view('admin.lando.pages.index', ['site' => $site, 'sites' => Site::orderBy('name')->get(), 'tree' => $tree, 'count' => $site->pages()->count(), 'traffic' => $traffic]);
+        return view('admin.lando.pages.index', ['site' => $site, 'sites' => Site::orderBy('name')->get(), 'pages' => $pages, 'traffic' => $traffic]);
     }
 
     public function create(Request $request): View

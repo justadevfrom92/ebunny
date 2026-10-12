@@ -57,14 +57,16 @@ class AdminTest extends TestCase
             '/admin/corral/reports/orders', '/admin/corral/reports/orders?run=1&output=summary', '/admin/corral/queues',
             '/admin/corral/queues/unapplied-payments', '/admin/corral/messages',
             '/admin/lando/pages', '/admin/lando/pages/create', '/admin/lando/pages/1/edit', '/admin/lando/templates',
-            '/admin/lando/blocks', '/admin/lando/blocks/create', '/admin/lando/blocks/8/edit', '/admin/lando/plans',
-            '/admin/lando/plans/create', '/admin/lando/plans/'.$plan->id.'/edit', '/admin/lando/groups',
-            '/admin/lando/rates', '/admin/lando/rates?plan=JEY&kwh=500', '/admin/lando/rates/edit', '/admin/lando/fees', '/admin/lando/markets',
+            '/admin/lando/blocks', '/admin/lando/blocks/create', '/admin/lando/blocks/8/edit', '/admin/astro/plans',
+            '/admin/astro/plans/create', '/admin/astro/plans/'.$plan->id.'/edit', '/admin/astro/groups',
+            '/admin/astro/rates', '/admin/astro/rates?plan=JEY&kwh=500', '/admin/astro/rates/edit', '/admin/astro/fees', '/admin/sheriff/markets',
             '/admin/astro/terms', '/admin/astro/etfs', '/admin/astro/products',
             '/admin/sheriff/users', '/admin/sheriff/users/1/history', '/admin/sheriff/users/1/history?hgroup=Logins', '/admin/sheriff/roles', '/admin/sheriff/integrations', '/admin/sheriff/jobs'];
-        foreach (array_keys(config('admin.reference_tables')) as $table) {
-            $urls[] = '/admin/sheriff/data/'.$table;
+        // Each reference table opens in the app that owns it, and only there
+        foreach (config('admin.reference_tables') as $table => $t) {
+            $urls[] = '/admin/'.$t[2].'/data/'.$table;
         }
+        $this->get('/admin/sheriff/data/tax-rates')->assertNotFound();
 
         foreach ($urls as $url) {
             $this->get($url)->assertOk();
@@ -73,7 +75,7 @@ class AdminTest extends TestCase
 
     public function test_admin_button_in_each_app_leads_back_to_the_launcher(): void
     {
-        $this->actingAs($this->user())->get('/admin/lando/plans')
+        $this->actingAs($this->user())->get('/admin/astro/plans')
             ->assertSee('class="admin-home" href="'.route('admin.launcher').'"', false)
             ->assertDontSee('app-switch')
             ->assertDontSee('Find a menu item');
@@ -168,7 +170,7 @@ class AdminTest extends TestCase
     {
         $this->actingAs($this->user('pricing@example.com'));
 
-        $this->get('/admin/lando/plans')->assertOk();
+        $this->get('/admin/astro/plans')->assertOk();
         $this->get('/admin/astro/terms')->assertOk();
         $this->get('/admin/corral')->assertRedirect('/admin?denied=corral');
         $this->get('/admin/sheriff/users')->assertRedirect('/admin?denied=sheriff');
@@ -196,10 +198,10 @@ class AdminTest extends TestCase
         $plan = Plan::where('internal', 'CT12')->first();
         $oncor = Market::where('name', 'TX-E-ONCOR')->first();
 
-        $this->put('/admin/lando/rates', ['effective_on' => now()->addDay()->toDateString(), 'rates' => [$plan->id => [$oncor->id => '9.999']]])->assertRedirect();
+        $this->put('/admin/astro/rates', ['effective_on' => now()->addDay()->toDateString(), 'rates' => [$plan->id => [$oncor->id => '9.999']]])->assertRedirect();
         $this->get('/shared/config/catalog.js')->assertOk()->assertDontSee('"energy":9.999', false);
 
-        $this->put('/admin/lando/rates', ['effective_on' => today()->toDateString(), 'rates' => [$plan->id => [$oncor->id => '5.000']]])->assertRedirect();
+        $this->put('/admin/astro/rates', ['effective_on' => today()->toDateString(), 'rates' => [$plan->id => [$oncor->id => '5.000']]])->assertRedirect();
         $this->get('/shared/config/catalog.js')->assertSee('"plan":"CT12","market":"TX-E-ONCOR","energy":5', false);
     }
 
@@ -210,10 +212,10 @@ class AdminTest extends TestCase
         $plan = Plan::where('internal', 'G18')->first();
 
         $this->put('/admin/astro/products', ['p' => [$product->id => ['rate_adj' => '-0.5', 'monthly' => '0', 'active' => '0']]])->assertRedirect();
-        $this->put('/admin/lando/plans/'.$plan->id, [
+        $this->put('/admin/astro/plans/'.$plan->id, [
             'name' => 'The Gruene 18', 'internal' => 'G18', 'slug' => '', 'active' => 1, 'type' => 'Resi', 'term' => 18,
             'rolloff' => 'JEY3', 'etf' => '$275', 'mrc' => 4.95, 'green' => 100, 'tags' => 'fixed, green', 'perks' => "Solar from West Texas\nFixed for 18 months",
-        ])->assertRedirect('/admin/lando/plans');
+        ])->assertRedirect('/admin/astro/plans');
 
         $this->get('/shared/config/catalog.js')
             ->assertSee('"key":"peakperks","name":"Peak Perks","model":"ItemProductPeakPerk_model","type":"Discount","adj":-0.5,"monthly":0,"step":"Lower Your Bill","active":false', false)

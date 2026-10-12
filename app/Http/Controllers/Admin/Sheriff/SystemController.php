@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ApiLog;
 use App\Models\JobRun;
 use App\Models\ReferenceRow;
+use App\Support\AdminMenu;
 use App\Support\History;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -76,10 +77,18 @@ class SystemController extends Controller
         return back()->with('status', config('admin.jobs.'.$data['command'])[0].': '.($run?->status ?? 'done').($run?->message ? ' — '.$run->message : ''));
     }
 
+    /** A reference table, only in the app that owns it. */
+    private static function owned(string $table): array
+    {
+        $t = config('admin.reference_tables.'.$table);
+        abort_unless($t && ($t[2] ?? 'sheriff') === AdminMenu::currentApp(), 404);
+
+        return $t;
+    }
+
     public function table(string $table): View
     {
-        abort_unless(config()->has('admin.reference_tables.'.$table), 404);
-        [$name, $columns] = config('admin.reference_tables.'.$table);
+        [$name, $columns] = self::owned($table);
 
         return view('admin.sheriff.table', [
             'key' => $table, 'name' => $name, 'columns' => $columns,
@@ -90,8 +99,7 @@ class SystemController extends Controller
     /** Replaces the table's rows with what was submitted. */
     public function updateTable(Request $request, string $table): RedirectResponse
     {
-        abort_unless(config()->has('admin.reference_tables.'.$table), 404);
-        [$name, $columns] = config('admin.reference_tables.'.$table);
+        [$name, $columns] = self::owned($table);
         $data = $request->validate(['rows' => ['array'], 'rows.*' => ['array'], 'rows.*.*' => ['nullable', 'string', 'max:500']]);
 
         DB::transaction(function () use ($table, $columns, $data) {

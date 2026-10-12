@@ -16,6 +16,7 @@ use App\Models\RewardRule;
 use App\Models\StarEntry;
 use App\Models\Survey;
 use App\Models\User;
+use App\Support\AdminMenu;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -36,11 +37,12 @@ class FinanceRewardsMarketingTest extends TestCase
     {
         $this->actingAs($this->user());
         foreach (['caboose', 'bounty', 'rodeo'] as $app) {
-            foreach (config("admin.apps.$app.menu") as $links) {
+            $this->get(route($app.'.dashboard'));   // sets the current app for the menu
+            foreach (AdminMenu::sections($app) as $links) {
                 foreach ($links as $link) {
-                    $html = $this->get(route($link[1]))->assertOk()->getContent();
+                    $html = $this->get($link['url'])->assertOk()->getContent();
                     foreach (['corral', 'lando', 'astro', 'walker', 'sheriff'] as $other) {
-                        $this->assertStringNotContainsString('/admin/'.$other.'/', $html, "$app {$link[0]} links into $other");
+                        $this->assertStringNotContainsString('/admin/'.$other.'/', $html, "$app {$link['label']} links into $other");
                     }
                 }
             }

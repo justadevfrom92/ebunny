@@ -38,7 +38,7 @@ class LandoSiteTest extends TestCase
         $this->get(route('lando.blocked.areas.edit', SiteBlock::where('value', 'wp-admin')->first()))->assertOk()->assertSee('page views');
         $this->get(route('lando.blocked.ips.edit', SiteBlock::where('value', 'wp-admin')->first()))->assertNotFound();
         $this->get(route('lando.pages.activity', $plans))->assertOk()->assertSee('Views by Day')->assertSee('History')->assertSee('Recent Visits');
-        $this->get(route('lando.pages.index'))->assertOk()->assertSee('views this week')->assertSee('Activity');
+        $this->get(route('lando.pages.index'))->assertOk()->assertSee('Views this week')->assertSee('Activity');
     }
 
     public function test_page_views_and_heartbeat(): void
@@ -107,7 +107,7 @@ class LandoSiteTest extends TestCase
         $this->get(route('lando.pages.edit', $page))->assertOk();
         SiteVisit::create(['visitor' => str_repeat('a', 32), 'ip' => '198.51.100.7', 'path' => 'about-us', 'page_id' => $page->id, 'created_at' => now(), 'seen_at' => now()]);
 
-        $this->get(route('lando.pages.index'))->assertOk()->assertSee('Editing: Admin Demo')->assertSee('on it now');
+        $this->get(route('lando.pages.index'))->assertOk()->assertSee('Editing: Admin Demo')->assertSee('1 on it');
         $this->get(route('lando.pages.activity', $page))->assertOk()->assertSee('Admin Demo')->assertSee('198.51.100.7');
 
         $page->update(['meta_description' => 'Who we are']);
