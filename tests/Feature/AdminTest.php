@@ -82,7 +82,7 @@ class AdminTest extends TestCase
     public function test_admin_button_in_each_app_leads_back_to_the_launcher(): void
     {
         $this->actingAs($this->user())->get('/admin/astro/plans')
-            ->assertSee('class="admin-home" href="'.route('admin.launcher').'"', false)
+            ->assertSee('class="admin-home" href="'.route('backend.launcher').'"', false)
             ->assertDontSee('app-switch')
             ->assertDontSee('Find a menu item');
     }

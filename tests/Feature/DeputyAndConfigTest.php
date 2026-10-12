@@ -31,7 +31,7 @@ class DeputyAndConfigTest extends TestCase
     {
         $this->get(route('admin.login'))->assertOk()->assertSee('Test Sign-Ins')->assertSee('AI Ops Demo')->assertSee('CS Lead Demo');
         $ai = User::where('email', 'ai@example.com')->firstOrFail();
-        $this->post(route('admin.login.test', $ai))->assertRedirect(route('admin.launcher'));
+        $this->post(route('admin.login.test', $ai))->assertRedirect(route('backend.launcher'));
         $this->assertAuthenticatedAs($ai);
         $this->get('/admin')->assertOk()->assertSee('Deputy')->assertSee('Switch test user');
         $this->get('/admin/corral')->assertRedirect();   // no Corral access for this role

@@ -1,1 +1,0 @@
-@include('admin.partials.pill', ['text' => config('deputy.outcomes.'.$c->outcome, $c->outcome), 'tone' => ['resolved' => 'ok', 'handed_off' => 'info', 'abandoned' => 'warn', 'failed' => 'bad'][$c->outcome] ?? ''])

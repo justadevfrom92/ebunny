@@ -23,7 +23,7 @@ class BlockSiteVisitors
         if ($block = SiteTraffic::blockFor($request->ip(), $path)) {
             SiteTraffic::hit($block);
 
-            return response()->view('site.blocked', ['block' => $block], 403);
+            return response()->view('frontend.blocked', ['block' => $block], 403);
         }
 
         return $next($request);

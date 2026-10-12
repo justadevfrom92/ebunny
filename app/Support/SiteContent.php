@@ -57,7 +57,7 @@ class SiteContent
             return match ($m[1]) {
                 'year' => now()->format('Y'),
                 'phone' => e($site?->phone ?: config('brand.phone')),
-                'zip_form' => view('site.widgets.zip-form', ['title' => self::$addressBoxTitle ?: $site?->address_box_title ?: 'Find your plan'])->render(),
+                'zip_form' => view('frontend.widgets.zip-form', ['title' => self::$addressBoxTitle ?: $site?->address_box_title ?: 'Find your plan'])->render(),
                 'plans' => '<div class="plan-grid" id="plan-grid" data-group="'.e($opt['group'] ?? 'resi').'"'
                     .(isset($opt['limit']) ? ' data-limit="'.(int) $opt['limit'].'"' : '').'></div>',
             };

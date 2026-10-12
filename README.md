@@ -45,13 +45,20 @@ config/brand.php           company name, phone, PUCT number, website nav  → /s
 config/admin.php           every admin app: name, icon, menu, queues, reference tables, jobs, integrations
 app/Services/Catalog.php   current rates/fees and the EFL average price  → /shared/config/catalog.js
 app/Http/Controllers/
-  SiteController.php       website data, session/CSRF token, Contact Us form
-  Admin/{Corral,Lando,Astro,Walker,Caboose,Bounty,Rodeo,Sheriff}/   one folder of controllers per app
-  SignupController.php, MyAccount/, SurveyController.php   website sign-up, customer portal, surveys
+  Frontend/                the website and My Account (what customers see)
+    SiteController.php       website data, session/CSRF token, cookie choices, Contact Us form
+    SignupController.php, ShopController.php, SurveyController.php, SitePageController.php
+    MyAccount/               the customer portal (sign-in, pages, chat bubble)
+  Backend/                 the admin portal (what employees see)
+    {Corral,Lando,Astro,Walker,Caboose,Bounty,Rodeo,Deputy,Sheriff}/   one folder of controllers per app
 app/Reports/               report definitions shared by Walker and Corral (config/walker.php lists them)
-resources/views/admin/
-  layouts/app.blade.php    the one layout every app uses (sidebar, switcher, menu from config/admin.php)
-  {corral,lando,astro,walker,caboose,bounty,rodeo,sheriff}/   each app's screens
+resources/views/
+  frontend/                website pages Laravel builds: myaccount/, checkout/, shop, surveys, CMS pages, layouts/main
+  backend/                 admin portal pages
+    layouts/app.blade.php    the one layout every app uses (sidebar, switcher, menu from config/admin.php)
+    {corral,lando,astro,walker,caboose,bounty,rodeo,deputy,sheriff}/   each app's screens
+  components/frontend/     My Account frame, chat bubble, sign-up steps (<x-frontend.*>)
+  components/              shared by both: bar chart and its hover tooltip
 app/Console/Commands/      scheduled jobs (et:*), each run logged for Sheriff → Crons
 database/migrations, seeders/data/*.json   schema and fictional sample data
 ```
