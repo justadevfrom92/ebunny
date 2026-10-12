@@ -455,7 +455,8 @@ textarea:focus { border-color: var(--cyan); }
   .byop { grid-template-columns: 1fr; }
   .summary { position: static; }
 }
-@media (max-width: 900px) {
+/* Tablets and phones: the header menu is a dropdown behind the menu button */
+@media (max-width: 1024px) {
   .menu-toggle { display: block; }
   .nav {
     position: absolute; top: 100%; left: 0; right: 0;
@@ -470,6 +471,8 @@ textarea:focus { border-color: var(--cyan); }
   .nav > a::after { display: none; }
   .nav .btn { margin-top: 14px; justify-content: center; }
   .nav .nav-out { margin-top: 10px; } .nav .nav-out button { width: 100%; justify-content: center; }
+}
+@media (max-width: 900px) {
   .hero .wrap, .split, .contact-grid { grid-template-columns: 1fr; gap: 40px; }
   .hero .wrap { padding: 60px 0 100px; }
 }
@@ -534,7 +537,15 @@ fieldset.field { border: 0; padding: 0; }
 @media (max-width: 860px) { .co-grid, .form-3 { grid-template-columns: 1fr; } .kv-site { grid-template-columns: 1fr; } }
 /* My Account */
 .ma-grid { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 32px; align-items: start; }
-.ma-nav { background: var(--navy); color: var(--white); border-radius: 14px; padding: 18px 0; position: sticky; top: 16px; }
+/* The menu comes after the page in the HTML (so phones show it at the bottom); on wider screens it sits on the left */
+.ma-grid > .ma-nav { grid-column: 1; grid-row: 1; } .ma-grid > .ma-main { grid-column: 2; grid-row: 1; min-width: 0; }
+.ma-props { padding: 6px 0 10px; border-bottom: 1px solid rgba(255,255,255,.15); }
+.ma-props form { margin: 0; }
+.ma-props button { display: flex; flex-direction: column; align-items: flex-start; width: 100%; text-align: left; background: none; border: 0; border-left: 3px solid transparent; color: var(--white); padding: 7px 20px; font: inherit; font-weight: 600; font-size: .88rem; cursor: pointer; }
+.ma-props button small { opacity: .65; font-weight: 400; font-size: .76rem; }
+.ma-props button:hover { background: rgba(255,255,255,.08); } .ma-props button.on { border-left-color: var(--cyan); background: rgba(255,255,255,.1); }
+.ma-products a { font-weight: 500; font-size: .9rem; padding-top: 6px; padding-bottom: 6px; }
+.ma-nav { background: var(--navy); color: var(--white); border-radius: 14px; padding: 18px 0; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
 .ma-who { padding: 0 20px 14px; border-bottom: 1px solid rgba(255,255,255,.15); display: flex; flex-direction: column; } .ma-who span { opacity: .7; font-size: .85rem; }
 .ma-nav h4 { color: rgba(255,255,255,.55); font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; padding: 16px 20px 6px; margin: 0; }
 .ma-nav a { display: block; padding: 8px 20px; color: var(--white); border-left: 3px solid transparent; font-weight: 600; }
@@ -561,7 +572,7 @@ fieldset.field { border: 0; padding: 0; }
 .offer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-top: 20px; }
 .offer-card { background: var(--white); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 6px; }
 .offer-card strong { color: var(--cyan); font: 900 1.3rem var(--font-display); } .offer-card small { color: var(--grey); flex: 1; } .offer-card.locked { opacity: .6; }
-@media (max-width: 900px) { .ma-grid, .ma-cards, .ma-row, .ma-split { grid-template-columns: 1fr; } .ma-nav { position: static; } }
+@media (max-width: 900px) { .ma-grid, .ma-cards, .ma-row, .ma-split { grid-template-columns: 1fr; } .ma-nav { position: static; } .ma-grid > .ma-nav, .ma-grid > .ma-main { grid-column: 1; grid-row: auto; } }
 
 /* Survey 0–10 rating */
 .rating-row { display: flex; flex-wrap: wrap; gap: 4px 14px; }
@@ -591,3 +602,30 @@ fieldset.field { border: 0; padding: 0; }
 .ma-test-switch { padding: 10px 20px 14px; border-bottom: 1px solid rgba(255,255,255,.15); display: grid; gap: 4px; }
 .ma-test-switch label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; opacity: .75; }
 .ma-test-switch select { width: 100%; max-width: 100%; min-width: 0; padding: 6px 8px; border-radius: 6px; border: 1px dashed #f0b429; background: #fff8e6; color: #3a2a00; font: inherit; font-size: .85rem; }
+
+/* My Account: Pay Bill amount choices, tables, and the Products page */
+.ma-table { overflow-x: auto; }
+.ma-table tr.on td { background: var(--sky); }
+.ma-table .num { text-align: right; }
+.pay-legend { font-weight: 700; color: var(--navy); font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+.pay-form fieldset + fieldset { margin-top: 22px; }
+.pay-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.pay-choice { position: relative; display: flex; flex-direction: column; gap: 4px; border: 2px solid var(--line); border-radius: 12px; padding: 14px 14px 12px 40px; cursor: pointer; }
+.pay-choice input[type=radio] { position: absolute; left: 14px; top: 17px; accent-color: var(--navy); }
+.pay-choice:has(input[type=radio]:checked) { border-color: var(--cyan); background: var(--sky); }
+.pay-choice .pc-label { font-weight: 700; color: var(--navy); }
+.pay-choice strong { font: 900 1.4rem var(--font-display); color: var(--navy); }
+.pay-choice small { color: var(--grey); font-size: .8rem; }
+.pc-other { display: flex; align-items: center; gap: 4px; font-weight: 700; }
+.pc-other input { width: 100%; padding: 6px 8px; border: 2px solid var(--line); border-radius: 8px; font: inherit; }
+.pay-later { margin-top: 12px; } .pay-later[hidden] { display: none; }
+.prod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+.prod-card { display: flex; flex-direction: column; gap: 8px; scroll-margin-top: 20px; }
+.prod-card:target { outline: 3px solid var(--cyan); outline-offset: 2px; }
+.prod-card h3 { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; margin: 0; font-size: 1.1rem; }
+.prod-card .price { color: var(--grey); font-size: .85rem; font-weight: 600; }
+.prod-card > form:last-child, .prod-card > a.btn:last-child, .prod-card > p.how:last-child { margin-top: auto; }
+.field label.pay-choice, .pay-form .ma-table label { display: flex; text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 1rem; color: inherit; margin: 0; }
+.field label.pay-choice { flex-direction: column; }
+.pay-form .ma-table label { font-weight: 600; cursor: pointer; }
+.pay-form input[type=radio] { width: auto; padding: 0; border: 0; margin: 0; }

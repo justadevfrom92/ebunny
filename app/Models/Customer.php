@@ -6,6 +6,7 @@ use App\Models\Concerns\RecordsHistory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Collection;
 
 /** A customer account. Customers sign in to My Account with this model (guard "customer"). */
 class Customer extends Authenticatable
@@ -125,6 +126,26 @@ class Customer extends Authenticatable
     public function phonecalls(): HasMany
     {
         return $this->hasMany(Phonecall::class)->latest('started_at');
+    }
+
+    public function scheduledPayments(): HasMany
+    {
+        return $this->hasMany(ScheduledPayment::class)->orderBy('pay_at');
+    }
+
+    /**
+     * The properties (service accounts) this My Account login can switch between: itself plus its
+     * linked accounts. A business with several locations has one per location.
+     */
+    public function properties(): Collection
+    {
+        return collect([$this])->merge(self::whereIn('account', $this->linked_accounts ?? [])->where('id', '!=', $this->id)->orderBy('address')->get());
+    }
+
+    /** "123 Main St, Austin" — how a property is named in the switcher. */
+    public function propertyLabel(): string
+    {
+        return trim(($this->address ?: 'Account '.$this->account).($this->unit ? ' #'.$this->unit : '').($this->city ? ', '.$this->city : ''));
     }
 
     public function hasProduct(string $name): bool

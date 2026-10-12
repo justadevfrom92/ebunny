@@ -46,6 +46,9 @@ Route::prefix('myaccount')->name('myaccount.')->group(function () {
         Route::get('bill-and-payments/view-bills', [MyAccount\PortalController::class, 'bills'])->name('bills');
         Route::get('bill-and-payments/pay-bill', [MyAccount\PortalController::class, 'payForm'])->name('pay');
         Route::post('bill-and-payments/pay-bill', [MyAccount\PortalController::class, 'pay'])->middleware('throttle:10,1')->name('pay.store');
+        Route::delete('bill-and-payments/scheduled/{scheduled}', [MyAccount\PortalController::class, 'cancelScheduled'])->name('scheduled.cancel');
+        Route::post('property/{account}', [MyAccount\PortalController::class, 'switchProperty'])->name('property');
+        Route::get('products', [MyAccount\PortalController::class, 'products'])->name('products');
         Route::get('bill-and-payments/payment-methods', [MyAccount\PortalController::class, 'methods'])->name('methods');
         Route::delete('payment-methods/{method}', [MyAccount\PortalController::class, 'removeMethod'])->name('methods.remove');
         Route::post('payment-methods/{method}/default', [MyAccount\PortalController::class, 'defaultMethod'])->name('methods.default');

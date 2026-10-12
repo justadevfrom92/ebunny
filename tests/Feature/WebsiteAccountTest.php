@@ -81,9 +81,16 @@ class WebsiteAccountTest extends TestCase
         $this->get('/shared/config/brand.js')->assertSee('"signoutTest":true', false); // test mode outside production
 
         foreach (['dashboard', 'bill-and-payments/view-bills', 'bill-and-payments/pay-bill', 'bill-and-payments/payment-methods', 'energy-insights',
-            'enroll/autopay', 'enroll/paperless-billing', 'enroll/peak-perks', 'enroll/giddy-up', 'profile-and-preferences', 'plan-and-services/current-plan',
+            'products', 'profile-and-preferences', 'plan-and-services/current-plan',
             'plan-and-services/transfer-service', 'rewards', 'refer-a-friend', 'message-center'] as $page) {
             $this->get('/myaccount/'.$page)->assertOk()->assertSee($c->account);
+        }
+
+        // The old one-product pages open that product's card on Products, which lists every product
+        $this->get('/myaccount/enroll/autopay')->assertRedirect(route('myaccount.products').'#autopay');
+        $products = $this->get('/myaccount/products')->assertSee('Electric Vehicle Charger Protection Program')->assertSee('ADT Security');
+        foreach (config('corral.products') as $name => $model) {
+            $products->assertSee($name);
         }
 
         // Admin pages stay closed to customers
@@ -95,10 +102,11 @@ class WebsiteAccountTest extends TestCase
         $this->assertFalse($c->fresh()->peak_perks);
 
         $method = $c->paymentMethods()->whereNull('removed_at')->firstOrFail();
-        $this->post('/myaccount/bill-and-payments/pay-bill', ['amount' => 25, 'method' => $method->id])->assertRedirect('/myaccount/bill-and-payments/view-bills');
+        $pay = ['choice' => 'other', 'amount' => 25, 'method' => $method->id, 'when' => 'now'];
+        $this->post('/myaccount/bill-and-payments/pay-bill', $pay)->assertRedirect('/myaccount/bill-and-payments/view-bills');
         $this->assertTrue($c->payments()->where('amount', 25)->where('source', 'MyAccount')->where('status', 'Pending')->exists());
         $other = Customer::where('id', '!=', $c->id)->whereHas('paymentMethods')->first();
-        $this->post('/myaccount/bill-and-payments/pay-bill', ['amount' => 25, 'method' => $other->paymentMethods()->value('id')])->assertSessionHasErrors('method');
+        $this->post('/myaccount/bill-and-payments/pay-bill', ['method' => $other->paymentMethods()->value('id')] + $pay)->assertSessionHasErrors('method');
         $this->delete('/myaccount/payment-methods/'.$other->paymentMethods()->value('id'))->assertNotFound();
 
         $this->put('/myaccount/profile-and-preferences', ['email' => 'new@example.com', 'phone' => '5555550100', 'phone_type' => 'mobile', 'language' => 'Spanish',

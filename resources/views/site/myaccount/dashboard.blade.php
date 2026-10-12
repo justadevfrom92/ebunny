@@ -13,6 +13,20 @@
     <div class="ma-stat"><span>Rewards</span><strong>{{ number_format($c->stars) }} ★</strong><small>stars to spend</small>
       <a class="btn btn-outline btn-block" href="{{ route('myaccount.rewards') }}">Redeem</a></div>
   </div>
+  @php $properties = auth('customer')->user()->properties(); @endphp
+  @if ($properties->count() > 1)
+    <div class="co-card" style="margin-bottom:20px"><h3>Your {{ auth('customer')->user()->type === 'Residential' ? 'Accounts' : 'Properties' }}</h3>
+      <div class="ma-table"><table class="price-table">
+        <thead><tr><th>Property</th><th>Account</th><th>Plan</th><th class="num">Balance</th><th>Due</th><th></th></tr></thead>
+        <tbody>@foreach ($properties as $p)
+          <tr @class(['on' => $p->is($c)])><td>{{ $p->propertyLabel() }}</td><td>{{ $p->account }}</td><td>{{ $p->plan?->name ?? '—' }}</td><td class="num">${{ number_format($p->balance, 2) }}</td><td>{{ $p->due_date?->format('M j') ?? '—' }}</td>
+            <td class="ma-actions">@unless ($p->is($c))<form method="post" action="{{ route('myaccount.property', $p->account) }}">@csrf<button class="link">View</button></form>@endunless
+              <form method="post" action="{{ route('myaccount.property', $p->account) }}">@csrf<input type="hidden" name="to" value="pay"><button class="link">Pay</button></form></td></tr>
+        @endforeach</tbody>
+        <tfoot><tr><td colspan="3"><b>Total</b></td><td class="num"><b>${{ number_format($properties->sum('balance'), 2) }}</b></td><td colspan="2"></td></tr></tfoot>
+      </table></div>
+    </div>
+  @endif
   <div class="ma-row">
     <div class="co-card"><h3>Last Bill</h3>
       @if ($lastBill)<p>{{ $lastBill->billed_on->format('M j, Y') }} · {{ number_format($lastBill->kwh) }} kWh · <b>${{ number_format($lastBill->amount, 2) }}</b></p><a href="{{ route('myaccount.bills') }}">View all bills</a>
@@ -21,9 +35,10 @@
     <div class="co-card"><h3>Services</h3>
       <ul class="ma-services">
         @foreach (['AutoPay' => 'autopay', 'Paperless Billing' => 'paperless-billing', 'Peak Perks' => 'peak-perks'] as $label => $slug)
-          <li><a href="{{ route('myaccount.product', $slug) }}">{{ $label }}</a> <span @class(['pill-on' => $c->hasProduct($label), 'pill-off' => ! $c->hasProduct($label)])>{{ $c->hasProduct($label) ? 'On' : 'Off' }}</span></li>
+          <li><a href="{{ route('myaccount.products') }}#{{ $slug }}">{{ $label }}</a> <span @class(['pill-on' => $c->hasProduct($label), 'pill-off' => ! $c->hasProduct($label)])>{{ $c->hasProduct($label) ? 'On' : 'Off' }}</span></li>
         @endforeach
       </ul>
+      <a href="{{ route('myaccount.products') }}">All products</a>
     </div>
   </div>
   @if ($usage->count())

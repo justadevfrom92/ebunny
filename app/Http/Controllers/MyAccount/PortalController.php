@@ -8,6 +8,7 @@ use App\Models\PaymentMethod;
 use App\Models\Plan;
 use App\Models\PlanGroup;
 use App\Models\PlanTerm;
+use App\Models\ScheduledPayment;
 use App\Models\WorkItem;
 use App\Services\AccountActions;
 use App\Services\Catalog;
@@ -15,6 +16,7 @@ use App\Services\Products;
 use App\Services\Rewards;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -28,17 +30,36 @@ use RuntimeException;
  */
 class PortalController extends Controller
 {
-    /** Products customers can turn on and off themselves: url slug => [product, label, description] */
-    public const SELF_SERVICE = [
-        'autopay' => ['AutoPay', 'AutoPay', 'Pay your bill automatically on the due date with your default payment method.'],
-        'paperless-billing' => ['Paperless Billing', 'Paperless Billing', 'Get your bill by email instead of by mail.'],
-        'peak-perks' => ['Peak Perks', 'Peak Perks', 'Earn bill credits for using less electricity during peak demand events.'],
-        'giddy-up' => ['Pick Your Due Date', 'Pick Your Due Date', 'Choose the day of the month your bill is due.'],
-    ];
-
-    private function c(Request $request): Customer
+    /** The signed-in My Account login. */
+    private function login(Request $request): Customer
     {
         return $request->user('customer');
+    }
+
+    /** The property (account) being viewed: the login itself, or one of its linked properties picked in the switcher. */
+    private function c(Request $request): Customer
+    {
+        $login = $this->login($request);
+        $id = $request->session()->get('ma_property');
+
+        return $id && $id !== $login->id ? ($login->properties()->firstWhere('id', $id) ?? $login) : $login;
+    }
+
+    /** Payment methods usable for a property: its own and the login's (a business pays every location from one card). */
+    private function methodsFor(Request $request, Customer $c)
+    {
+        return PaymentMethod::whereIn('customer_id', array_unique([$c->id, $this->login($request)->id]))->whereNull('removed_at')->orderByDesc('autopay')->get();
+    }
+
+    /** Switch to another property under this login; ?to= picks the page to land on (pay, bills, dashboard). */
+    public function switchProperty(Request $request, string $account): RedirectResponse
+    {
+        $p = $this->login($request)->properties()->firstWhere('account', $account);
+        abort_unless($p, 404);
+        $request->session()->put('ma_property', $p->id);
+        $to = in_array($request->input('to'), ['pay', 'bills', 'dashboard'], true) ? $request->input('to') : 'dashboard';
+
+        return redirect()->route('myaccount.'.$to)->with('status', 'Now viewing '.$p->propertyLabel().' (account '.$p->account.').');
     }
 
     private function actions(Request $request): AccountActions
@@ -76,23 +97,67 @@ class PortalController extends Controller
 
     // ---------- Pay bill / payment methods ----------
 
+    /** Pay Bill: pick an amount (balance, past due, last bill or another amount) and pay now or at a date and time. */
     public function payForm(Request $request): View
     {
         $c = $this->c($request);
 
-        return view('site.myaccount.pay', ['c' => $c, 'methods' => $c->paymentMethods()->whereNull('removed_at')->get()]);
+        return view('site.myaccount.pay', ['c' => $c, 'methods' => $this->methodsFor($request, $c), 'amounts' => $this->amounts($c),
+            'scheduled' => $c->scheduledPayments()->with('method')->where('status', 'scheduled')->get(),
+            'recent' => $c->scheduledPayments()->with('method')->where('status', '!=', 'scheduled')->latest('updated_at')->limit(5)->get(),
+            'properties' => $this->login($request)->properties()]);
+    }
+
+    /** The amounts offered on Pay Bill: key => [label, amount, note]. */
+    private function amounts(Customer $c): array
+    {
+        $last = $c->bills()->orderByDesc('billed_on')->first();
+        $pastDue = $c->due_date && $c->due_date->isPast() ? max(0, (float) $c->balance) : 0;
+
+        return array_filter([
+            'balance' => $c->balance > 0 ? ['Current balance', (float) $c->balance, $c->due_date ? 'Due '.$c->due_date->format('M j, Y') : null] : null,
+            'past_due' => $pastDue > 0 ? ['Past due amount', $pastDue, 'Pay this to avoid a late fee or disconnection'] : null,
+            'last_bill' => $last ? ['Last bill', (float) $last->amount, 'Billed '.$last->billed_on->format('M j, Y')] : null,
+            'other' => ['Another amount', null, 'Pay part of your balance, or extra toward your next bill'],
+        ]);
     }
 
     public function pay(Request $request): RedirectResponse
     {
         $c = $this->c($request);
+        $amounts = $this->amounts($c);
         $data = $request->validate([
-            'amount' => ['required', 'numeric', 'min:1', 'max:10000'],
-            'method' => ['required', Rule::exists('payment_methods', 'id')->where('customer_id', $c->id)->whereNull('removed_at')],
-        ]);
-        [$message] = DB::transaction(fn () => $this->actions($request)->run('make-payment', $data));
+            'choice' => ['required', Rule::in(array_keys($amounts))],
+            'amount' => ['nullable', 'required_if:choice,other', 'numeric', 'min:1', 'max:10000'],
+            'method' => ['required', Rule::in($this->methodsFor($request, $c)->pluck('id')->all())],
+            'when' => ['required', 'in:now,later'],
+            'pay_date' => ['nullable', 'required_if:when,later', 'date', 'after_or_equal:today', 'before_or_equal:'.today()->addDays(60)->toDateString()],
+            'pay_time' => ['nullable', 'required_if:when,later', 'date_format:H:i'],
+        ], ['pay_date.before_or_equal' => 'Pick a date within the next 60 days.', 'amount.required_if' => 'Enter the amount to pay.']);
+        $amount = $data['choice'] === 'other' ? round((float) $data['amount'], 2) : $amounts[$data['choice']][1];
+
+        if ($data['when'] === 'later') {
+            $at = Carbon::parse($data['pay_date'].' '.$data['pay_time']);
+            if ($at->lte(now()->addMinutes(5))) {
+                return back()->withInput()->withErrors(['pay_time' => 'Pick a time at least a few minutes from now, or choose Pay now.']);
+            }
+            $c->scheduledPayments()->create(['payment_method_id' => $data['method'], 'amount' => $amount, 'pay_at' => $at]);
+            $c->notes()->create(['author' => 'Customer (MyAccount)', 'category' => 'Payment', 'action' => 'Scheduled Payment', 'priority' => 'Low',
+                'body' => 'Scheduled a $'.number_format($amount, 2).' payment for '.$at->format('M j, Y g:i A').' in My Account.']);
+
+            return redirect()->route('myaccount.pay')->with('status', 'Payment of $'.number_format($amount, 2).' scheduled for '.$at->format('l, M j \a\t g:i A').'. You can cancel it here until then.');
+        }
+        [$message] = DB::transaction(fn () => $this->actions($request)->run('make-payment', ['amount' => $amount, 'method' => $data['method']]));
 
         return redirect()->route('myaccount.bills')->with('status', $message);
+    }
+
+    public function cancelScheduled(Request $request, ScheduledPayment $scheduled): RedirectResponse
+    {
+        abort_unless($scheduled->customer_id === $this->c($request)->id && $scheduled->status === 'scheduled', 404);
+        $scheduled->update(['status' => 'canceled']);
+
+        return back()->with('status', 'Scheduled payment of $'.number_format($scheduled->amount, 2).' canceled.');
     }
 
     public function methods(Request $request): View
@@ -123,29 +188,38 @@ class PortalController extends Controller
 
     // ---------- AutoPay, Paperless, Peak Perks, Pick Your Due Date ----------
 
-    public function product(Request $request, string $product): View
+    /** Products: every product on one page, the same card for each. */
+    public function products(Request $request): View
     {
-        abort_unless(isset(self::SELF_SERVICE[$product]), 404);
         $c = $this->c($request);
+        $on = $c->products()->whereNull('removed_at')->pluck('product')->all();
 
-        return view('site.myaccount.product', ['c' => $c, 'slug' => $product, 'p' => self::SELF_SERVICE[$product], 'on' => $c->hasProduct(self::SELF_SERVICE[$product][0]),
-            'hasMethod' => $c->paymentMethods()->whereNull('removed_at')->exists()]);
+        return view('site.myaccount.products', ['c' => $c, 'products' => config('myaccount.products'), 'on' => $on,
+            'hasMethod' => $this->methodsFor($request, $c)->isNotEmpty()]);
+    }
+
+    /** The old one-product pages land on that product's card. */
+    public function product(string $product): RedirectResponse
+    {
+        abort_unless(config('myaccount.products.'.$product), 404);
+
+        return redirect()->to(route('myaccount.products').'#'.$product);
     }
 
     public function toggleProduct(Request $request, string $product): RedirectResponse
     {
-        abort_unless(isset(self::SELF_SERVICE[$product]), 404);
+        [$name, , , $how] = config('myaccount.products.'.$product) ?? abort(404);
+        abort_unless($how === 'self', 404);
         $c = $this->c($request);
-        [$name, $label] = self::SELF_SERVICE[$product];
         $on = $request->validate(['enroll' => ['required', 'boolean']])['enroll'];
-        if ($on && $name === 'AutoPay' && ! $c->paymentMethods()->whereNull('removed_at')->exists()) {
+        if ($on && $name === 'AutoPay' && $this->methodsFor($request, $c)->isEmpty()) {
             return back()->withErrors(['enroll' => 'Add a payment method before turning on AutoPay.']);
         }
         $on ? Products::add($c, $name) : Products::remove($c, $name);
-        $c->notes()->create(['author' => 'Customer (MyAccount)', 'category' => 'Products', 'action' => ($on ? 'Add ' : 'Remove ').$label, 'priority' => 'Low',
-            'body' => ($on ? 'Enrolled in ' : 'Un-enrolled from ').$label.' in My Account.']);
+        $c->notes()->create(['author' => 'Customer (MyAccount)', 'category' => 'Products', 'action' => ($on ? 'Add ' : 'Remove ').$name, 'priority' => 'Low',
+            'body' => ($on ? 'Enrolled in ' : 'Un-enrolled from ').$name.' in My Account.']);
 
-        return back()->with('status', $on ? 'You\'re enrolled in '.$label.'.' : $label.' is turned off.');
+        return redirect()->to(route('myaccount.products').'#'.$product)->with('status', $on ? 'You\'re enrolled in '.$name.'.' : $name.' is turned off.');
     }
 
     // ---------- Profile, password, authorized users, linked accounts ----------
@@ -174,7 +248,7 @@ class PortalController extends Controller
 
     public function password(Request $request): RedirectResponse
     {
-        $c = $this->c($request);
+        $c = $this->login($request);
         $data = $request->validate(['current_password' => ['required'], 'password' => ['required', 'string', 'min:8', 'max:100', 'confirmed']]);
         if (! Hash::check($data['current_password'], $c->password)) {
             return back()->withErrors(['current_password' => 'Your current password isn\'t right.']);
@@ -206,7 +280,7 @@ class PortalController extends Controller
 
     public function linkAccount(Request $request): RedirectResponse
     {
-        $c = $this->c($request);
+        $c = $this->login($request);
         $data = $request->validate(['account' => ['required', 'string', 'max:20'], 'zip' => ['required', 'digits:5']]);
         $other = Customer::where('account', $data['account'])->where('zip', $data['zip'])->whereRaw('lower(email) = ?', [strtolower($c->email)])->first();
         if (! $other || $other->is($c)) {
