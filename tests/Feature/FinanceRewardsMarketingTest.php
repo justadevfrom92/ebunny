@@ -59,17 +59,17 @@ class FinanceRewardsMarketingTest extends TestCase
     public function test_apps_follow_role_permissions(): void
     {
         $this->actingAs($this->user('csr@example.com'));
-        $this->get('/admin/caboose')->assertRedirect(route('backend.launcher', ['denied' => 'caboose']));
-        $this->get('/admin/rodeo')->assertRedirect(route('backend.launcher', ['denied' => 'rodeo']));
+        $this->get('/admin/caboose')->assertRedirect(route('admin.launcher', ['denied' => 'caboose']));
+        $this->get('/admin/rodeo')->assertRedirect(route('admin.launcher', ['denied' => 'rodeo']));
         $this->get('/admin/bounty')->assertOk();
 
         $this->actingAs($this->user('finance@example.com'));
         $this->get('/admin/caboose')->assertOk();
-        $this->get('/admin/bounty')->assertRedirect(route('backend.launcher', ['denied' => 'bounty']));
+        $this->get('/admin/bounty')->assertRedirect(route('admin.launcher', ['denied' => 'bounty']));
 
         $this->actingAs($this->user('marketing@example.com'));
         $this->get('/admin/rodeo')->assertOk();
-        $this->get('/admin/caboose')->assertRedirect(route('backend.launcher', ['denied' => 'caboose']));
+        $this->get('/admin/caboose')->assertRedirect(route('admin.launcher', ['denied' => 'caboose']));
     }
 
     public function test_caboose_payments_ledger_refunds_and_journal(): void

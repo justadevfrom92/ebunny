@@ -124,7 +124,7 @@ Route::prefix('admin')->group(function () {
     // Every admin page keeps a cached copy of its table (Sheriff → Cached Tables)
     Route::middleware(['auth:web', CacheAdminTables::class])->group(function () {
         Route::post('logout', [Backend\AuthController::class, 'logout'])->name('admin.logout');
-        Route::get('/', Backend\LauncherController::class)->name('backend.launcher');
+        Route::get('/', Backend\LauncherController::class)->name('admin.launcher');
 
         // Admin apps created from the launcher's "New Admin App" button
         Route::get('apps/create', [Backend\AppController::class, 'create'])->name('apps.create');
@@ -462,5 +462,5 @@ Route::prefix('admin')->group(function () {
 | Anything not matched above (and not a file in public/) is looked up as a
 | page on the site for this host name. Kept last so it never shadows a route.
 */
-Route::get('amp/{path}', [SitePageController::class, 'amp'])->where('path', '.*')->name('frontend.amp');
-Route::get('{path}', [SitePageController::class, 'show'])->where('path', '.*')->name('frontend.page');
+Route::get('amp/{path}', [SitePageController::class, 'amp'])->where('path', '.*')->name('site.amp');
+Route::get('{path}', [SitePageController::class, 'show'])->where('path', '.*')->name('site.page');

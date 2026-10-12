@@ -25,7 +25,7 @@
         </div>
         <span class="env">{{ strtoupper(app()->environment()) }}</span>
         {{-- One Admin button back to the launcher (the same page the website's Admin button opens) --}}
-        <a class="admin-home" href="{{ route('backend.launcher') }}">
+        <a class="admin-home" href="{{ route('admin.launcher') }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
             <span>Admin<small>{{ $app['name'] }}</small></span>
         </a>

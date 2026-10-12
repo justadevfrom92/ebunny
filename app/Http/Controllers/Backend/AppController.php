@@ -27,7 +27,7 @@ class AppController extends Controller
         $app = AdminApps::get($appKey);
         abort_unless($app && $app['custom'], 404);
         if (! $request->user()->hasPerm($appKey)) {
-            return redirect()->route('backend.launcher', ['denied' => $appKey]);
+            return redirect()->route('admin.launcher', ['denied' => $appKey]);
         }
 
         return view('backend.apps.show', ['app' => $app, 'appKey' => $appKey, 'canManage' => Gate::allows('manage-apps')]);
@@ -87,7 +87,7 @@ class AppController extends Controller
             $app->delete();
         });
 
-        return redirect()->route('backend.launcher')->with('status', $app->name.' deleted');
+        return redirect()->route('admin.launcher')->with('status', $app->name.' deleted');
     }
 
     private function form(AdminApp $app, array $roleIds): View

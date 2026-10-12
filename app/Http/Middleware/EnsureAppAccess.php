@@ -25,7 +25,7 @@ class EnsureAppAccess
         }
 
         if (! $user->hasPerm($app)) {
-            return redirect()->route('backend.launcher', ['denied' => $app]);
+            return redirect()->route('admin.launcher', ['denied' => $app]);
         }
 
         return $next($request);

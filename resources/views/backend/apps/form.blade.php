@@ -6,7 +6,7 @@
     @include('backend.partials.page-head', [
         'title' => $app->exists ? 'Edit '.$app->name : 'New Admin App',
         'sub' => $app->exists ? 'Address: <span class="mono">/admin/'.e($app->key).'</span>' : 'It gets its own tile on the launcher and a sidebar with the links you add below.',
-        'actions' => '<a class="btn ghost" href="'.($app->exists ? route('custom.show', $app->key) : route('backend.launcher')).'">Cancel</a>',
+        'actions' => '<a class="btn ghost" href="'.($app->exists ? route('custom.show', $app->key) : route('admin.launcher')).'">Cancel</a>',
     ])
 
     <form method="post" action="{{ $app->exists ? route('apps.update', $app) : route('apps.store') }}" style="display:flex;flex-direction:column;gap:20px">

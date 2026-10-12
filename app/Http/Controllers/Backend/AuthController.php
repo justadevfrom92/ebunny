@@ -36,7 +36,7 @@ class AuthController extends Controller
         $user->forceFill(['last_login_at' => now()])->save();
         History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $user->id, 'action' => 'logged', 'summary' => 'Signed in to the admin as a test user']);
 
-        return redirect()->route('backend.launcher')->with('status', 'Signed in as '.$user->name.' ('.($user->role?->name ?? 'no role').').');
+        return redirect()->route('admin.launcher')->with('status', 'Signed in as '.$user->name.' ('.($user->role?->name ?? 'no role').').');
     }
 
     /** Also receives the website's Admin prompt, which posts here in a new tab. */
@@ -61,7 +61,7 @@ class AuthController extends Controller
         // Only go back to an admin page (not a My Account page left over in the session)
         $intended = (string) $request->session()->pull('url.intended');
 
-        return redirect(str_starts_with($intended, url('admin')) ? $intended : route('backend.launcher'));
+        return redirect(str_starts_with($intended, url('admin')) ? $intended : route('admin.launcher'));
     }
 
     public function logout(Request $request): RedirectResponse
