@@ -347,10 +347,14 @@ Route::prefix('admin')->group(function () {
             Route::get('/', 'dashboard')->name('dashboard');
             Route::get('campaigns', 'campaigns')->name('campaigns');
             Route::get('campaigns/new', 'campaignForm')->name('campaigns.create');
+            Route::get('campaigns/count', 'campaignCount')->name('campaigns.count');
             Route::post('campaigns', 'saveCampaign')->name('campaigns.store');
             Route::get('campaigns/{campaign}', 'campaignForm')->name('campaigns.edit');
             Route::put('campaigns/{campaign}', 'saveCampaign')->name('campaigns.update');
             Route::post('campaigns/{campaign}/send', 'sendCampaign')->name('campaigns.send');
+            Route::post('campaigns/{campaign}/schedule', 'scheduleCampaign')->name('campaigns.schedule');
+            Route::post('campaigns/{campaign}/unschedule', 'unscheduleCampaign')->name('campaigns.unschedule');
+            Route::post('campaigns/{campaign}/duplicate', 'duplicateCampaign')->name('campaigns.duplicate');
             Route::get('templates', 'templates')->name('templates');
             Route::get('templates/new', 'templateForm')->name('templates.create');
             Route::post('templates', 'saveTemplate')->name('templates.store');

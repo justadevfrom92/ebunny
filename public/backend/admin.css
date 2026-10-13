@@ -566,3 +566,27 @@ tr.row-new td { background: var(--info-bg); }
 
 /* Content Blocks table: fits without sideways scrolling */
 .blocks-table td { white-space: normal; } .blocks-table td:first-child { max-width: 340px; overflow-wrap: anywhere; }
+
+/* ---------- Campaign builder ---------- */
+.camp-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.camp-steps, .camp-side { display: grid; gap: 20px; min-width: 0; }
+.camp-side { position: sticky; top: 72px; }
+.camp-steps .panel-body { display: grid; gap: 14px; }
+.camp-steps .field { display: flex; flex-direction: column; gap: 6px; } .camp-steps .field > label, .camp-steps details summary { font-size: .8rem; color: var(--muted); font-weight: 600; }
+.camp-steps .field input:not([type=radio]):not([type=checkbox]), .camp-steps textarea { padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; font: inherit; width: 100%; }
+.camp-steps [hidden] { display: none !important; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips label { cursor: pointer; } .chips input { position: absolute; opacity: 0; pointer-events: none; }
+.chips label > span { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+.chips.small label > span { padding: 5px 10px; font-size: .85rem; border-radius: 999px; }
+.chips small { color: var(--muted); font-size: .75rem; }
+.chips input:checked + span { border-color: var(--cyan); background: var(--info-bg); box-shadow: inset 0 0 0 1px var(--cyan); }
+.chips input:focus-visible + span { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.pick-list { max-height: 320px; overflow-y: auto; border: 1px solid var(--line); border-radius: 6px; } .pick-list label { cursor: pointer; }
+.camp-count { margin: 0 0 10px; } .camp-count strong { font-size: 2rem; color: var(--navy); }
+.camp-excl { margin: 0; } .camp-sample { margin: 0 0 10px; padding-left: 18px; font-size: .85rem; }
+.camp-prev { width: 100%; height: 360px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+.camp-sms { margin: 0; background: var(--info-bg); padding: 10px 14px; border-radius: 14px 14px 14px 4px; }
+.camp-sched { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; } .camp-sched .field { display: flex; flex-direction: column; gap: 4px; font-size: .8rem; }
+.camp-sched input { padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+@media (max-width: 1100px) { .camp-grid { grid-template-columns: minmax(0, 1fr); } .camp-side { position: static; } }

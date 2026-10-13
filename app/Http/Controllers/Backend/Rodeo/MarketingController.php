@@ -7,15 +7,15 @@ use App\Models\Campaign;
 use App\Models\ContactLog;
 use App\Models\Customer;
 use App\Models\EmailCategory;
-use App\Models\EmailSuppression;
 use App\Models\EmailTemplate;
 use App\Models\Market;
 use App\Models\MarketingChannel;
 use App\Models\PromoCode;
 use App\Models\SurveyResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -51,69 +51,130 @@ class MarketingController extends Controller
 
     // ---------- Campaigns ----------
 
+    /** Campaigns in three tables: Scheduled (next first), Drafts, Sent (with results). */
     public function campaigns(): View
     {
-        return view('backend.rodeo.campaigns', ['campaigns' => Campaign::with('template')->withCount([
+        $all = Campaign::with('template')->withCount([
             'messages', 'messages as opened_count' => fn ($q) => $q->whereNotNull('opened_at'), 'messages as clicked_count' => fn ($q) => $q->whereNotNull('clicked_at'),
-        ])->latest()->get()]);
+        ])->latest()->get();
+
+        return view('backend.rodeo.campaigns', [
+            'scheduled' => $all->where('status', 'scheduled')->sortBy('scheduled_at'),
+            'drafts' => $all->where('status', 'draft'),
+            'sent' => $all->where('status', 'sent')->sortByDesc('sent_at')->each(fn ($c) => $c->setAttribute('converted_count', $c->converted()->count())),
+            'counts' => ['sent30' => $all->where('status', 'sent')->where('sent_at', '>=', now()->subDays(30))->sum('messages_count')],
+        ]);
     }
 
+    /** A campaign's page: the builder while it's a draft or scheduled; results once sent. */
     public function campaignForm(?Campaign $campaign = null): View
     {
-        $campaign ??= new Campaign(['channel' => 'Email', 'audience' => ['statuses' => ['Good - On Flow']]]);
+        $campaign ??= new Campaign(['channel' => 'Email', 'goal' => 'renewal', 'cap_days' => 7, 'audience' => ['statuses' => ['Good - On Flow']]]);
+        if ($campaign->status === 'sent') {
+            $results = $campaign->results();
 
-        return view('backend.rodeo.campaign', ['campaign' => $campaign, 'templates' => EmailTemplate::orderBy('name')->get(), 'markets' => Market::orderBy('name')->get(),
-            'count' => $campaign->exists ? $campaign->audienceQuery()->count() : null, 'ready' => self::ready($campaign->channel)]);
+            return view('backend.rodeo.campaign-results', ['campaign' => $campaign->load('template'), 'r' => $results,
+                'recipients' => $campaign->messages()->with('customer')->latest('id')->paginate(50),
+                'convertedIds' => $campaign->converted()->pluck('id')->flip(),
+                'daily' => $campaign->messages()->whereNotNull('opened_at')->selectRaw('date(opened_at) as d, count(*) as n')->groupBy('d')->orderBy('d')->pluck('n', 'd')]);
+        }
+        $sample = $campaign->exists ? $campaign->audienceQuery()->with('plan')->first() : null;
+
+        return view('backend.rodeo.campaign', ['campaign' => $campaign, 'templates' => EmailTemplate::with('category')->orderBy('name')->get(),
+            'markets' => Market::orderBy('short')->get(), 'channels' => MarketingChannel::where('active', true)->orderBy('msid')->get(),
+            'promos' => PromoCode::orderBy('code')->get()->filter->isLive(), 'ready' => self::ready($campaign->channel),
+            'count' => $campaign->exists ? $campaign->audienceQuery()->count() : null, 'excluded' => $campaign->exists ? $campaign->exclusions() : null,
+            'preview' => $campaign->exists && $sample ? ($campaign->channel === 'Email' ? $campaign->template?->render($sample) : $campaign->textFor($sample)) : null, 'sample' => $sample]);
+    }
+
+    private function campaignRules(): array
+    {
+        $products = array_keys(config('corral.products'));
+
+        return [
+            'name' => ['required', 'string', 'max:120'],
+            'goal' => ['required', Rule::in(array_keys(Campaign::GOALS))],
+            'description' => ['nullable', 'string', 'max:500'],
+            'product' => ['nullable', 'required_if:goal,product', Rule::in($products)],
+            'channel' => ['required', Rule::in(['Email', 'SMS'])],
+            'email_template_id' => ['nullable', 'required_if:channel,Email', 'exists:email_templates,id'],
+            'message' => ['nullable', 'required_if:channel,SMS', 'string', 'max:320'],
+            'msid' => ['nullable', 'exists:marketing_channels,msid'],
+            'promo_code' => ['nullable', 'exists:promo_codes,code'],
+            'cap_days' => ['required', 'integer', 'min:0', 'max:90'],
+            'audience.statuses' => ['nullable', 'array'], 'audience.statuses.*' => [Rule::in(array_keys(config('admin.customer_statuses')))],
+            'audience.type' => ['nullable', Rule::in(['Residential', 'Small Business'])],
+            'audience.market_ids' => ['nullable', 'array'], 'audience.market_ids.*' => ['exists:markets,id'],
+            'audience.product' => ['nullable', Rule::in($products)],
+            'audience.without_product' => ['nullable', Rule::in($products)],
+            'audience.autopay' => ['nullable', Rule::in(['yes', 'no'])],
+            'audience.balance' => ['nullable', Rule::in(['owes', 'paid'])],
+            'audience.contract_ends_within' => ['nullable', 'integer', 'min:1', 'max:365'],
+        ];
     }
 
     public function saveCampaign(Request $request, ?Campaign $campaign = null): RedirectResponse
     {
         abort_if($campaign?->status === 'sent', 422, 'A sent campaign can\'t be changed.');
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:120'],
-            'channel' => ['required', Rule::in(['Email', 'SMS'])],
-            'email_template_id' => ['nullable', 'required_if:channel,Email', 'exists:email_templates,id'],
-            'message' => ['nullable', 'required_if:channel,SMS', 'string', 'max:320'],
-            'audience.statuses' => ['nullable', 'array'], 'audience.statuses.*' => [Rule::in(array_keys(config('admin.customer_statuses')))],
-            'audience.type' => ['nullable', Rule::in(['Residential', 'Small Business'])],
-            'audience.market_id' => ['nullable', 'exists:markets,id'],
-            'audience.product' => ['nullable', Rule::in(array_keys(config('corral.products')))],
-            'audience.without_product' => ['nullable', Rule::in(array_keys(config('corral.products')))],
-            'audience.contract_ends_within' => ['nullable', 'integer', 'min:1', 'max:365'],
-        ]);
+        $data = $request->validate($this->campaignRules(), ['product.required_if' => 'Pick the product this campaign promotes.']);
         $data['audience'] = array_filter($data['audience'] ?? [], fn ($v) => $v !== null && $v !== []);
+        $data['product'] = $data['goal'] === 'product' ? $data['product'] : null;
         $campaign = $campaign ? tap($campaign)->update($data) : Campaign::create($data + ['created_by' => $request->user()->id]);
 
         return redirect()->route('rodeo.campaigns.edit', $campaign)->with('status', 'Campaign saved. '.number_format($campaign->audienceQuery()->count()).' customers match.');
     }
 
-    /** Creates one message per customer. They go out through Salesforce (email) or Twilio (texts) when those are set up in .env. */
+    /** Live audience count for the builder (no save): matches, exclusions and a few names. */
+    public function campaignCount(Request $request): JsonResponse
+    {
+        $data = $request->validate(array_intersect_key($this->campaignRules(), array_flip(['channel', 'cap_days'])) + array_filter($this->campaignRules(), fn ($k) => str_starts_with($k, 'audience'), ARRAY_FILTER_USE_KEY));
+        $c = new Campaign(['channel' => $data['channel'], 'cap_days' => (int) $data['cap_days'], 'audience' => array_filter($data['audience'] ?? [], fn ($v) => $v !== null && $v !== [])]);
+        $q = $c->audienceQuery();
+
+        return response()->json(['count' => (clone $q)->count(), 'excluded' => $c->exclusions(),
+            'sample' => (clone $q)->orderBy('id')->limit(5)->get(['name', 'account'])->map(fn ($x) => $x->name.' · '.$x->account)]);
+    }
+
+    /** Send now. */
     public function sendCampaign(Request $request, Campaign $campaign): RedirectResponse
     {
         abort_if($campaign->status === 'sent', 422, 'This campaign was already sent.');
         $ready = self::ready($campaign->channel);
-        $count = $suppressed = 0;
-        DB::transaction(function () use ($campaign, $ready, &$count, &$suppressed) {
-            $campaign->audienceQuery()->with('plan')->chunkById(200, function ($customers) use ($campaign, $ready, &$count, &$suppressed) {
-                foreach ($customers as $c) {
-                    // Rodeo → Emails → Suppression List: no email to these addresses
-                    if ($campaign->channel === 'Email' && EmailSuppression::has($c->email)) {
-                        $suppressed++;
+        [$count, $skipped] = $campaign->send($ready);
 
-                        continue;
-                    }
-                    ContactLog::create(['customer_id' => $c->id, 'campaign_id' => $campaign->id, 'channel' => $campaign->channel,
-                        'template' => $campaign->channel === 'Email' ? $campaign->template?->name : 'Campaign: '.$campaign->name,
-                        'body' => $campaign->channel === 'Email' ? strip_tags($campaign->template?->render($c) ?? '') : str_replace('{{first_name}}', $c->first_name, $campaign->message),
-                        'phone' => $campaign->channel === 'SMS' ? $c->phone : null, 'status' => $ready ? 'queued' : 'not sent']);
-                    $count++;
-                }
-            });
-            $campaign->update(['status' => 'sent', 'sent_at' => now(), 'recipients' => $count]);
-        });
+        return redirect()->route('rodeo.campaigns.edit', $campaign)->with('status', number_format($count).' messages '.($ready ? 'queued.' : 'logged but not sent: '.($campaign->channel === 'SMS' ? 'Twilio' : 'Salesforce').' is not configured in .env.')
+            .($skipped ? ' '.$skipped.' skipped (suppressed or contacted in the last '.$campaign->cap_days.' days).' : ''));
+    }
 
-        return redirect()->route('rodeo.campaigns')->with('status', $count.' messages '.($ready ? 'queued.' : 'logged but not sent: '.($campaign->channel === 'SMS' ? 'Twilio' : 'Salesforce').' is not configured in .env.')
-            .($suppressed ? ' '.$suppressed.' skipped: on the suppression list.' : ''));
+    /** Send at a date and time: the et:campaigns job sends it then. */
+    public function scheduleCampaign(Request $request, Campaign $campaign): RedirectResponse
+    {
+        abort_if($campaign->status === 'sent', 422, 'This campaign was already sent.');
+        $data = $request->validate(['date' => ['required', 'date', 'after_or_equal:today'], 'time' => ['required', 'date_format:H:i']]);
+        $at = Carbon::parse($data['date'].' '.$data['time']);
+        if ($at->lte(now()->addMinutes(5))) {
+            return back()->withErrors(['time' => 'Pick a time at least a few minutes from now, or use Send Now.']);
+        }
+        $campaign->update(['status' => 'scheduled', 'scheduled_at' => $at]);
+
+        return redirect()->route('rodeo.campaigns.edit', $campaign)->with('status', 'Scheduled for '.$at->format('l, M j \a\t g:i A').'.');
+    }
+
+    public function unscheduleCampaign(Campaign $campaign): RedirectResponse
+    {
+        abort_unless($campaign->status === 'scheduled', 422);
+        $campaign->update(['status' => 'draft', 'scheduled_at' => null]);
+
+        return redirect()->route('rodeo.campaigns.edit', $campaign)->with('status', 'Back to draft: it will not send until you schedule or send it.');
+    }
+
+    /** Start a new draft from any campaign (handy for resending a sent one to a new audience). */
+    public function duplicateCampaign(Request $request, Campaign $campaign): RedirectResponse
+    {
+        $copy = $campaign->replicate(['status', 'sent_at', 'recipients', 'skipped', 'scheduled_at']);
+        $copy->fill(['name' => $campaign->name.' (copy)', 'status' => 'draft', 'recipients' => 0, 'skipped' => 0, 'created_by' => $request->user()->id])->save();
+
+        return redirect()->route('rodeo.campaigns.edit', $copy)->with('status', 'Copied. Change what you need, then send or schedule it.');
     }
 
     // ---------- Email templates ----------

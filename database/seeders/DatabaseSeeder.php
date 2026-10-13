@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             CookieConsentSeeder::class,
             ContactMessageSeeder::class,
             DeputySeeder::class,
+            CampaignSeeder::class,   // after the account data (phone types, AutoPay) it targets
         ]);
     }
 

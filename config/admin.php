@@ -323,6 +323,7 @@ return [
         'et:ercot-responses' => ['Pull ERCOT 814 responses', '*/10 * * * *'],
         'et:autopay' => ['Process AutoPay drafts', '0 6 * * *'],
         'et:scheduled-payments' => ['Pay scheduled My Account payments', '* * * * *'],
+        'et:campaigns' => ['Send scheduled marketing campaigns', '*/5 * * * *'],
         'et:sync-payments' => ['Sync payments to Utilibill', '*/30 * * * *'],
         'et:welcome-packets' => ['Generate welcome packets', '0 * * * *'],
         'et:rewards-stars' => ['Rangler Rewards stars', '0 2 * * *'],

@@ -139,7 +139,7 @@ class FinanceRewardsMarketingTest extends TestCase
         $this->post(route('rodeo.templates.store'), ['name' => 'Survey invite', 'subject' => 'Tell us', 'body' => '<p>Hi {{first_name}}, <a href="{{survey:how-are-we-doing}}">take our survey</a></p>'])->assertRedirect();
         $template = EmailTemplate::where('name', 'Survey invite')->firstOrFail();
 
-        $this->post(route('rodeo.campaigns.store'), ['name' => 'Fall survey', 'channel' => 'Email', 'email_template_id' => $template->id, 'audience' => ['statuses' => ['Good - On Flow']]])->assertRedirect();
+        $this->post(route('rodeo.campaigns.store'), ['name' => 'Fall survey', 'goal' => 'announcement', 'cap_days' => 0, 'channel' => 'Email', 'email_template_id' => $template->id, 'audience' => ['statuses' => ['Good - On Flow']]])->assertRedirect();
         $campaign = Campaign::where('name', 'Fall survey')->firstOrFail();
         $count = $campaign->audienceQuery()->count();
         $this->assertGreaterThan(0, $count);
