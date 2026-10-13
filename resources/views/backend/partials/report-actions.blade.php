@@ -27,4 +27,3 @@
         @endif
     @endif
 </span>
-@include('components.chart-tip')

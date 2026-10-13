@@ -22,7 +22,6 @@
         <div class="panel-head"><h2>Page Views by Hour</h2><span class="muted">today and yesterday</span></div>
         <div class="panel-body">@php $top = max(1, collect($hours)->max(fn ($h) => max($h['today'], $h['yesterday']))); @endphp
             <div class="hour-chart">@foreach ($hours as $h)<div class="col" tabindex="0" data-tip="{{ date('ga', mktime($h['hour'])) }}: {{ $h['today'] }} today, {{ $h['yesterday'] }} yesterday"><div class="bars"><i style="height:{{ round($h['yesterday'] / $top * 100) }}%"></i><b style="height:{{ round($h['today'] / $top * 100) }}%"><em>{{ $h['today'] }}</em></b></div><small>{{ $h['hour'] % 2 === 0 ? date('ga', mktime($h['hour'])) : '' }}</small></div>@endforeach</div>
-            @include('components.chart-tip')
             <div class="hour-legend"><span><b></b> Today</span><span><i></i> Yesterday</span></div>
         </div>
     </div>

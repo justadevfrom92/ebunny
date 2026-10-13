@@ -113,4 +113,28 @@ class LandoSiteTest extends TestCase
         $page->update(['meta_description' => 'Who we are']);
         $this->get(route('lando.pages.activity', $page))->assertSee('meta description');
     }
+
+    public function test_blocked_entry_page_has_unblock_and_remove_and_pages_have_history(): void
+    {
+        $this->actingAs($this->admin());
+        $block = SiteBlock::where('type', 'ip')->where('active', true)->firstOrFail();
+        $this->get(route('lando.blocked.ips.edit', $block))->assertOk()->assertSee('Unblock')->assertSee('Remove')
+            ->assertSee(route('lando.blocked.ips.toggle', $block), false)->assertSee(route('lando.blocked.ips.destroy', $block), false);
+        $this->post(route('lando.blocked.ips.toggle', $block))->assertRedirect();
+        $this->assertFalse($block->fresh()->active);
+        $this->get(route('lando.blocked.ips.edit', $block))->assertSee('Block Again');
+        $this->delete(route('lando.blocked.ips.destroy', $block))->assertRedirect(route('lando.blocked.ips'));
+        $this->assertNull($block->fresh());
+
+        $page = Page::where('path', 'plans')->firstOrFail();
+        $this->get(route('lando.pages.activity', $page))->assertOk()->assertSee('Page created: '.$page->title)->assertDontSee('No changes recorded.');
+    }
+
+    public function test_tooltip_code_is_not_inside_tables(): void
+    {
+        $this->actingAs(User::where('email', 'finance@example.com')->firstOrFail());
+        $html = $this->get(route('walker.uploads.index'))->assertOk()->getContent();
+        $this->assertSame(1, substr_count($html, 'window.__chartTip = true'));
+        $this->assertDoesNotMatchRegularExpression('#<td[^>]*>(?:(?!</td>).)*<style#s', $html);
+    }
 }

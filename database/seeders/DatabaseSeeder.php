@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             CatalogSeeder::class,
             CmsSeeder::class,
             ContentModulesSeeder::class,
+            PageHistorySeeder::class,
             CustomerSeeder::class,
             MarketingRewardsSeeder::class,
             AccountSeeder::class,

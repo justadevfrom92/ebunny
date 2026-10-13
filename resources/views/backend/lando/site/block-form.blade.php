@@ -5,7 +5,9 @@
 
 @section('content')
     @include('backend.partials.page-head', ['title' => $block->exists ? 'Edit Blocked '.$label : 'Block an '.$label,
-        'sub' => $ip ? 'Visitors from this address see “Not available” instead of the website. The admin isn\'t affected.' : 'Nobody can open this part of the website, or anything under it.'])
+        'sub' => $ip ? 'Visitors from this address see “Not available” instead of the website. The admin isn\'t affected.' : 'Nobody can open this part of the website, or anything under it.',
+        'actions' => $block->exists ? '<form method="post" action="'.route('lando.blocked.'.$kind.'.toggle', $block).'" class="inline">'.csrf_field().'<button class="btn ghost">'.($block->active ? 'Unblock' : 'Block Again').'</button></form>'
+            .'<form method="post" action="'.route('lando.blocked.'.$kind.'.destroy', $block).'" class="inline" data-confirm="Remove '.e($block->value).'?|It comes off the list for good. Use Unblock to keep it for later.|Remove">'.csrf_field().method_field('delete').'<button class="btn red">Remove</button></form>' : null])
     @if ($views)<div class="banner-note" role="status" style="margin-bottom:16px">{{ $ip ? 'This address' : 'This area' }} had {{ number_format($views['n']) }} page {{ Str::plural('view', $views['n']) }} from {{ $views['people'] }} {{ Str::plural('visitor', $views['people']) }} in the last 30 days{{ $views['last'] ? ', the last '.\Illuminate\Support\Carbon::parse($views['last'])->diffForHumans() : '' }}.</div>@endif
     <form method="post" action="{{ $block->exists ? route('lando.blocked.'.$kind.'.update', $block) : route('lando.blocked.'.$kind.'.store') }}" class="panel simple-form">@csrf @if ($block->exists) @method('put') @endif
         <div class="panel-body form-grid">
