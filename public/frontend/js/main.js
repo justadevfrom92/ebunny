@@ -187,19 +187,23 @@
   function planCard(p, market, featured) {
     var termLabel = p.term === 1 ? 'Month-to-Month' : p.term + ' Months · Fixed';
     var price = ET.price(p.internal, market, 1000);
+    // Every plan has its own page with prices for each utility area, details and documents
+    var zip = ET.query().get('zip');
+    var page = ET.root + 'plans/' + encodeURIComponent(p.slug) + (zip ? '?zip=' + encodeURIComponent(zip) : '');
     return (
       '<article class="plan' + (featured ? ' featured' : '') + ' reveal">' +
       (featured ? '<span class="plan-flag">Popular Pick</span>' : '') +
       '<div class="plan-top">' +
       '<span class="plan-term">' + termLabel + '</span>' +
-      '<h3>' + esc(p.name) + '</h3>' +
+      '<h3><a class="plan-name" href="' + page + '">' + esc(p.name) + '</a></h3>' +
       '<div class="plan-rate"><strong>' + (price == null ? '—' : price.toFixed(1) + '¢') + '</strong><span>per kWh</span></div>' +
       '<p class="plan-rate-note">Avg. price at 1,000 kWh · ' + etfLabel(p) + '</p>' +
       '</div>' +
       '<div class="plan-body"><ul class="checks">' +
       p.perks.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') +
       '</ul>' +
-      '<a class="btn btn-block" href="' + ET.root + 'checkout?plan=' + encodeURIComponent(p.internal) + (ET.query().get('zip') ? '&zip=' + encodeURIComponent(ET.query().get('zip')) : '') + '">Sign Up</a>' +
+      '<a class="btn btn-block" href="' + ET.root + 'checkout?plan=' + encodeURIComponent(p.internal) + (zip ? '&zip=' + encodeURIComponent(zip) : '') + '">Sign Up</a>' +
+      '<a class="btn btn-outline btn-block plan-details" href="' + page + '">Plan Details</a>' +
       '<div class="plan-links"><a href="#">Electricity Facts Label</a><a href="#">Terms of Service</a><a href="#">YRAC</a></div>' +
       '</div></article>'
     );

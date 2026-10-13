@@ -765,3 +765,25 @@ fieldset.field { border: 0; padding: 0; }
 .msg-steps li.done { color: var(--navy); font-weight: 600; } .msg-steps li.done::before { background: var(--cyan); border-color: var(--cyan); }
 .msg-pager { display: flex; justify-content: space-between; margin-top: 20px; font-weight: 700; }
 @media (max-width: 900px) { .msg-grid { grid-template-columns: 1fr; } .msg-frame { min-height: 160px; } }
+
+/* Plan pages (/plans/{slug}) */
+.pp-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 24px; align-items: start; margin-bottom: 24px; }
+.pp-price { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 16px; }
+.pp-price .plan-rate strong { font-size: 3rem; }
+.pp-zip label { display: block; font-weight: 700; font-size: .85rem; color: var(--navy); margin-bottom: 6px; }
+.pp-zip div { display: flex; gap: 8px; } .pp-zip input { flex: 1; min-width: 0; padding: 10px 12px; border: 2px solid var(--line); border-radius: var(--radius); font: inherit; }
+.pp-zip .btn { padding: 10px 16px; } .pp-zip .btn::after { display: none; }
+.pp-areas { margin-bottom: 24px; } .muted-p { color: var(--grey); margin: -8px 0 12px; }
+.pp-areas td small { color: var(--grey); }
+.pp-docs { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; margin-bottom: 32px; }
+.pp-doclist { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; } .pp-doclist a { font-weight: 700; } .pp-doclist small { display: block; color: var(--grey); }
+.pp-docs details { border-bottom: 1px solid var(--line); padding: 10px 0; } .pp-docs summary { cursor: pointer; font-weight: 700; color: var(--navy); } .pp-docs details p { margin: 8px 0 0; }
+.pp-others { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.pp-other { display: flex; flex-direction: column; gap: 6px; color: inherit; } .pp-other:hover { text-decoration: none; border-color: var(--cyan); }
+.pp-other b { font: 800 1.15rem var(--font-display); color: var(--navy); } .pp-o-price { font: 900 1.5rem var(--font-display); color: var(--navy); } .pp-o-price small { font: 400 .8rem var(--font-body, inherit); color: var(--grey); }
+.pp-o-more { color: var(--cyan); font-weight: 700; margin-top: auto; }
+.plan-links .plan-more { font-weight: 700; }
+@media (max-width: 900px) { .pp-top, .pp-docs, .pp-others { grid-template-columns: 1fr; } .pp-price { position: static; } }
+
+.plan .plan-name { color: inherit; } .plan .plan-name:hover { color: var(--cyan); text-decoration: none; }
+.plan .plan-details { margin-top: 10px; }

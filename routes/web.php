@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Backend;
 use App\Http\Controllers\Frontend\MyAccount;
+use App\Http\Controllers\Frontend\PlanController;
 use App\Http\Controllers\Frontend\ShopController;
 use App\Http\Controllers\Frontend\SignupController;
 use App\Http\Controllers\Frontend\SiteController;
@@ -83,6 +84,8 @@ Route::prefix('myaccount')->name('myaccount.')->group(function () {
 });
 
 // Shop: a sample product catalog with filters and sorts
+// A page for each plan
+Route::get('plans/{plan:slug}', [PlanController::class, 'show'])->name('plans.show');
 Route::get('shop', [ShopController::class, 'index'])->name('shop');
 Route::get('shop/{slug}', [ShopController::class, 'show'])->where('slug', '[a-z0-9-]+')->name('shop.show');
 
