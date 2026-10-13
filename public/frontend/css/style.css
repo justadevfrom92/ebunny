@@ -810,3 +810,6 @@ fieldset.field { border: 0; padding: 0; }
 @media (max-width: 900px) { .cart-grid { grid-template-columns: 1fr; } }
 @media (min-width: 1025px) and (max-width: 1400px) { .nav-cart-label { display: none; } }
 @media (max-width: 1024px) { .nav > a.nav-cart { padding: 14px 0; } .nav-cart .cart-n { position: static; } }
+
+/* Cart bar and chat bubble float above the cookie banner while it is showing */
+.shop-cart { bottom: calc(20px + var(--cookie-h, 0px)); }

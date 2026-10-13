@@ -125,6 +125,10 @@
       '<div class="cb-actions"><button type="button" class="btn" data-c="all">Accept All</button><button type="button" class="btn btn-outline" data-c="necessary">Necessary Only</button>' +
       '<button type="button" class="link-btn" data-c="choose">Choose</button><button type="button" class="btn btn-outline" data-c="custom" hidden>Save My Choices</button></div></div>';
     document.body.appendChild(el);
+    // Floating buttons (cart bar, chat bubble) sit above the banner while it shows
+    function lift() { document.documentElement.style.setProperty('--cookie-h', (el.isConnected ? el.offsetHeight : 0) + 'px'); }
+    lift(); window.addEventListener('resize', lift);
+    new MutationObserver(function () { if (!el.isConnected) lift(); }).observe(document.body, { childList: true });
     el.addEventListener('click', function (e) {
       var b = e.target.closest('[data-c]'); if (!b) return;
       if (b.dataset.c === 'choose') { el.querySelector('.cb-choose').hidden = false; el.querySelector('[data-c=custom]').hidden = false; b.hidden = true; return; }

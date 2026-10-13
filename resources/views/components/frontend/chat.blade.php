@@ -15,7 +15,7 @@
 </div>
 @once
 <style>
-.chatw { position: fixed; right: 20px; bottom: 20px; z-index: 900; font-size: .95rem; }
+.chatw { position: fixed; right: 20px; bottom: calc(20px + var(--cookie-h, 0px)); z-index: 900; font-size: .95rem; }
 .chatw-open { background: var(--cyan, #00AEEF); color: #fff; border: 0; border-radius: 999px; padding: 12px 18px; font: inherit; font-weight: 700; box-shadow: 0 6px 18px rgba(0,0,0,.2); cursor: pointer; }
 .chatw-panel { width: min(360px, calc(100vw - 32px)); height: min(500px, calc(100vh - 100px)); background: #fff; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.25); display: flex; flex-direction: column; overflow: hidden; }
 .chatw-panel[hidden] { display: none; }
@@ -36,7 +36,7 @@
 .chatw-person { background: none; border: 0; border-top: 1px solid #e3e8ef; padding: 8px; color: var(--cyan, #00AEEF); font: inherit; font-weight: 700; cursor: pointer; }
 .chatw-person[hidden] { display: none; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-@media (max-width: 600px) { .chatw { right: 12px; bottom: 12px; } }
+@media (max-width: 600px) { .chatw { right: 12px; bottom: calc(12px + var(--cookie-h, 0px)); } }
 </style>
 <script>
 (function () {
