@@ -247,9 +247,10 @@ class AdminTest extends TestCase
 
     public function test_website_contact_form_lands_in_corral(): void
     {
+        $before = ContactMessage::open()->count();   // the sample data has some open messages
         $this->postJson('/contact', ['first' => 'Pat', 'last' => 'Example', 'email' => 'pat@example.com', 'topic' => 'general', 'message' => 'Hello'])
             ->assertCreated();
-        $this->assertSame(1, ContactMessage::open()->count());
+        $this->assertSame($before + 1, ContactMessage::open()->count());
 
         $this->actingAs($this->user())->get('/admin/corral/messages')->assertSee('Pat Example');
     }
