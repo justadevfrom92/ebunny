@@ -6,6 +6,7 @@ use App\Models\Concerns\RecordsHistory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Plan extends Model
 {
@@ -32,5 +33,21 @@ class Plan extends Model
     public function etfAmount(): int
     {
         return preg_match('/\d+/', (string) $this->etf, $m) ? (int) $m[0] : 0;
+    }
+
+    /**
+     * The plan page address (/plans/{this}): the slug. When several plans (versions of the
+     * same plan) share a slug, the first keeps it and the others add their code (slug-etm2).
+     */
+    public function pageSlug(): string
+    {
+        $first = once(fn () => self::selectRaw('slug, min(id) as id')->groupBy('slug')->pluck('id', 'slug')->all());
+
+        return ($first[$this->slug] ?? $this->id) === $this->id ? $this->slug : $this->slug.'-'.Str::slug($this->internal);
+    }
+
+    public static function forPage(string $page): ?self
+    {
+        return self::where('active', true)->get()->first(fn ($p) => $p->pageSlug() === $page);
     }
 }

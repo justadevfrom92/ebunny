@@ -189,7 +189,7 @@
     var price = ET.price(p.internal, market, 1000);
     // Every plan has its own page with prices for each utility area, details and documents
     var zip = ET.query().get('zip');
-    var page = ET.root + 'plans/' + encodeURIComponent(p.slug) + (zip ? '?zip=' + encodeURIComponent(zip) : '');
+    var page = ET.root + 'plans/' + encodeURIComponent(p.page || p.slug) + (zip ? '?zip=' + encodeURIComponent(zip) : '');
     return (
       '<article class="plan' + (featured ? ' featured' : '') + ' reveal">' +
       (featured ? '<span class="plan-flag">Popular Pick</span>' : '') +

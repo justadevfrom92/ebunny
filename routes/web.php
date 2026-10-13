@@ -85,7 +85,7 @@ Route::prefix('myaccount')->name('myaccount.')->group(function () {
 
 // Shop: a sample product catalog with filters and sorts
 // A page for each plan
-Route::get('plans/{plan:slug}', [PlanController::class, 'show'])->name('plans.show');
+Route::get('plans/{page}', [PlanController::class, 'show'])->where('page', '[a-z0-9-]+')->name('plans.show');
 Route::get('shop', [ShopController::class, 'index'])->name('shop');
 Route::get('shop/{slug}', [ShopController::class, 'show'])->where('slug', '[a-z0-9-]+')->name('shop.show');
 

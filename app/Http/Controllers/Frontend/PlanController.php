@@ -17,9 +17,9 @@ use Illuminate\View\View;
  */
 class PlanController extends Controller
 {
-    public function show(Request $request, Plan $plan, Catalog $catalog): View
+    public function show(Request $request, string $page, Catalog $catalog): View
     {
-        abort_unless($plan->active, 404);
+        $plan = Plan::forPage($page) ?? abort(404);
         $rates = $catalog->currentRates();
         $fees = $catalog->currentFees();
         $markets = Market::where('status', 'Active')->orderBy('short')->get()

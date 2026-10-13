@@ -29,7 +29,7 @@
         <div class="plan-rate"><strong>{{ $mainPrice !== null ? number_format($mainPrice, 1).'¢' : '—' }}</strong><span>per kWh</span></div>
         <p class="plan-rate-note">Average price at 1,000 kWh @if ($mainMarket) in the {{ $mainMarket->description ?: $mainMarket->short }} area @endif @if (! $here && $zip) (this zip isn't in an area we serve) @endif</p>
         <a class="btn btn-block" href="{{ $signup }}">Sign Up for {{ $plan->name }}</a>
-        <form class="pp-zip" method="get" action="{{ route('plans.show', $plan) }}">
+        <form class="pp-zip" method="get" action="{{ route('plans.show', $plan->pageSlug()) }}">
           <label for="pp-zip">See the price for your zip</label>
           <div><input id="pp-zip" name="zip" inputmode="numeric" maxlength="5" pattern="\d{5}" value="{{ $zip }}" placeholder="Zip code"><button class="btn btn-outline">Go</button></div>
         </form>
@@ -81,7 +81,7 @@
     @if ($others->isNotEmpty())
       <h2 class="pd-related">Other {{ $biz ? 'business' : 'home' }} plans</h2>
       <div class="pp-others">@foreach ($others as $o)
-        <a class="co-card pp-other" href="{{ route('plans.show', array_filter(['plan' => $o->slug, 'zip' => $zip])) }}">
+        <a class="co-card pp-other" href="{{ route('plans.show', array_filter(['page' => $o->pageSlug(), 'zip' => $zip])) }}">
           <span class="plan-term">{{ $o->term > 1 ? $o->term.' months · fixed' : 'Month-to-month' }}</span><b>{{ $o->name }}</b>
           @if ($main && isset($rates[$o->id.'-'.$main], $fees[$main]))<span class="pp-o-price">{{ number_format(\App\Services\Catalog::averagePrice($rates[$o->id.'-'.$main]->energy, $fees[$main]->per_kwh, $fees[$main]->per_bill, $o->mrc, 1000), 1) }}¢ <small>at 1,000 kWh</small></span>@endif
           <span class="pp-o-more">See plan ›</span></a>

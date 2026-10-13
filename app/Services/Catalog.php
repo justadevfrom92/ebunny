@@ -76,7 +76,7 @@ class Catalog
             'PLANS' => $plans->map(fn ($p) => [
                 'id' => $p->id, 'type' => $p->type, 'term' => $p->term, 'name' => $p->name, 'internal' => $p->internal,
                 'rolloff' => $p->rolloff, 'etf' => $p->etf, 'mrc' => $p->mrc, 'green' => $p->green, 'active' => $p->active,
-                'tags' => $p->tags ?? [], 'perks' => $p->perks ?? [], 'slug' => $p->slug,
+                'tags' => $p->tags ?? [], 'perks' => $p->perks ?? [], 'slug' => $p->slug, 'page' => $p->pageSlug(),
             ])->values(),
             'PLAN_GROUPS' => PlanGroup::with('plans')->get()->map(fn ($g) => [
                 'id' => $g->id, 'name' => $g->name, 'slug' => $g->slug, 'plans' => $g->plans->pluck('internal')->values(),

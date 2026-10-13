@@ -7,9 +7,9 @@
     <div style="overflow-x:auto"><table class="price-table">
       <thead><tr><th>Plan</th><th>Term</th><th>500 kWh</th><th>1,000 kWh</th><th>2,000 kWh</th><th></th></tr></thead>
       <tbody>@foreach ($grid['rows'] as $r)
-        <tr><td><a href="{{ route('plans.show', $r['plan']) }}"><b>{{ $r['plan']->name }}</b></a></td><td>{{ $r['plan']->term === 1 ? 'Month-to-month' : $r['plan']->term.' months' }}</td>
+        <tr><td><a href="{{ route('plans.show', $r['plan']->pageSlug()) }}"><b>{{ $r['plan']->name }}</b></a></td><td>{{ $r['plan']->term === 1 ? 'Month-to-month' : $r['plan']->term.' months' }}</td>
           @foreach ([500, 1000, 2000] as $kwh)<td>{{ number_format($r['avg'][$kwh], 1) }}¢</td>@endforeach
-          <td class="nowrap"><a class="btn" href="/checkout?plan={{ urlencode($r['plan']->internal) }}">Sign Up</a> <a href="{{ route('plans.show', $r['plan']) }}">Details</a></td></tr>
+          <td class="nowrap"><a class="btn" href="/checkout?plan={{ urlencode($r['plan']->internal) }}">Sign Up</a> <a href="{{ route('plans.show', $r['plan']->pageSlug()) }}">Details</a></td></tr>
       @endforeach</tbody>
     </table></div>
   @else
@@ -17,11 +17,11 @@
       <div class="plan">
         <div class="plan-top">
           <span class="plan-term">{{ $r['plan']->term === 1 ? 'Month-to-month' : $r['plan']->term.' months' }}</span>
-          <h3><a class="plan-name" href="{{ route('plans.show', $r['plan']) }}">{{ $r['plan']->name }}</a></h3>
+          <h3><a class="plan-name" href="{{ route('plans.show', $r['plan']->pageSlug()) }}">{{ $r['plan']->name }}</a></h3>
           <div class="plan-rate"><strong>{{ number_format($r['price'], 1) }}¢</strong><span>per kWh</span></div>
           <p class="plan-rate-note">{{ $grid['formula'] }}</p>
         </div>
-        <div class="plan-body"><a class="btn btn-block" href="/checkout?plan={{ urlencode($r['plan']->internal) }}">Sign Up</a><a class="btn btn-outline btn-block plan-details" href="{{ route('plans.show', $r['plan']) }}">Plan Details</a></div>
+        <div class="plan-body"><a class="btn btn-block" href="/checkout?plan={{ urlencode($r['plan']->internal) }}">Sign Up</a><a class="btn btn-outline btn-block plan-details" href="{{ route('plans.show', $r['plan']->pageSlug()) }}">Plan Details</a></div>
       </div>
     @endforeach</div>
   @endif

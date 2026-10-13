@@ -7,7 +7,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>@hasSection('full-title')@yield('full-title')@else@yield('title') | {{ $siteName ?? config('brand.name') }}@endif</title>
+  @hasSection('full-title')
+  <title>@yield('full-title')</title>
+  @else
+  <title>@yield('title') | {{ $siteName ?? config('brand.name') }}</title>
+  @endif
   <meta name="csrf-token" content="{{ csrf_token() }}">
   @yield('head')
   <link rel="stylesheet" href="/frontend/css/style.css">
