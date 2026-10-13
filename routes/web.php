@@ -364,7 +364,6 @@ Route::prefix('admin')->group(function () {
                 Route::get('/', 'overview');
                 Route::get('sent', 'sent')->name('.sent');
                 Route::get('sent/{email}', 'show')->name('.sent.show');
-                Route::get('tests', 'tests')->name('.tests');
                 Route::get('categories', 'categories')->name('.categories');
                 Route::get('categories/new', 'categoryForm')->name('.categories.create');
                 Route::get('categories/{category}/edit', 'categoryForm')->name('.categories.edit');

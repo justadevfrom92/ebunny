@@ -2,7 +2,7 @@
 
 @section('content')
     @include('backend.partials.page-head', ['title' => 'Emails',
-        'sub' => 'Every email customers get: account emails from Corral, campaign emails and tests. Rates are of delivered emails.',
+        'sub' => 'Every email customers get: account emails from Corral and campaign emails. Rates are of delivered emails.',
         'actions' => '<a class="btn ghost" href="'.route('rodeo.emails.sent').'">Sent Emails</a><a class="btn cyan" href="'.route('rodeo.templates.create').'">New Template</a>'])
 
     <div class="actions" style="margin-bottom:14px">@foreach ([7 => 'Last 7 days', 30 => 'Last 30 days', 90 => 'Last 90 days', 365 => 'Last year'] as $d => $l)<a class="btn sm {{ $days === $d ? '' : 'ghost' }}" href="{{ route('rodeo.emails', ['days' => $d]) }}">{{ $l }}</a>@endforeach</div>
@@ -11,7 +11,7 @@
         <a class="stat" href="{{ route('rodeo.emails.sent', ['start' => $since->toDateString()]) }}"><span>Emails</span><strong>{{ number_format($stats['total']) }}</strong><small>{{ number_format($stats['delivered']) }} delivered @if ($stats['unsent']) · {{ number_format($stats['unsent']) }} not sent @endif</small></a>
         <div class="stat"><span>Open Rate</span><strong>{{ $stats['open'] }}%</strong><small>Click rate {{ $stats['click'] }}%</small></div>
         <a class="stat" href="{{ route('rodeo.emails.sent', ['stage' => 'dropped', 'start' => $since->toDateString()]) }}"><span>Dropped</span><strong>{{ $stats['drop'] }}%</strong><small>bounced or blocked by the inbox</small></a>
-        <a class="stat" href="{{ route('rodeo.emails.suppressions') }}"><span>Suppressed Addresses</span><strong>{{ number_format($suppressed) }}</strong><small>{{ $tests }} {{ Str::plural('test send', $tests) }} in this time</small></a>
+        <a class="stat" href="{{ route('rodeo.emails.suppressions') }}"><span>Suppressed Addresses</span><strong>{{ number_format($suppressed) }}</strong><small>never emailed</small></a>
     </div>
 
     <div class="panel" style="margin-bottom:20px">

@@ -180,7 +180,6 @@ return [
                     ['Sent Emails', 'rodeo.emails.sent'],
                     ['Templates', 'rodeo.templates'],
                     ['New Template', 'rodeo.templates.create'],
-                    ['Test Sends', 'rodeo.emails.tests'],
                     ['Categories', 'rodeo.emails.categories'],
                     ['Suppression List', 'rodeo.emails.suppressions'],
                 ],

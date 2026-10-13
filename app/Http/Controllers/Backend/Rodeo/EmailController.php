@@ -9,7 +9,6 @@ use App\Models\Customer;
 use App\Models\EmailCategory;
 use App\Models\EmailSuppression;
 use App\Models\EmailTemplate;
-use App\Models\EmailTestSend;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -60,7 +59,6 @@ class EmailController extends Controller
             ],
             'chart' => self::chart($q()->selectRaw('date(created_at) as d, count(*) as n')->groupBy('d')->pluck('n', 'd'), $since, $days),
             'since' => $since,
-            'tests' => EmailTestSend::where('created_at', '>=', $since)->count(),
             'suppressed' => EmailSuppression::count(),
             'recent' => self::emails()->with('customer')->latest()->latest('id')->limit(8)->get(),
             'byCategory' => EmailCategory::withCount('templates')->orderBy('position')->get()
@@ -135,23 +133,6 @@ class EmailController extends Controller
         ]);
     }
 
-    public function tests(Request $request): View
-    {
-        $f = $request->only(['template', 'result', 'user', 'start', 'end']);
-
-        return view('backend.rodeo.emails.tests', [
-            'f' => $f,
-            'tests' => EmailTestSend::with(['user', 'template'])
-                ->when($f['template'] ?? null, fn ($q, $t) => $q->where('email_template_id', $t))
-                ->when($f['result'] ?? null, fn ($q, $r) => $q->where('status', $r))
-                ->when($f['user'] ?? null, fn ($q, $u) => $q->where('user_id', $u))
-                ->when($f['start'] ?? null, fn ($q, $d) => $q->whereDate('created_at', '>=', $d))
-                ->when($f['end'] ?? null, fn ($q, $d) => $q->whereDate('created_at', '<=', $d))
-                ->latest('id')->paginate(30)->withQueryString(),
-            'templates' => EmailTemplate::orderBy('name')->get(['id', 'name']),
-            'users' => User::whereIn('id', EmailTestSend::select('user_id'))->orderBy('name')->get(['id', 'name']),
-        ]);
-    }
 
     // ---------- Categories ----------
 

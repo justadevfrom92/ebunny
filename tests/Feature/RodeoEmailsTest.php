@@ -37,7 +37,7 @@ class RodeoEmailsTest extends TestCase
         $this->get(route('rodeo.emails.sent', ['template' => 'Bill Ready', 'start' => today()->subYear()->toDateString(), 'user' => 'system', 'stage' => 'opened']))->assertOk();
         $this->get(route('rodeo.emails.sent.show', $email))->assertOk()->assertSee('on the suppression list')->assertSee('Timeline');
         $this->get(route('rodeo.emails.sent.show', ContactLog::where('channel', 'SMS')->firstOrFail()))->assertNotFound();
-        $this->get(route('rodeo.emails.tests'))->assertOk()->assertSee('Test Sends');
+        $this->get('/admin/rodeo/emails/tests')->assertNotFound();   // Test Sends was removed from Emails
         $this->get(route('rodeo.emails.categories'))->assertOk()->assertSee('Billing')->assertSee('Disconnect Notice');
         $this->get(route('rodeo.emails.categories.create'))->assertOk();
         $this->get(route('rodeo.emails.suppressions'))->assertOk()->assertSee('old-address@example.net');
