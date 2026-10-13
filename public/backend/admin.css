@@ -536,3 +536,16 @@ tr.row-new td { background: var(--info-bg); }
 .sv-bar, .sv-cols > div, .hour-chart .col { outline: none; }
 .sv-bar:focus-visible, .sv-cols > div:focus-visible, .hour-chart .col:focus-visible { box-shadow: 0 0 0 2px var(--cyan); border-radius: 3px; }
 .hour-chart .col { cursor: default; }
+
+/* ---------- Phones: nothing sits at half width; every card, panel and column is full width ---------- */
+@media (max-width: 640px) {
+  .grid-2, .grid-3, .grid-4, .stat-row, .it-grid, .search-layout, .sms { grid-template-columns: minmax(0, 1fr) !important; }
+  /* Pages that set their columns inline (except the bar charts and label/value rows) */
+  .content [style*="grid-template-columns"]:not(.bc):not(.sv-week):not(.sv-cols):not([style*="110px 1fr"]):not([style*="1fr auto"]) { grid-template-columns: minmax(0, 1fr) !important; }
+  /* Page title on its own line, buttons full width under it */
+  .page-head { flex-direction: column; align-items: stretch; }
+  .page-head > * { width: 100%; }
+  .page-head .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .page-head .actions .btn { flex: 1 1 auto; justify-content: center; text-align: center; }
+  .sv-cat-head { flex-wrap: wrap; } .sv-cat-head h2 { flex: 1 0 100%; }
+}
