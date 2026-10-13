@@ -34,4 +34,14 @@ class ShopTest extends TestCase
         $this->get('/shop?cat[]=nope')->assertRedirect();
         $this->get('/shop?sort=random')->assertRedirect();
     }
+
+    public function test_every_product_has_its_own_page(): void
+    {
+        $this->get('/shop')->assertSee(route('shop.show', 'th-100'), false);
+        foreach (config('shop.products') as $p) {
+            $this->get('/shop/'.strtolower($p[0]))->assertOk()->assertSee($p[1])->assertSee('What you get')->assertSee('Details')->assertSee('Ratings');
+        }
+        $this->get('/shop/pr-510')->assertSee('a month on your electricity bill')->assertSee('You might also like');
+        $this->get('/shop/nope')->assertNotFound();
+    }
 }

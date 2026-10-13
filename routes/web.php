@@ -82,6 +82,7 @@ Route::prefix('myaccount')->name('myaccount.')->group(function () {
 
 // Shop: a sample product catalog with filters and sorts
 Route::get('shop', [ShopController::class, 'index'])->name('shop');
+Route::get('shop/{slug}', [ShopController::class, 'show'])->where('slug', '[a-z0-9-]+')->name('shop.show');
 
 // Website sign-up (the original /checkout flow)
 // Customer surveys (built in Rodeo → Surveys)

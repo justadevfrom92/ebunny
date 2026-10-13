@@ -711,3 +711,30 @@ fieldset.field { border: 0; padding: 0; }
   .cb-actions .btn { padding: 8px 10px; font-size: .72rem; letter-spacing: .04em; }
   .cb-actions .link-btn { font-size: .85rem; }
 }
+
+/* Shop: whole card opens the product page; product pages */
+.shop-card { position: relative; }
+.shop-link { color: inherit; } .shop-link::after { content: ''; position: absolute; inset: 0; z-index: 1; }
+.shop-card:hover .shop-link { color: var(--cyan); text-decoration: none; }
+.shop-add { position: relative; z-index: 2; }
+.pd-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: start; margin-bottom: 32px; }
+.pd-img { border-radius: 16px; border: 1px solid var(--line); }
+.pd-img svg { width: 40%; }
+.pd-buy { display: flex; flex-direction: column; gap: 12px; }
+.pd-blurb { font-size: 1.1rem; margin: 0; }
+.pd-price strong { font-size: 2rem; } .pd-save { background: var(--red); color: var(--white); font-size: .8rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+.pd-note { margin: 0; color: var(--grey); }
+.pd-add { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.pd-qty { margin: 0; } .pd-qty input { width: 80px; }
+.pd-perks { margin: 4px 0 0; padding-left: 20px; color: var(--grey); display: grid; gap: 4px; }
+.pd-info { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-bottom: 36px; }
+.pd-info h2 { font-size: 1.2rem; }
+.pd-features { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.pd-specs th { width: 40%; font: 600 .85rem var(--font-body, inherit); text-transform: none; letter-spacing: 0; color: var(--grey); }
+.pd-specs th, .pd-specs td { padding: 8px 6px; }
+.pd-avg { margin: 0 0 12px; } .pd-avg strong { font: 900 2rem var(--font-display); color: var(--navy); } .pd-avg small { color: var(--grey); }
+.pd-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.pd-bars li { display: grid; grid-template-columns: 34px 1fr 52px; gap: 8px; align-items: center; font-size: .85rem; } .pd-bars li span:last-child { text-align: right; color: var(--grey); }
+.pd-track { height: 8px; background: var(--sky); border-radius: 4px; overflow: hidden; } .pd-track span { display: block; height: 100%; background: #f5a623; }
+.pd-related { margin-bottom: 16px; }
+@media (max-width: 900px) { .pd-grid, .pd-info { grid-template-columns: 1fr; gap: 20px; } }

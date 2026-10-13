@@ -15,6 +15,16 @@ return [
         'solar' => 'Solar & Backup',
         'gear' => 'Rewards Gear',
     ],
+    // What every product in a category comes with (shown on each product page)
+    'details' => [
+        'thermostats' => ['features' => ['Works with most 24V heating and cooling systems', 'Free app for iPhone and Android', 'Enroll in Peak Rewards+ for seasonal bill credits', 'Energy reports in My Account'], 'warranty' => '3-year limited warranty', 'delivery' => 'Ships free in 2–4 business days'],
+        'ev' => ['features' => ['Works with every EV sold in North America (J1772, Tesla with adapter)', 'Wi-Fi scheduling so you charge in off-peak hours', 'UL listed for indoor and outdoor use', 'Charging history in the app'], 'warranty' => '3-year limited warranty', 'delivery' => 'Ships free in 3–5 business days; install visits booked by phone'],
+        'lighting' => ['features' => ['Uses up to 85% less electricity than incandescent bulbs', 'Instant on, no warm-up', 'Rated for about 15,000 hours'], 'warranty' => '3-year replacement guarantee', 'delivery' => 'Ships free on orders over $25'],
+        'plugs' => ['features' => ['Schedules and timers from your phone', 'Works with Alexa and Google Home', 'See usage in kWh for what is plugged in'], 'warranty' => '2-year limited warranty', 'delivery' => 'Ships free in 2–4 business days'],
+        'protection' => ['features' => ['Added to your monthly electricity bill', 'Cancel any time from My Account or by phone', 'Licensed, insured technicians', '24/7 claims line'], 'warranty' => 'Coverage starts 30 days after enrollment', 'delivery' => 'No shipping: coverage is added to your account'],
+        'solar' => ['features' => ['Quiet, no fumes: safe indoors', 'Charges from a wall outlet, car or solar panel', 'Pure sine wave output for electronics'], 'warranty' => '5-year limited warranty', 'delivery' => 'Ships free in 3–5 business days'],
+        'gear' => ['features' => ['Embroidered or printed star logo', 'Earn it free with Power Rewards stars, or buy it here'], 'warranty' => '30-day returns', 'delivery' => 'Ships in 3–5 business days'],
+    ],
     'products' => [
         ['TH-100', 'ecobee Smart Thermostat Premium', 'thermostats', 249.00, 279.00, 4.7, 1284, 500, true, 'Peak Perks+ ready', 'thermo', 'Room sensor included; adjusts itself during Peak Perks events.'],
         ['TH-110', 'ecobee Smart Thermostat Enhanced', 'thermostats', 189.00, null, 4.6, 902, 380, true, null, 'thermo', 'Voice control and an energy report every month.'],

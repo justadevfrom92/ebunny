@@ -5,12 +5,38 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
-/** The website's Shop (/shop): a sample product catalog with filters, sorts and paging. Works without JavaScript. */
+/** The website's Shop (/shop): a sample product catalog with filters, sorts and paging, and a page per product. Works without JavaScript. */
 class ShopController extends Controller
 {
     public const SORTS = ['featured' => 'Featured', 'price_asc' => 'Price: low to high', 'price_desc' => 'Price: high to low', 'rating' => 'Top rated', 'reviews' => 'Most reviewed', 'name' => 'Name A–Z'];
+
+    /** Every product, keyed by its page address (/shop/th-100). */
+    public static function products(): Collection
+    {
+        return collect(config('shop.products'))->map(fn ($p, $i) => array_combine(['sku', 'name', 'cat', 'price', 'was', 'rating', 'reviews', 'stars', 'stock', 'badge', 'icon', 'blurb'], $p)
+            + ['order' => $i, 'slug' => strtolower($p[0])])->keyBy('slug');
+    }
+
+    /** One product's own page: photo area, price, what's included, specs, ratings and related products. */
+    public function show(string $slug): View
+    {
+        $all = self::products();
+        $p = $all->get(strtolower($slug)) ?? abort(404);
+        // Star breakdown for the ratings bars, spread around the average (sample data)
+        $r = $p['rating'];
+        $split = [5 => max(0, ($r - 4) * 0.9 + 0.1), 4 => 0.25, 3 => max(0.02, (5 - $r) * 0.12), 2 => max(0.01, (5 - $r) * 0.06), 1 => max(0.01, (5 - $r) * 0.05)];
+        $total = array_sum($split);
+        $breakdown = collect($split)->map(fn ($v) => (int) round($p['reviews'] * $v / $total));
+
+        return view('frontend.shop.show', [
+            'p' => $p, 'cats' => config('shop.categories'), 'details' => config('shop.details.'.$p['cat']), 'breakdown' => $breakdown,
+            'related' => $all->where('cat', $p['cat'])->where('slug', '!=', $p['slug'])->take(4)
+                ->concat($all->where('cat', '!=', $p['cat'])->where('badge', '!=', null)->take(4))->take(4),
+        ]);
+    }
 
     public function index(Request $request): View
     {
@@ -21,7 +47,7 @@ class ShopController extends Controller
             'rating' => ['nullable', 'in:4,4.5'], 'stock' => ['nullable', 'boolean'], 'sale' => ['nullable', 'boolean'], 'stars' => ['nullable', 'boolean'],
             'q' => ['nullable', 'string', 'max:60'], 'sort' => ['nullable', 'in:'.implode(',', array_keys(self::SORTS))], 'per' => ['nullable', 'in:12,24'],
         ]);
-        $all = collect(config('shop.products'))->map(fn ($p, $i) => array_combine(['sku', 'name', 'cat', 'price', 'was', 'rating', 'reviews', 'stars', 'stock', 'badge', 'icon', 'blurb'], $p) + ['order' => $i]);
+        $all = self::products();
         $q = mb_strtolower(trim((string) ($f['q'] ?? '')));
 
         // Filter on everything but category to count each category's matches (so the counts beside the checkboxes are honest)
@@ -49,7 +75,7 @@ class ShopController extends Controller
         $page = max(1, $request->integer('page', 1));
         $items = new LengthAwarePaginator($list->values()->forPage($page, $per), $list->count(), $per, $page, ['path' => route('shop'), 'query' => $request->except('page')]);
 
-        return view('frontend.shop', ['items' => $items, 'f' => $f, 'cats' => $cats, 'counts' => $counts, 'sort' => $sort, 'sorts' => self::SORTS,
+        return view('frontend.shop.index', ['items' => $items, 'f' => $f, 'cats' => $cats, 'counts' => $counts, 'sort' => $sort, 'sorts' => self::SORTS,
             'priceTop' => (int) ceil($all->max('price') / 50) * 50]);
     }
 }
