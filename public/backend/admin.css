@@ -537,8 +537,8 @@ tr.row-new td { background: var(--info-bg); }
 .sv-bar:focus-visible, .sv-cols > div:focus-visible, .hour-chart .col:focus-visible { box-shadow: 0 0 0 2px var(--cyan); border-radius: 3px; }
 .hour-chart .col { cursor: default; }
 
-/* ---------- Phones: nothing sits at half width; every card, panel and column is full width ---------- */
-@media (max-width: 640px) {
+/* ---------- Phones (the whole collapsed-sidebar range): nothing sits at half width; every card, panel and column is full width ---------- */
+@media (max-width: 860px) {
   .grid-2, .grid-3, .grid-4, .stat-row, .it-grid, .search-layout, .sms { grid-template-columns: minmax(0, 1fr) !important; }
   /* Pages that set their columns inline (except the bar charts and label/value rows) */
   .content [style*="grid-template-columns"]:not(.bc):not(.sv-week):not(.sv-cols):not([style*="110px 1fr"]):not([style*="1fr auto"]) { grid-template-columns: minmax(0, 1fr) !important; }
@@ -548,4 +548,5 @@ tr.row-new td { background: var(--info-bg); }
   .page-head .actions { display: flex; flex-wrap: wrap; gap: 8px; }
   .page-head .actions .btn { flex: 1 1 auto; justify-content: center; text-align: center; }
   .sv-cat-head { flex-wrap: wrap; } .sv-cat-head h2 { flex: 1 0 100%; }
+  .content .panel[style*="max-width"], .content form[style*="max-width"] { max-width: none !important; }
 }
