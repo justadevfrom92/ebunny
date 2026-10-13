@@ -63,7 +63,7 @@ class DeputySeeder extends Seeder
             'Rewards' => ['How many stars do I have?', 'You have stars ready to redeem for a bill credit or a gift card. Want me to redeem them?'],
             'Deposit' => ['Why do I need a deposit?', 'The credit check asked for a deposit. You can pay it now, or enroll in AutoPay and paperless billing to lower it.'],
         ];
-        $customers = Customer::whereNotNull('phone')->inRandomOrder()->limit(60)->get();
+        $customers = Customer::whereNotNull('phone')->whereNull('password')->inRandomOrder()->limit(60)->get();   // not the My Account test sign-ins, so their chat starts empty
         $csrs = User::whereHas('role', fn ($q) => $q->where('perms', 'like', '%corral%'))->where('active', true)->get();
         foreach (['sms' => 90, 'chat' => 80] as $k => $count) {
             $agent = $agents[$k];

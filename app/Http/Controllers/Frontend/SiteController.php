@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ContactMessage;
 use App\Models\CookieConsent;
 use App\Models\SiteVisit;
+use App\Services\Cart;
 use App\Services\Catalog;
 use App\Support\SiteTraffic;
 use Illuminate\Http\JsonResponse;
@@ -51,6 +52,7 @@ class SiteController extends Controller
             'user' => $user?->active ? ['name' => $user->name] : null,
             // A customer signed in to My Account gets Sign Out in the website header
             'customer' => ($c = auth('customer')->user()) ? ['name' => $c->first_name] : null,
+            'cart' => app(Cart::class)->count(),
             'visit' => $visit && ! $block ? $visit->id : null,
             // The static pages hide themselves when the visitor is blocked
             'blocked' => $block ? ['message' => $block->message ?: 'This page isn\'t available.'] : null,

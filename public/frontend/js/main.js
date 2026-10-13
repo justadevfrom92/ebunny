@@ -24,6 +24,7 @@
       '<a class="logo" href="' + ET.root + 'index.html" aria-label="' + esc(B.name) + ' home">' + LOGO + '</a>' +
       '<button class="menu-toggle" aria-label="Menu" aria-expanded="false"><span></span></button>' +
       '<nav class="nav" id="main-nav">' + links +
+      '<a class="nav-cart" href="' + ET.root + 'shop/cart" aria-label="Cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.7 12.4a2 2 0 0 0 2 1.6h8.6a2 2 0 0 0 2-1.6L22 7H6"/></svg><span class="nav-cart-label">Cart</span><span class="cart-n" hidden>0</span></a>' +
       '<a class="btn" href="' + ET.root + 'myaccount">My Account</a>' +
       '</nav></div></header>'
     );
@@ -140,6 +141,8 @@
   }
   loadSession().then(function (s) {
     if (s.blocked) return;
+    // Items in the Shop cart, on the header's cart icon
+    ET.ready(function () { document.querySelectorAll('.cart-n').forEach(function (el) { el.textContent = s.cart || 0; el.hidden = !s.cart; }); });
     ET.consent = s.consent || null;
     if (!s.consent) ET.ready(function () { cookieBanner(null); });
   });

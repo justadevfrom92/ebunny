@@ -1,17 +1,31 @@
-{{-- A small sample cart kept in this browser (the shop has no checkout yet). Any .shop-add button adds its data-sku (and data-qty). --}}
-<div class="shop-cart" id="shop-cart" hidden role="status"><span>Cart: <b id="shop-cart-n">0</b></span><button type="button" class="link-btn" id="shop-cart-clear">Clear</button><small>Sample shop: checkout isn't open yet.</small></div>
+{{-- Cart bar on Shop pages: shows what's in the cart with Cart and Checkout buttons. Every .shop-add button adds its data-sku (and the qty field named in data-qty). --}}
+@php $count = app(\App\Services\Cart::class)->count(); @endphp
+<div class="shop-cart" id="shop-cart" @if (! $count) hidden @endif role="status" aria-live="polite">
+  <span class="shop-cart-msg" id="shop-cart-msg">Cart: <b id="shop-cart-n">{{ $count }}</b> {{ \Illuminate\Support\Str::plural('item', $count) }}</span>
+  <a class="btn btn-outline" href="{{ route('shop.cart') }}">View Cart</a>
+  <a class="btn" href="{{ route('myaccount.checkout') }}">Checkout</a>
+</div>
 <script>
 (function () {
-  var key = 'et-shop-cart', cart = []; try { cart = JSON.parse(localStorage.getItem(key)) || []; } catch (e) {}
-  var box = document.getElementById('shop-cart'), n = document.getElementById('shop-cart-n');
-  function show() { n.textContent = cart.length; box.hidden = !cart.length; try { localStorage.setItem(key, JSON.stringify(cart)); } catch (e) {} }
+  var box = document.getElementById('shop-cart'), msg = document.getElementById('shop-cart-msg');
+  var token = (document.querySelector('meta[name=csrf-token]') || {}).content;
+  function setCount(n, text) {
+    box.hidden = !n; msg.innerHTML = '';
+    var b = document.createElement('b'); b.id = 'shop-cart-n'; b.textContent = n;
+    msg.append(text ? text + ' · Cart: ' : 'Cart: ', b, ' ' + (n === 1 ? 'item' : 'items'));
+    document.querySelectorAll('.cart-n').forEach(function (el) { el.textContent = n; el.hidden = !n; });
+  }
   document.addEventListener('click', function (e) {
-    var b = e.target.closest('.shop-add'); if (!b) return;
+    var b = e.target.closest('.shop-add'); if (!b || b.disabled) return;
+    e.preventDefault();
     var q = Math.max(1, Math.min(10, parseInt((document.getElementById(b.dataset.qty || '') || {}).value || '1', 10) || 1));
-    for (var i = 0; i < q; i++) cart.push(b.dataset.sku);
-    show(); var t = b.textContent; b.textContent = 'Added ✓'; setTimeout(function () { b.textContent = t; }, 1200);
+    var label = b.textContent; b.disabled = true; b.textContent = 'Adding…';
+    fetch('{{ route('shop.cart.add') }}', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': token },
+      body: JSON.stringify({ sku: b.dataset.sku, qty: q }) })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(r); })
+      .then(function (j) { setCount(j.count, j.message); b.textContent = 'Added ✓'; })
+      .catch(function () { b.textContent = 'Try again'; })
+      .finally(function () { setTimeout(function () { b.disabled = false; b.textContent = label; }, 1200); });
   });
-  document.getElementById('shop-cart-clear').addEventListener('click', function () { cart = []; show(); });
-  show();
 })();
 </script>

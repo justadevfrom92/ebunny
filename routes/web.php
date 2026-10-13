@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Backend;
+use App\Http\Controllers\Frontend\CartController;
 use App\Http\Controllers\Frontend\MyAccount;
 use App\Http\Controllers\Frontend\PlanController;
 use App\Http\Controllers\Frontend\ShopController;
@@ -74,6 +75,11 @@ Route::prefix('myaccount')->name('myaccount.')->group(function () {
         Route::post('rewards', [MyAccount\PortalController::class, 'redeem'])->name('rewards.redeem');
         Route::get('refer-a-friend', [MyAccount\PortalController::class, 'refer'])->name('refer');
         Route::get('message-center', [MyAccount\PortalController::class, 'messages'])->name('messages');
+        // Shop: checkout (the cart itself is /shop/cart) and orders
+        Route::get('checkout', [MyAccount\CheckoutController::class, 'form'])->name('checkout');
+        Route::post('checkout', [MyAccount\CheckoutController::class, 'place'])->middleware('throttle:10,1')->name('checkout.place');
+        Route::get('orders', [MyAccount\CheckoutController::class, 'orders'])->name('orders');
+        Route::get('orders/{order}', [MyAccount\CheckoutController::class, 'order'])->name('order');
         Route::get('message-center/{message}', [MyAccount\PortalController::class, 'message'])->whereNumber('message')->name('message');
         Route::get('bill-and-payments/bills/{bill}/pdf', [MyAccount\PortalController::class, 'billPdf'])->whereNumber('bill')->name('bill.pdf');
         // The chat bubble (bottom right): the bot answers until a person takes over
@@ -87,6 +93,10 @@ Route::prefix('myaccount')->name('myaccount.')->group(function () {
 // A page for each plan
 Route::get('plans/{page}', [PlanController::class, 'show'])->where('page', '[a-z0-9-]+')->name('plans.show');
 Route::get('shop', [ShopController::class, 'index'])->name('shop');
+Route::get('shop/cart', [CartController::class, 'show'])->name('shop.cart');
+Route::post('shop/cart', [CartController::class, 'add'])->middleware('throttle:60,1')->name('shop.cart.add');
+Route::patch('shop/cart/{sku}', [CartController::class, 'update'])->name('shop.cart.update');
+Route::delete('shop/cart/{sku}', [CartController::class, 'remove'])->name('shop.cart.remove');
 Route::get('shop/{slug}', [ShopController::class, 'show'])->where('slug', '[a-z0-9-]+')->name('shop.show');
 
 // Website sign-up (the original /checkout flow)

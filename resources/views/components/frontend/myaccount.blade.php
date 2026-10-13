@@ -1,11 +1,13 @@
 @props(['c', 'title'])
 {{-- My Account frame: account menu on the left (below the page on phones), the page on the right --}}
 @php
+    $cartCount = app(\App\Services\Cart::class)->count();
     $menu = [
         'Account' => [['Dashboard', route('myaccount.dashboard')], ['Profile & Preferences', route('myaccount.profile')], ['Products & Protections', route('myaccount.products')], ['Message Center', route('myaccount.messages')]],
         'Bills' => [['View Bills', route('myaccount.bills')], ['Pay Bill', route('myaccount.pay')], ['Payment Methods', route('myaccount.methods')]],
         'Plan & Services' => [['Current Plan & Renew', route('myaccount.plan')], ['Transfer Service', route('myaccount.transfer')], ['Energy Insights', route('myaccount.insights')]],
         'Rewards' => [['My Rewards', route('myaccount.rewards')], ['Refer a Friend', route('myaccount.refer')]],
+        'Shop' => [['Cart & Checkout'.($cartCount ? ' ('.$cartCount.')' : ''), route('shop.cart')], ['Orders', route('myaccount.orders')], ['Shop', route('shop')]],
     ];
     $here = url()->current();
     $login = auth('customer')->user();
@@ -46,7 +48,7 @@
         <h4>{{ $heading }}</h4>
         <div class="ma-group">
         @foreach ($items as [$label, $url])
-          @php $on = $url === $here || ($url === route('myaccount.messages') && str_starts_with($here, $url.'/')); @endphp
+          @php $on = $url === $here || (in_array($url, [route('myaccount.messages'), route('myaccount.orders')], true) && str_starts_with($here, $url.'/')) || ($url === route('shop.cart') && $here === route('myaccount.checkout')); @endphp
           <a href="{{ $url }}" @class(['on' => $on]) @if ($on) aria-current="page" @endif>{{ $label }}</a>
         @endforeach
         </div>
