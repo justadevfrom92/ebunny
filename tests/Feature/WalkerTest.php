@@ -106,9 +106,10 @@ class WalkerTest extends TestCase
             ->assertSee('aria-label="Download .xlsx"', false)->assertSee('aria-label="Rerun report"', false)->assertSee(route('walker.runs.rerun', $run), false);
         $this->get('/admin/walker/reports/payments')->assertOk()->assertSee('Download latest .xlsx')->assertSee(route('walker.runs.rerun', $run), false);
         $this->get('/admin/walker/reports/orders')->assertOk()->assertSee(route('walker.reports.run', 'orders'), false);   // never run: reload runs it
-        // Every run row in Report Status has both icons
+        // Every run row in Report Status has both icons (the tables are paged)
         $html = $this->get('/admin/walker')->getContent();
-        $this->assertSame(ReportRun::count(), substr_count($html, 'aria-label="Rerun report"'));
+        $this->assertGreaterThan(10, substr_count($html, '<tr class="click" data-href="'.url('/admin/walker/runs')));
+        $this->assertSame(substr_count($html, '<tr class="click" data-href="'.url('/admin/walker/runs')), substr_count($html, 'aria-label="Rerun report"'));
         // Corral reports: top right downloads these results and reruns them
         $this->get('/admin/corral/reports/notes?run=1&start=2025-01-01')->assertOk()->assertSee('Download .xlsx')->assertSee('output=xls', false)->assertSee('output=screen', false);
     }

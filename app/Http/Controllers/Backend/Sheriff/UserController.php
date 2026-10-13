@@ -23,7 +23,9 @@ class UserController extends Controller
         $users = User::with(['role', 'manager'])->orderByDesc('active')->orderBy('name')->get();
 
         return view('backend.sheriff.users', [
-            'groups' => $users->where('active', true)->groupBy(fn ($u) => $u->department ?? 'No department')->sortKeys(),
+            // Employees by department, then 3rd-party company users by company
+            'groups' => $users->where('active', true)->whereNull('company')->groupBy(fn ($u) => $u->department ?? 'No department')->sortKeys(),
+            'external' => $users->where('active', true)->whereNotNull('company')->groupBy('company')->sortKeys(),
             'disabled' => $users->where('active', false),
             'apps' => AdminApps::all(),
             'rights' => config('admin.permissions'),
@@ -98,6 +100,8 @@ class UserController extends Controller
             'phone_ext' => ['nullable', 'string', 'max:10'],
             'location' => ['nullable', 'string', 'max:100'],
             'hired_on' => ['nullable', 'date'],
+            'company' => ['nullable', 'string', 'max:120'],
+            'access_ends_on' => ['nullable', 'date'],
             'role_id' => ['required', 'exists:roles,id'],
             'access' => ['array'],
             'access.*' => [Rule::in(['role', 'allow', 'deny'])],

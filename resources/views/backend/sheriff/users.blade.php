@@ -1,14 +1,14 @@
 @extends('backend.layouts.app')
 
 @section('content')
-    @include('backend.partials.page-head', ['title' => 'Users', 'sub' => 'Employees who sign in to the admin, by department. Access comes from each person\'s role; anything added or taken away for one person is marked.',
+    @include('backend.partials.page-head', ['title' => 'Users', 'sub' => 'Employees who sign in to the admin, by department, then 3rd-party company users by company. Access comes from each person\'s role; anything added or taken away for one person is marked.',
         'actions' => '<a class="btn cyan" href="'.route('sheriff.users.create').'">New User</a>'])
 
     <div class="stack">
-        @foreach ($groups as $department => $list)
-            <div class="panel"><div class="panel-head"><h2>{{ $department }}</h2><span class="muted">{{ $list->count() }} {{ Str::plural('person', $list->count()) }}</span></div>
+        @foreach ($groups->map(fn ($l, $d) => [$d, $l, false])->values()->concat($external->map(fn ($l, $c) => [$c, $l, true])->values()) as [$department, $list, $ext])
+            <div class="panel"><div class="panel-head"><h2>@if ($ext)<span class="pill info" style="margin-right:6px">3rd party</span>@endif{{ $department }}</h2><span class="muted">{{ $list->count() }} {{ Str::plural('person', $list->count()) }}</span></div>
                 <div class="table-wrap"><table class="table">
-                    <thead><tr><th>Employee</th><th>Role</th><th>Can Open</th><th>Rights</th><th>Manager</th><th>Last Sign-in</th><th></th></tr></thead>
+                    <thead><tr><th>{{ $ext ? 'User' : 'Employee' }}</th><th>Role</th><th>Can Open</th><th>Rights</th><th>{{ $ext ? 'Contact / Access Ends' : 'Manager' }}</th><th>Last Sign-in</th><th></th></tr></thead>
                     <tbody>@foreach ($list as $u)
                         @php $changes = $u->accessChanges(); @endphp
                         <tr class="click" data-href="{{ route('sheriff.users.edit', $u) }}">

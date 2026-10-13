@@ -172,7 +172,7 @@ class FinanceRewardsMarketingTest extends TestCase
 
         // Check Recipients and the live preview
         $sample = Customer::firstOrFail();
-        $this->getJson(route('rodeo.templates.test.recipients', [$template, 'mode' => 'team', 'role_id' => $admin->role_id]))->assertOk()->assertJsonPath('count', 1);
+        $this->getJson(route('rodeo.templates.test.recipients', [$template, 'mode' => 'team', 'role_id' => $admin->role_id]))->assertOk()->assertJsonPath('count', User::where('role_id', $admin->role_id)->where('active', true)->count());
         $this->getJson(route('rodeo.templates.test.recipients', [$template, 'mode' => 'accounts', 'accounts' => '999']))->assertStatus(422)->assertJsonPath('error', 'No account 999');
         $this->getJson(route('rodeo.templates.test.preview', [$template, 'sample' => $sample->account, 'prefix' => '[QA]', 'note' => 'Logo check']))->assertOk()
             ->assertJsonPath('customer.account', $sample->account)->assertJson(fn ($j) => $j->where('subject', fn ($s) => str_starts_with($s, '[QA] '))->etc())

@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             AccessSeeder::class,
+            MoreUsersSeeder::class,
             CatalogSeeder::class,
             CmsSeeder::class,
             ContentModulesSeeder::class,
@@ -33,6 +34,7 @@ class DatabaseSeeder extends Seeder
             CookieConsentSeeder::class,
             ContactMessageSeeder::class,
             DeputySeeder::class,
+            FillTablesSeeder::class, // rows for every admin table that would otherwise be empty
             CampaignSeeder::class,   // after the account data (phone types, AutoPay) it targets
         ]);
     }

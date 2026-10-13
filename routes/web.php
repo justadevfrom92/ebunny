@@ -314,10 +314,12 @@ Route::prefix('admin')->group(function () {
             Route::post('payments', 'recordPayment')->name('payments.record');
             Route::post('payments/{payment}/reverse', 'reverse')->name('payments.reverse');
             Route::get('credits-debits', 'ledger')->name('ledger');
+            Route::get('credits-debits/{entry}', 'ledgerShow')->name('ledger.show');
             Route::post('credits-debits/{entry}', 'decideLedger')->name('ledger.decide');
             Route::get('refunds', 'refunds')->name('refunds');
             Route::get('refunds/new', 'refundForm')->name('refunds.create');
             Route::post('refunds', 'requestRefund')->name('refunds.request');
+            Route::get('refunds/{refund}', 'refundShow')->name('refunds.show');
             Route::post('refunds/{refund}', 'decideRefund')->name('refunds.decide');
             Route::get('deposits', 'deposits')->name('deposits');
             Route::get('aging', 'aging')->name('aging');

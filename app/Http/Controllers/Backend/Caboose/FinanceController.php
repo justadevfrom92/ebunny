@@ -124,16 +124,32 @@ class FinanceController extends Controller
     {
         return view('backend.caboose.ledger', [
             'pending' => LedgerEntry::with(['customer', 'user'])->where('status', 'pending')->oldest()->get(),
-            'recent' => LedgerEntry::with(['customer', 'user'])->where('status', '!=', 'pending')->latest('updated_at')->limit(25)->get(),
+            'recent' => LedgerEntry::with(['customer', 'user', 'decider'])->where('status', '!=', 'pending')->latest('updated_at')->limit(25)->get(),
+        ]);
+    }
+
+    /** One credit or debit: the details, the account it changes, and Apply / Reject. */
+    public function ledgerShow(LedgerEntry $entry): View
+    {
+        $entry->load(['customer', 'user', 'decider']);
+        $c = $entry->customer;
+
+        return view('backend.caboose.ledger-show', ['e' => $entry, 'c' => $c,
+            'after' => $c ? round($c->balance + ($entry->kind === 'credit' ? -$entry->amount : $entry->amount), 2) : null,
+            'others' => $c ? LedgerEntry::with('user')->where('customer_id', $c->id)->whereKeyNot($entry->id)->latest()->limit(15)->get() : collect(),
+            'payments' => $c ? Payment::where('customer_id', $c->id)->latest('paid_on')->limit(6)->get() : collect(),
+            'bills' => $c ? Bill::where('customer_id', $c->id)->latest('id')->limit(4)->get() : collect(),
+            'notes' => $c ? $c->notes()->where('body', 'like', '%'.ucfirst($entry->kind).'%')->latest()->limit(8)->get() : collect(),
         ]);
     }
 
     public function decideLedger(Request $request, LedgerEntry $entry): RedirectResponse
     {
-        $do = $request->validate(['do' => ['required', Rule::in(['apply', 'reject'])]])['do'];
+        $in = $request->validate(['do' => ['required', Rule::in(['apply', 'reject'])], 'note' => ['nullable', 'string', 'max:250']]);
+        $do = $in['do'];
         abort_unless($entry->status === 'pending', 422);
-        DB::transaction(function () use ($request, $entry, $do) {
-            $entry->update(['status' => $do === 'apply' ? 'applied' : 'deleted']);
+        DB::transaction(function () use ($request, $entry, $do, $in) {
+            $entry->update(['status' => $do === 'apply' ? 'applied' : 'deleted', 'decided_by' => $request->user()->id, 'decided_at' => now(), 'decision_note' => $in['note'] ?? null]);
             if ($do === 'apply') {
                 $entry->kind === 'credit' ? $entry->customer->decrement('balance', $entry->amount) : $entry->customer->increment('balance', $entry->amount);
             }
@@ -154,6 +170,20 @@ class FinanceController extends Controller
         ]);
     }
 
+    /** One refund: the request, where it is (requested → approved → paid), the account and Approve / Reject / Mark Paid. */
+    public function refundShow(Refund $refund): View
+    {
+        $refund->load(['customer', 'requester', 'decider']);
+        $c = $refund->customer;
+
+        return view('backend.caboose.refund-show', ['r' => $refund, 'c' => $c,
+            'limit' => $c ? ($refund->kind === 'deposit' ? (float) $c->deposit_held : max(0, -$c->balance)) : 0,
+            'others' => $c ? Refund::with('decider')->where('customer_id', $c->id)->whereKeyNot($refund->id)->latest()->get() : collect(),
+            'payments' => $c ? Payment::where('customer_id', $c->id)->latest('paid_on')->limit(6)->get() : collect(),
+            'notes' => $c ? $c->notes()->where('action', 'Deposit Refund Request')->latest()->limit(8)->get() : collect(),
+        ]);
+    }
+
     public function requestRefund(Request $request): RedirectResponse
     {
         $data = $request->validate([
@@ -168,25 +198,26 @@ class FinanceController extends Controller
         if ($data['amount'] > $limit + 0.001) {
             return back()->withInput()->withErrors(['amount' => 'The most that can be refunded is $'.number_format(max(0, $limit), 2).($data['kind'] === 'deposit' ? ' (deposit held)' : ' (credit balance)').'.']);
         }
-        Refund::create(['customer_id' => $c->id, 'requested_by' => $request->user()->id] + collect($data)->except('account')->all());
+        $refund = Refund::create(['customer_id' => $c->id, 'requested_by' => $request->user()->id] + collect($data)->except('account')->all());
 
-        return redirect()->route('caboose.refunds')->with('status', 'Refund requested for account '.$c->account);
+        return redirect()->route('caboose.refunds.show', $refund)->with('status', 'Refund requested for account '.$c->account);
     }
 
     /** Approve or reject needs the "refunds" right; paying marks the money as sent. */
     public function decideRefund(Request $request, Refund $refund): RedirectResponse
     {
-        $do = $request->validate(['do' => ['required', Rule::in(['approve', 'reject', 'paid'])]])['do'];
+        $in = $request->validate(['do' => ['required', Rule::in(['approve', 'reject', 'paid'])], 'note' => ['nullable', 'string', 'max:250'], 'check_number' => ['nullable', 'string', 'max:30']]);
+        $do = $in['do'];
         Gate::authorize('refunds');
         abort_unless(($do === 'paid' && $refund->status === 'approved') || ($do !== 'paid' && $refund->status === 'requested'), 422);
-        DB::transaction(function () use ($request, $refund, $do) {
+        DB::transaction(function () use ($request, $refund, $do, $in) {
             $c = $refund->customer;
             if ($do === 'paid') {
-                $refund->update(['status' => 'paid', 'paid_at' => now()]);
+                $refund->update(['status' => 'paid', 'paid_at' => now(), 'check_number' => $in['check_number'] ?? null]);
                 $refund->kind === 'deposit' ? $c->update(['deposit_held' => max(0, $c->deposit_held - $refund->amount)]) : $c->increment('balance', $refund->amount);
                 $this->note($request, $c, ucfirst($refund->kind).' refund of $'.number_format($refund->amount, 2).' sent by '.$refund->method.'.', 'Deposit Refund Request');
             } else {
-                $refund->update(['status' => $do === 'approve' ? 'approved' : 'rejected', 'decided_by' => $request->user()->id, 'decided_at' => now()]);
+                $refund->update(['status' => $do === 'approve' ? 'approved' : 'rejected', 'decided_by' => $request->user()->id, 'decided_at' => now(), 'decision_note' => $in['note'] ?? null]);
                 $this->note($request, $c, 'Refund of $'.number_format($refund->amount, 2).' '.($do === 'approve' ? 'approved' : 'rejected').'.', 'Deposit Refund Request');
             }
         });

@@ -25,15 +25,18 @@
             <div class="panel"><div class="panel-head"><h2>Preview</h2><span class="muted">variables show their default text; widget codes shown as-is</span></div>
                 <div class="panel-body"><iframe id="b-prev" title="Block preview" sandbox="" style="width:100%;min-height:300px;border:1px solid var(--line);border-radius:6px;background:#fff"></iframe></div>
             </div>
-            <div class="panel"><div class="panel-head"><h2>Variables</h2><span class="muted">text each page passes in</span></div><div class="table-wrap"><table>
+            <div class="panel" hidden><div class="panel-head"><h2>Variables</h2><span class="muted">text each page passes in</span></div><div class="table-wrap"><table>
                 <thead><tr><th>Name</th><th>Default text</th></tr></thead><tbody id="b-vars"></tbody></table></div></div>
-            @if ($block->exists)
+            @if ($block->exists && $usedOn->isEmpty())<p class="help">Not placed on any page as a component yet. Add it from a page's Content Blocks, or paste its shortcode into another block.</p>@endif
+            @if ($block->exists && $usedOn->isNotEmpty())
                 <div class="panel"><div class="panel-head"><h2>Used On</h2></div><div class="table-wrap"><table>
                     <thead><tr><th>Page</th><th>Site</th><th>Zone</th></tr></thead>
-                    <tbody>@forelse ($usedOn as $u)
+                    <tbody>@foreach ($usedOn as $u)
                         <tr><td><a href="{{ route('lando.pages.edit', $u->page) }}#components">{{ $u->page->title }}</a> <span class="mono help">{{ $u->page->url() }}</span></td><td>{{ $u->page->site?->name }}</td><td>{{ config('cms.zones.'.$u->zone) }}</td></tr>
-                    @empty <tr><td colspan="3" class="empty">Not placed on any page as a component.</td></tr> @endforelse</tbody>
+                    @endforeach</tbody>
                 </table></div></div>
+            @endif
+            @if ($block->exists)
                 @can('delete')
                     <form method="post" action="{{ route('lando.blocks.destroy', $block) }}" data-confirm="Delete this content block?|It is also removed from every page it is on.|Delete Block">@csrf @method('delete')<button class="btn red">Delete Content Block</button></form>
                 @endcan

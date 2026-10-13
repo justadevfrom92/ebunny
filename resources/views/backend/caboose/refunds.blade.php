@@ -7,7 +7,7 @@
         <div class="panel"><div class="panel-head"><h2>Open</h2><span class="muted">{{ $open->count() }}</span></div><div class="table-wrap"><table>
             <thead><tr><th>Requested</th><th>Account</th><th>Kind</th><th class="num">Amount</th><th>Reason</th><th>Method</th><th>Status</th><th></th></tr></thead>
             <tbody>@forelse ($open as $r)
-                <tr><td>{{ $r->created_at->format('n/j/Y') }}<br><span class="help">{{ $r->requester?->name }}</span></td><td>{{ $r->customer?->account }}<br><span class="help">{{ $r->customer?->name }}</span></td>
+                <tr class="click" data-href="{{ route('caboose.refunds.show', $r) }}"><td><a href="{{ route('caboose.refunds.show', $r) }}">{{ $r->created_at->format('n/j/Y') }}</a><br><span class="help">{{ $r->requester?->name }}</span></td><td>{{ $r->customer?->account }}<br><span class="help">{{ $r->customer?->name }}</span></td>
                     <td>{{ ucfirst($r->kind) }}</td><td class="num">${{ number_format($r->amount, 2) }}</td><td class="wrap">{{ $r->reason }}</td><td>{{ $r->method }}</td>
                     <td>@include('backend.partials.pill', ['text' => ucfirst($r->status), 'tone' => $r->status === 'approved' ? 'ok' : 'info'])</td>
                     <td class="actions">@can('refunds')
@@ -26,7 +26,7 @@
         </table></div></div>
         <div class="panel"><div class="panel-head"><h2>Recently Closed</h2></div><div class="table-wrap"><table>
             <thead><tr><th>Closed</th><th>Account</th><th>Kind</th><th class="num">Amount</th><th>Status</th><th>Decided By</th></tr></thead>
-            <tbody>@forelse ($done as $r)<tr><td>{{ $r->updated_at->format('n/j/Y') }}</td><td>{{ $r->customer?->account }}</td><td>{{ ucfirst($r->kind) }}</td><td class="num">${{ number_format($r->amount, 2) }}</td><td>@include('backend.partials.pill', ['text' => ucfirst($r->status), 'tone' => $r->status === 'paid' ? 'ok' : ''])</td><td>{{ $r->decider?->name }}</td></tr>
+            <tbody>@forelse ($done as $r)<tr class="click" data-href="{{ route('caboose.refunds.show', $r) }}"><td><a href="{{ route('caboose.refunds.show', $r) }}">{{ ($r->paid_at ?? $r->decided_at ?? $r->updated_at)->format('n/j/Y') }}</a></td><td>{{ $r->customer?->account }}</td><td>{{ ucfirst($r->kind) }}</td><td class="num">${{ number_format($r->amount, 2) }}</td><td>@include('backend.partials.pill', ['text' => ucfirst($r->status), 'tone' => $r->status === 'paid' ? 'ok' : ''])</td><td>{{ $r->decider?->name }}</td></tr>
             @empty <tr><td colspan="6" class="empty">None yet.</td></tr> @endforelse</tbody>
         </table></div></div>
     </div>

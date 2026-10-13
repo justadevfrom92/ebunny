@@ -3,7 +3,7 @@
 @section('crumb', $u->exists ? $u->name : 'New User')
 
 @section('content')
-    @include('backend.partials.page-head', ['title' => $u->exists ? $u->name : 'New User', 'sub' => $u->exists ? e($u->title ?? 'Employee').' · '.e($u->department ?? 'No department') : 'An employee who signs in to the admin.',
+    @include('backend.partials.page-head', ['title' => $u->exists ? $u->name : 'New User', 'sub' => $u->exists ? e($u->title ?? 'Employee').' · '.e($u->company ? $u->company.' (3rd party)' : ($u->department ?? 'No department')) : 'An employee, or a 3rd-party company user, who signs in to the admin.',
         'actions' => $u->exists ? '<a class="btn ghost" href="'.route('sheriff.users.history', $u).'">History</a>' : null])
 
     @php
@@ -14,9 +14,11 @@
     @endphp
 
     <form method="post" action="{{ $u->exists ? route('sheriff.users.update', $u) : route('sheriff.users.store') }}" class="stack" style="max-width:980px">@csrf @if ($u->exists) @method('patch') @endif
-        <div class="panel"><div class="panel-head"><h2>Employee</h2></div>
+        <div class="panel"><div class="panel-head"><h2>Person</h2></div>
             <div class="panel-body form-grid">
                 <label for="name">Name</label><input id="name" name="name" required maxlength="150" value="{{ old('name', $u->name) }}">
+                <label for="company">Company</label><div><input id="company" name="company" maxlength="120" value="{{ old('company', $u->company) }}" placeholder="Empty for Energy Texas employees"><div class="help">For 3rd-party users: the outside company they work for (call center, agency, vendor).</div></div>
+                <label for="access_ends_on">Access ends</label><div><input id="access_ends_on" name="access_ends_on" type="date" value="{{ old('access_ends_on', $u->access_ends_on?->toDateString()) }}" style="max-width:20ch"><div class="help">Usually the end of the company's contract. Empty for no end date.</div></div>
                 <label for="employee_id">Employee #</label><input id="employee_id" name="employee_id" maxlength="20" class="mono" value="{{ old('employee_id', $u->employee_id) }}" style="max-width:16ch">
                 <label for="title">Job title</label><input id="title" name="title" maxlength="100" value="{{ old('title', $u->title) }}">
                 <label for="department">Department</label><select id="department" name="department"><option value="">None</option>@foreach (config('admin.departments') as $d)<option @selected(old('department', $u->department) === $d)>{{ $d }}</option>@endforeach</select>

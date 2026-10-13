@@ -173,7 +173,8 @@
           return def ? esc(def) : '[' + esc(name) + ']';
         });
         frame.srcdoc = '<style>body{font-family:sans-serif;padding:12px;color:#102247}</style>' + filled;
-        if (varList) varList.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="2" class="empty">No variables: this block shows the same text everywhere.</td></tr>';
+        // The Variables panel shows only when the block has {{variables}}
+        if (varList) { varList.innerHTML = rows.join(''); varList.closest('.panel').hidden = !rows.length; }
       };
       html.addEventListener('input', preview);
       preview();
