@@ -701,3 +701,13 @@ fieldset.field { border: 0; padding: 0; }
 .cookie-banner p { color: var(--navy); opacity: .8; }
 .logo-text strong, .logo-text span { white-space: nowrap; }
 @media (max-width: 1200px) and (min-width: 1025px) { .logo-text strong { font-size: 1.15rem; } .logo-text span { font-size: .62rem; letter-spacing: .22em; } .nav { gap: 14px; } }
+/* Phones: a compact cookie banner that leaves the page visible */
+@media (max-width: 600px) {
+  .cookie-banner { padding: 12px 0; }
+  .cookie-banner .wrap { gap: 10px; }
+  .cookie-banner h2 { font-size: 1rem; margin-bottom: 4px; }
+  .cookie-banner p { font-size: .8rem; line-height: 1.4; }
+  .cb-actions { flex-wrap: nowrap; gap: 8px; }
+  .cb-actions .btn { padding: 8px 10px; font-size: .72rem; letter-spacing: .04em; }
+  .cb-actions .link-btn { font-size: .85rem; }
+}
