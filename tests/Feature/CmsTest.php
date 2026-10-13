@@ -171,4 +171,16 @@ class CmsTest extends TestCase
         $this->get('/admin/sheriff/fees')->assertNotFound();
         $this->get('/admin/sheriff/integrations/stripe')->assertOk()->assertSee('STRIPE_SECRET')->assertDontSee((string) config('admin.integrations.stripe.env.STRIPE_SECRET') ?: 'unset-value-guard');
     }
+
+    public function test_rows_with_one_action_link_the_entry_instead_of_a_button(): void
+    {
+        $this->actingAs($this->admin());
+        $t = Template::firstOrFail();
+        $this->get('/admin/lando/templates')->assertOk()->assertSee('href="'.route('lando.templates.edit', $t).'"><b>', false)->assertDontSee('>Edit</a>', false);
+        $m = Market::firstOrFail();
+        $this->get('/admin/sheriff/markets')->assertOk()->assertSee('href="'.route('sheriff.markets.edit', $m).'"><b>', false)->assertDontSee('>Edit</a>', false);
+        $this->get('/admin/corral/queues')->assertOk()->assertDontSee('>Open</a>', false);
+        $this->get('/admin/rodeo/channels')->assertOk()->assertDontSee('>Edit</a>', false);
+        $this->get('/admin/sheriff/cached-tables')->assertOk()->assertDontSee('>View</a>', false);
+    }
 }
