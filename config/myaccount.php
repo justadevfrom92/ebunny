@@ -32,4 +32,34 @@ return [
         'ev-charger-protection' => ['Electric Vehicle Charger Protection Program', 'Covers repairs to your home EV charger.', '$7.99/mo', 'self'],
         'adt-security' => ['ADT Security', 'Home security monitoring with a discount for our customers.', 'From $29.99/mo through ADT', 'call'],
     ],
+
+    /*
+    | Message Center: for each kind of message, what it is about and what the customer can do next.
+    |   template => [kind label, explanation, about: bill | payment | plan | rewards | account, [[button, route, params]]]
+    */
+    'messages' => [
+        'Bill Ready' => ['label' => 'Bill', 'about' => 'bill', 'why' => 'Your new bill is ready. It shows your usage for the billing period, the charges and when payment is due.',
+            'actions' => [['View PDF', 'pdf'], ['Pay Bill', 'myaccount.pay'], ['Set up AutoPay', 'products', 'autopay']]],
+        'Billing - Resi - Payment Made' => ['label' => 'Payment', 'about' => 'payment', 'why' => 'We received your payment. It can take up to one business day to show on your balance.',
+            'actions' => [['See Payments', 'myaccount.bills'], ['Payment Methods', 'myaccount.methods']]],
+        'Payment Made' => ['label' => 'Payment', 'about' => 'payment', 'why' => 'We received your payment. It can take up to one business day to show on your balance.',
+            'actions' => [['See Payments', 'myaccount.bills']]],
+        'Welcome Letter' => ['label' => 'Welcome', 'about' => 'plan', 'why' => 'Welcome! Your welcome packet has your plan, your Electricity Facts Label, Terms of Service and Your Rights as a Customer.',
+            'actions' => [['Current Plan', 'myaccount.plan'], ['Products & Protections', 'myaccount.products']]],
+        'Welcome Letter - Renewed' => ['label' => 'Renewal', 'about' => 'plan', 'why' => 'Thanks for renewing. Your new plan starts when your current contract ends.', 'actions' => [['Current Plan', 'myaccount.plan']]],
+        'Renewal Offer' => ['label' => 'Renewal', 'about' => 'plan', 'why' => 'Your contract is ending soon. Renew now to lock in a new rate; if you do nothing you move to a month-to-month rate.',
+            'actions' => [['See Renewal Plans', 'myaccount.plan']]],
+        'Renewal - Confirmation' => ['label' => 'Renewal', 'about' => 'plan', 'why' => 'Your renewal is confirmed.', 'actions' => [['Current Plan', 'myaccount.plan']]],
+        'Order Accepted' => ['label' => 'Order', 'about' => 'plan', 'why' => 'Your utility accepted your order. Service starts on your start date; there is nothing else you need to do.',
+            'actions' => [['Current Plan', 'myaccount.plan']]],
+        'Rewards - Stars Earned' => ['label' => 'Rewards', 'about' => 'rewards', 'why' => 'You earned Power Rewards stars. Spend them on bill credits and gift cards.', 'actions' => [['My Rewards', 'myaccount.rewards']]],
+        'Rewards - Welcome' => ['label' => 'Rewards', 'about' => 'rewards', 'why' => 'You are in Power Rewards: earn stars for paying on time, AutoPay and referrals.', 'actions' => [['My Rewards', 'myaccount.rewards'], ['Refer a Friend', 'myaccount.refer']]],
+        'AutoPay Removed' => ['label' => 'AutoPay', 'about' => 'account', 'why' => 'AutoPay is off, so your next bill will not be paid automatically.', 'actions' => [['Turn AutoPay back on', 'products', 'autopay'], ['Pay Bill', 'myaccount.pay']]],
+        'Disconnect Notice' => ['label' => 'Important', 'about' => 'bill', 'why' => 'Your account is past due. Pay the past-due amount by the date shown to keep your service on, or ask about a payment arrangement.',
+            'actions' => [['Pay Bill', 'myaccount.pay'], ['Payment Arrangement', 'products', 'payment-arrangement']]],
+        'Agent text' => ['label' => 'Text', 'about' => 'account', 'why' => 'A text from our customer service team. Reply to the text, or chat with us here.', 'actions' => []],
+        'Bot text' => ['label' => 'Text', 'about' => 'account', 'why' => 'A text from our virtual assistant. Reply to the text to keep the conversation going.', 'actions' => []],
+        'Reply' => ['label' => 'Your text', 'about' => 'account', 'why' => 'A text you sent us. Our team or assistant replies by text.', 'actions' => []],
+        '_default' => ['label' => 'Message', 'about' => 'account', 'why' => 'A message from us about your account.', 'actions' => [['Dashboard', 'myaccount.dashboard']]],
+    ],
 ];

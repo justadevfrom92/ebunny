@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Bill;
+use App\Models\ContactLog;
 use App\Models\Customer;
 use App\Models\PaymentMethod;
 use App\Models\ScheduledPayment;
@@ -87,15 +89,49 @@ class MyAccountPayTest extends TestCase
         $this->post(route('myaccount.login.test', $c));
         $html = $this->get(route('myaccount.dashboard'))->assertOk()->getContent();
         $this->assertStringContainsString('<h4>Bills</h4>', $html);
-        $this->assertStringContainsString('<h4>Products</h4>', $html);
+        $this->assertStringNotContainsString('<h4>Products</h4>', $html);
         $this->assertStringNotContainsString('Bill &amp; Payments', $html);
+        // One Products & Protections link, right above Message Center
         $nav = substr($html, strpos($html, 'class="ma-nav"'));
-        $this->assertSame(count(config('myaccount.products')), substr_count(substr($nav, 0, strpos($nav, '</nav>')), 'href="'.route('myaccount.products').'#'));
+        $nav = substr($nav, 0, strpos($nav, '</nav>'));
+        $this->assertSame(1, substr_count($nav, 'href="'.route('myaccount.products').'"'));
+        $this->assertSame(0, substr_count($nav, route('myaccount.products').'#'));
+        $this->assertLessThan(strpos($nav, '>Message Center<'), strpos($nav, '>Products &amp; Protections<'));
         // On phones the account menu shows below the page: it comes after the page in the HTML
         $this->assertLessThan(strpos($html, 'class="ma-nav"'), strpos($html, 'class="ma-main"'));
 
         $this->post(route('myaccount.product.toggle', 'home-warranty'), ['enroll' => 1])->assertRedirect(route('myaccount.products').'#home-warranty');
         $this->assertTrue($c->hasProduct('AIG Home Warranty'));
         $this->post(route('myaccount.product.toggle', 'adt-security'), ['enroll' => 1])->assertNotFound();   // set up by phone, not a toggle
+    }
+
+    public function test_view_bills_opens_each_bill_as_a_pdf(): void
+    {
+        $c = Customer::where('username', 'demo.customer')->firstOrFail();
+        $this->post(route('myaccount.login.test', $c));
+        $bill = $c->bills()->orderByDesc('billed_on')->firstOrFail();
+        $this->get(route('myaccount.bills'))->assertOk()->assertSee('View PDF')->assertSee('href="'.route('myaccount.bill.pdf', $bill).'" target="_blank"', false);
+        $res = $this->get(route('myaccount.bill.pdf', $bill))->assertOk()->assertHeader('Content-Type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF-1.4', $res->getContent());
+        $this->assertStringContainsString($c->account, $res->getContent());
+        $this->assertStringContainsString('inline; filename="bill-', $res->headers->get('Content-Disposition'));
+        // Someone else's bill
+        $other = Bill::where('customer_id', '!=', $c->id)->firstOrFail();
+        $this->get(route('myaccount.bill.pdf', $other))->assertNotFound();
+    }
+
+    public function test_message_center_has_a_page_per_message(): void
+    {
+        $c = Customer::where('username', 'demo.customer')->firstOrFail();
+        $this->post(route('myaccount.login.test', $c));
+        $list = $this->get(route('myaccount.messages'))->assertOk();
+        foreach ($c->contactLogs()->limit(50)->get() as $m) {
+            $list->assertSee(route('myaccount.message', $m), false);
+            $this->get(route('myaccount.message', $m))->assertOk()->assertSee('What this is about')->assertSee('All messages');
+        }
+        $bill = $c->contactLogs()->where('template', 'Bill Ready')->firstOrFail();
+        $this->get(route('myaccount.message', $bill))->assertSee('The bill')->assertSee('View PDF')->assertSee('srcdoc=', false);
+        $other = ContactLog::where('customer_id', '!=', $c->id)->firstOrFail();
+        $this->get(route('myaccount.message', $other))->assertNotFound();
     }
 }

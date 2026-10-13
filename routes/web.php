@@ -73,6 +73,8 @@ Route::prefix('myaccount')->name('myaccount.')->group(function () {
         Route::post('rewards', [MyAccount\PortalController::class, 'redeem'])->name('rewards.redeem');
         Route::get('refer-a-friend', [MyAccount\PortalController::class, 'refer'])->name('refer');
         Route::get('message-center', [MyAccount\PortalController::class, 'messages'])->name('messages');
+        Route::get('message-center/{message}', [MyAccount\PortalController::class, 'message'])->whereNumber('message')->name('message');
+        Route::get('bill-and-payments/bills/{bill}/pdf', [MyAccount\PortalController::class, 'billPdf'])->whereNumber('bill')->name('bill.pdf');
         // The chat bubble (bottom right): the bot answers until a person takes over
         Route::get('chat', [MyAccount\ChatController::class, 'show'])->middleware('throttle:120,1')->name('chat');
         Route::post('chat', [MyAccount\ChatController::class, 'send'])->middleware('throttle:20,1')->name('chat.send');

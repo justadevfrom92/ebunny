@@ -4,12 +4,13 @@
 @section('heading', 'My Account')
 @section('main')
 <x-frontend.myaccount :c="$c" title="View Bills">
-  <div class="co-card"><h3>Bills</h3><div style="overflow-x:auto"><table class="price-table">
-    <thead><tr><th>Bill Date</th><th>Period</th><th>Usage</th><th>Amount</th><th>Due</th><th>Status</th></tr></thead>
+  <div class="co-card"><h3>Bills</h3><div class="ma-table"><table class="price-table">
+    <thead><tr><th>Bill Date</th><th>Period</th><th>Usage</th><th>Amount</th><th>Due</th><th>Status</th><th class="num">Bill</th></tr></thead>
     <tbody>@forelse ($bills as $b)
       <tr><td>{{ $b->billed_on->format('M j, Y') }}</td><td>{{ $b->period_start?->format('n/j') }}–{{ $b->period_end?->format('n/j') }}</td><td>{{ number_format($b->kwh) }} kWh</td>
-        <td>${{ number_format($b->amount, 2) }}</td><td>{{ $b->due_on?->format('M j') }}</td><td>{{ $b->paid_on ? 'Paid '.$b->paid_on->format('n/j') : 'Open' }}</td></tr>
-    @empty <tr><td colspan="6">No bills yet.</td></tr> @endforelse</tbody></table></div></div>
+        <td>${{ number_format($b->amount, 2) }}</td><td>{{ $b->due_on?->format('M j') }}</td><td>{{ $b->paid_on ? 'Paid '.$b->paid_on->format('n/j') : 'Open' }}</td>
+        <td class="num"><a class="pdf-link" href="{{ route('myaccount.bill.pdf', $b) }}" target="_blank" rel="noopener" aria-label="View PDF of the {{ $b->billed_on->format('F j, Y') }} bill (opens in a new tab)">@include('frontend.myaccount._pdf-icon') View PDF</a></td></tr>
+    @empty <tr><td colspan="7">No bills yet.</td></tr> @endforelse</tbody></table></div></div>
   <div class="co-card" style="margin-top:20px"><h3>Payments</h3><div style="overflow-x:auto"><table class="price-table">
     <thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Status</th><th>Confirmation</th></tr></thead>
     <tbody>@forelse ($payments as $p)

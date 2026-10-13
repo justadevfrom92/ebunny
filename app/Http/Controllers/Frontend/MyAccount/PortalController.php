@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Frontend\MyAccount;
 
 use App\Http\Controllers\Controller;
+use App\Models\Bill;
+use App\Models\ContactLog;
 use App\Models\Customer;
+use App\Models\EmailTemplate;
 use App\Models\PaymentMethod;
 use App\Models\Plan;
 use App\Models\PlanGroup;
@@ -14,8 +17,10 @@ use App\Services\AccountActions;
 use App\Services\Catalog;
 use App\Services\Products;
 use App\Services\Rewards;
+use App\Support\BillPdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -372,6 +377,41 @@ class PortalController extends Controller
     public function messages(Request $request): View
     {
         return view('frontend.myaccount.messages', ['c' => $this->c($request), 'messages' => $this->c($request)->contactLogs()->limit(50)->get()]);
+    }
+
+    /**
+     * One message: what it is about and what to do next, when it was sent, opened and clicked,
+     * the full text (emails as the customer received them) and the bill or payment it is about.
+     */
+    public function message(Request $request, ContactLog $message): View
+    {
+        $c = $this->c($request);
+        abort_unless($message->customer_id === $c->id, 404);
+        $info = config('myaccount.messages.'.$message->template) ?? config('myaccount.messages._default');
+        $template = $message->channel === 'Email' ? EmailTemplate::where('name', $message->template)->first() : null;
+        $when = $message->sent_at ?? $message->created_at;
+        $list = $c->contactLogs()->limit(50)->pluck('id')->values();
+        $i = $list->search($message->id);
+
+        return view('frontend.myaccount.message', ['c' => $c, 'm' => $message, 'info' => $info,
+            'subject' => $template ? $template->renderSubject($c) : $message->template,
+            'html' => $template ? $template->render($c) : null,
+            'bill' => in_array($info['about'] ?? null, ['bill'], true) ? $c->bills()->where('billed_on', '<=', $when->copy()->addDays(3))->orderByDesc('billed_on')->first() : null,
+            'payment' => ($info['about'] ?? null) === 'payment' ? $c->payments()->where('paid_on', '<=', $when->copy()->addDay())->orderByDesc('paid_on')->first() : null,
+            'newer' => $i !== false && $i > 0 ? $list[$i - 1] : null, 'older' => $i !== false ? $list[$i + 1] ?? null : null,
+        ]);
+    }
+
+    /** View PDF on View Bills: the bill as a PDF statement, opened in a new tab. */
+    public function billPdf(Request $request, Bill $bill): Response
+    {
+        abort_unless($bill->customer_id === $this->c($request)->id, 404);
+
+        return response(BillPdf::make($bill->load('customer.plan', 'customer.market')), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="bill-'.($bill->invoice ?: $bill->reference).'.pdf"',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
     // ---------- QuickPay (no sign-in) ----------

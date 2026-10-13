@@ -1,12 +1,9 @@
 @props(['c', 'title'])
 {{-- My Account frame: account menu on the left (below the page on phones), the page on the right --}}
 @php
-    $products = route('myaccount.products');
     $menu = [
-        'Account' => [['Dashboard', route('myaccount.dashboard')], ['Profile & Preferences', route('myaccount.profile')], ['Message Center', route('myaccount.messages')]],
+        'Account' => [['Dashboard', route('myaccount.dashboard')], ['Profile & Preferences', route('myaccount.profile')], ['Products & Protections', route('myaccount.products')], ['Message Center', route('myaccount.messages')]],
         'Bills' => [['View Bills', route('myaccount.bills')], ['Pay Bill', route('myaccount.pay')], ['Payment Methods', route('myaccount.methods')]],
-        // Every product is on the one Products page; each link jumps to its card
-        'Products' => collect(config('myaccount.products'))->map(fn ($p, $slug) => [$p[0], $products.'#'.$slug])->values()->all(),
         'Plan & Services' => [['Current Plan & Renew', route('myaccount.plan')], ['Transfer Service', route('myaccount.transfer')], ['Energy Insights', route('myaccount.insights')]],
         'Rewards' => [['My Rewards', route('myaccount.rewards')], ['Refer a Friend', route('myaccount.refer')]],
     ];
@@ -47,9 +44,10 @@
       @endif
       @foreach ($menu as $heading => $items)
         <h4>{{ $heading }}</h4>
-        <div @class(['ma-group', 'ma-products' => $heading === 'Products'])>
+        <div class="ma-group">
         @foreach ($items as [$label, $url])
-          <a href="{{ $url }}" @class(['on' => $url === $here]) @if ($url === $here) aria-current="page" @endif>{{ $label }}</a>
+          @php $on = $url === $here || ($url === route('myaccount.messages') && str_starts_with($here, $url.'/')); @endphp
+          <a href="{{ $url }}" @class(['on' => $on]) @if ($on) aria-current="page" @endif>{{ $label }}</a>
         @endforeach
         </div>
       @endforeach
@@ -57,8 +55,3 @@
   </div>
 </section>
 <x-frontend.chat />
-<script>
-  // Products links all open the one Products page: mark the one whose card is showing
-  (function () { function mark() { document.querySelectorAll('.ma-products a').forEach(function (a) { var on = location.pathname === new URL(a.href).pathname && location.hash === new URL(a.href).hash; a.classList.toggle('on', on); on ? a.setAttribute('aria-current', 'location') : a.removeAttribute('aria-current'); }); }
-    mark(); window.addEventListener('hashchange', mark); })();
-</script>

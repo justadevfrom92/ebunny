@@ -1,10 +1,10 @@
 @extends('frontend.layouts.main')
-@section('title', 'Products')
+@section('title', 'Products & Protections')
 @section('crumb', 'My Account')
 @section('heading', 'My Account')
 @section('main')
-<x-frontend.myaccount :c="$c" title="Products">
-  <p style="margin-bottom:20px">Everything you can add to your account. Turn the free ones on and off here; for the rest, we'll set it up with you.</p>
+<x-frontend.myaccount :c="$c" title="Products & Protections">
+  <p style="margin-bottom:20px">Everything you can add to your account: billing options, rewards, smart home and protection plans. Turn the free ones on and off here; for the rest, we'll set it up with you.</p>
   <div class="prod-grid">
     @foreach ($products as $slug => [$name, $desc, $price, $how])
       @php $enrolled = in_array($name, $on, true); @endphp
