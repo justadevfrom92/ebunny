@@ -257,6 +257,7 @@ Route::prefix('admin')->group(function () {
             Route::resource('pages', Backend\Lando\PageController::class)->except('show');
             Route::post('pages/{page}/components', [Backend\Lando\PageController::class, 'addComponent'])->name('pages.components.store');
             Route::post('page-components/{component}/move', [Backend\Lando\PageController::class, 'moveComponent'])->name('pages.components.move');
+            Route::patch('page-components/{component}', [Backend\Lando\PageController::class, 'updateComponent'])->name('pages.components.update');
             Route::delete('page-components/{component}', [Backend\Lando\PageController::class, 'removeComponent'])->name('pages.components.destroy');
             Route::post('sitemap', [Backend\Lando\PageController::class, 'sitemap'])->name('pages.sitemap');
             Route::resource('templates', Backend\Lando\TemplateController::class)->except(['show', 'destroy']);

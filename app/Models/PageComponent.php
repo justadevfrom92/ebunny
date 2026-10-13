@@ -12,6 +12,11 @@ class PageComponent extends Model
 
     protected $guarded = ['id'];
 
+    protected function casts(): array
+    {
+        return ['vars' => 'array'];
+    }
+
     public function page(): BelongsTo
     {
         return $this->belongsTo(Page::class);

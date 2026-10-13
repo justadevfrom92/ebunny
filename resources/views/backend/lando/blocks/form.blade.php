@@ -17,13 +17,16 @@
                 <label for="b-html">Content (HTML)</label><textarea id="b-html" name="html" spellcheck="false">{{ old('html', $block->html) }}</textarea>
             </div>
             <p class="help" style="margin-top:8px">Widgets you can use: <span class="mono">[[zip_form]] [[plans|group=featured|limit=3]] [[phone]] [[year]]</span> and other blocks with <span class="mono">[[block|slug]]</span>.</p>
+            <p class="help" style="margin-top:6px"><b>Make it a module:</b> put <span class="mono">@{{heading}}</span> or <span class="mono">@{{heading|Default text}}</span> where a page should pass its own text. Each page fills them in on its component (Edit Page → Page Components) or in the code: <span class="mono">[[block|{{ $block->slug ?: 'slug' }}|heading=Save today]]</span>.</p>
             <div class="actions" style="margin-top:16px"><button class="btn cyan">Save Content Block</button><a class="btn ghost" href="{{ route('lando.blocks.index') }}">Cancel</a></div>
             <p class="help" style="margin-top:10px">Ctrl+S saves.</p>
         </div></form>
         <div style="display:flex;flex-direction:column;gap:20px">
-            <div class="panel"><div class="panel-head"><h2>Preview</h2><span class="muted">widget codes shown as-is</span></div>
+            <div class="panel"><div class="panel-head"><h2>Preview</h2><span class="muted">variables show their default text; widget codes shown as-is</span></div>
                 <div class="panel-body"><iframe id="b-prev" title="Block preview" sandbox="" style="width:100%;min-height:300px;border:1px solid var(--line);border-radius:6px;background:#fff"></iframe></div>
             </div>
+            <div class="panel"><div class="panel-head"><h2>Variables</h2><span class="muted">text each page passes in</span></div><div class="table-wrap"><table>
+                <thead><tr><th>Name</th><th>Default text</th></tr></thead><tbody id="b-vars"></tbody></table></div></div>
             @if ($block->exists)
                 <div class="panel"><div class="panel-head"><h2>Used On</h2></div><div class="table-wrap"><table>
                     <thead><tr><th>Page</th><th>Site</th><th>Zone</th></tr></thead>

@@ -10,7 +10,8 @@ use App\Services\Catalog;
 
 /**
  * Turns Lando content into website HTML: expands [[block|slug]] (or
- * [[block|id=N]]) codes and collects each zone's page components.
+ * [[block|id=N]]) codes, filling in the block's {{variables}} from the code
+ * ([[block|slug|city=Dallas]]) or the page component, and collects each zone's page components.
  * Content is written by signed-in Lando editors and is output as HTML.
  */
 class SiteContent
@@ -18,7 +19,20 @@ class SiteContent
     /** Heading for [[zip_form]] on the page being rendered (Address Box Title). */
     public static ?string $addressBoxTitle = null;
 
-    private const CODE = '/\[\[block\|(?:id=(\d+)|([A-Za-z0-9_-]+))\]\]/';
+    /** [[block|slug]] or [[block|id=N]], optionally passing the block's variables: [[block|slug|city=Dallas|utility=Oncor]] */
+    private const CODE = '/\[\[block\|(?:id=(\d+)|([A-Za-z0-9_-]+))((?:\|[A-Za-z0-9_]+=[^|\]]*)*)\]\]/';
+
+    /** "|city=Dallas|utility=Oncor" → ['city' => 'Dallas', 'utility' => 'Oncor'] */
+    private static function params(string $s): array
+    {
+        $out = [];
+        foreach (array_filter(explode('|', $s)) as $pair) {
+            [$k, $v] = array_pad(explode('=', $pair, 2), 2, '');
+            $out[$k] = html_entity_decode(trim($v));
+        }
+
+        return $out;
+    }
 
     public static function expand(?string $html, ?Site $site, int $depth = 0): string
     {
@@ -37,7 +51,7 @@ class SiteContent
                 ->where(fn ($q) => $q->whereNull('site_id')->orWhere('site_id', $site?->id))
                 ->first();
 
-            return $block ? self::expand($block->html, $site, $depth + 1) : '';
+            return $block ? self::expand($block->withVars(self::params($m[3] ?? '')), $site, $depth + 1) : '';
         }, $html);
 
         // Codes this site doesn't support (e.g. old checkout codes) are left out rather than shown
@@ -102,7 +116,7 @@ class SiteContent
         foreach ($page->components()->with('block')->get() as $c) {
             $b = $c->block;
             if ($b && ($b->site_id === null || $b->site_id === $page->site_id) && isset($out[$c->zone])) {
-                $out[$c->zone] .= '<div class="cms-block" data-block="'.e($b->slug).'">'.self::expand($b->html, $page->site).'</div>';
+                $out[$c->zone] .= '<div class="cms-block" data-block="'.e($b->slug).'">'.self::expand($b->withVars($c->vars ?? []), $page->site).'</div>';
             }
         }
 

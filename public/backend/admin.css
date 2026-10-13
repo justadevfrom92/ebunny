@@ -558,3 +558,11 @@ tr.row-new td { background: var(--info-bg); }
 .report-actions .btn.icon { padding: 5px 7px; line-height: 0; }
 .report-actions .btn.disabled { opacity: .4; cursor: not-allowed; }
 .report-actions .ri { flex-shrink: 0; }
+
+/* Page components: text boxes for a module block's variables */
+.comp-vars { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: flex-end; margin: -2px 0 12px; padding: 10px 12px; background: var(--row); border-radius: 6px; }
+.comp-vars .field { display: flex; flex-direction: column; gap: 3px; min-width: 160px; flex: 1; } .comp-vars label { font-size: .75rem; color: var(--muted); }
+.comp-vars input { padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+
+/* Content Blocks table: fits without sideways scrolling */
+.blocks-table td { white-space: normal; } .blocks-table td:first-child { max-width: 340px; overflow-wrap: anywhere; }

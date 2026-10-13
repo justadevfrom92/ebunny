@@ -114,6 +114,16 @@
                                 @if ($blockUrl = app_route('blocks.edit', $c->block))<a class="btn sm ghost" href="{{ $blockUrl }}">Edit Block</a>@endif
                                 <form method="post" action="{{ app_route('pages.components.destroy', $c) }}" class="inline">@csrf @method('delete')<button class="link-btn">[ remove ]</button></form>
                             </span></div>
+                        @if ($vars = $c->block->variables())
+                            {{-- A module: this page's own text for each of the block's variables --}}
+                            <form method="post" action="{{ app_route('pages.components.update', $c) }}" class="comp-vars">@csrf @method('patch')
+                                @foreach ($vars as $name => $default)
+                                    <div class="field"><label for="v{{ $c->id }}-{{ $name }}">{{ \Illuminate\Support\Str::headline($name) }}</label>
+                                        <input id="v{{ $c->id }}-{{ $name }}" name="vars[{{ $name }}]" value="{{ $c->vars[$name] ?? '' }}" placeholder="{{ $default !== '' ? $default : 'Text for '.$name }}"></div>
+                                @endforeach
+                                <button class="btn sm">Save Text</button>
+                            </form>
+                        @endif
                     @empty <p class="help" style="margin-bottom:10px">Nothing here.</p> @endforelse
                 @endforeach
                 <form method="post" action="{{ app_route('pages.components.store', $page) }}" class="form-row" style="margin-top:16px">@csrf

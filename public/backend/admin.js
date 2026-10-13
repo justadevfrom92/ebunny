@@ -162,7 +162,19 @@
     // Content block editor: live preview, Tab inserts spaces, Ctrl+S saves
     var html = $('#b-html'), frame = $('#b-prev');
     if (html && frame) {
-      var preview = function () { frame.srcdoc = '<style>body{font-family:sans-serif;padding:12px;color:#102247}</style>' + html.value; };
+      // Variables ({{name}} or {{name|default}}) show their default text (or [name]) in the preview, and are listed under it
+      var varList = $('#b-vars');
+      var esc = function (t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; };
+      var preview = function () {
+        var seen = {}, rows = [];
+        var filled = html.value.replace(/\{\{\s*([a-z][a-z0-9_]*)\s*(?:\|([^}]*))?\}\}/gi, function (m, name, def) {
+          def = (def || '').trim();
+          if (!seen[name]) { seen[name] = 1; rows.push('<tr><td class="mono">' + esc(name) + '</td><td>' + (def ? esc(def) : '<span class="muted">none</span>') + '</td></tr>'); }
+          return def ? esc(def) : '[' + esc(name) + ']';
+        });
+        frame.srcdoc = '<style>body{font-family:sans-serif;padding:12px;color:#102247}</style>' + filled;
+        if (varList) varList.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="2" class="empty">No variables: this block shows the same text everywhere.</td></tr>';
+      };
       html.addEventListener('input', preview);
       preview();
       html.addEventListener('keydown', function (e) {

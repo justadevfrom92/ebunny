@@ -133,6 +133,16 @@ class PageController extends Controller
         return redirect(app_route('pages.edit', $page).'#components')->with('status', 'Component added');
     }
 
+    /** The text a page passes into its component's {{variables}}. */
+    public function updateComponent(Request $request, PageComponent $component): RedirectResponse
+    {
+        $names = array_keys($component->block->variables());
+        $data = $request->validate(['vars' => ['array'], 'vars.*' => ['nullable', 'string', 'max:2000']]);
+        $component->update(['vars' => array_filter(array_intersect_key($data['vars'] ?? [], array_flip($names)), fn ($v) => $v !== null && $v !== '')]);
+
+        return redirect(app_route('pages.edit', $component->page).'#components')->with('status', $component->block->name.' text saved');
+    }
+
     public function moveComponent(Request $request, PageComponent $component): RedirectResponse
     {
         $dir = $request->validate(['dir' => ['required', Rule::in(['up', 'down'])]])['dir'];
