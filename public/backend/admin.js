@@ -17,7 +17,8 @@
   (function () {
     var side = $('#sidebar');
     if (!side) return;
-    var key = 'admin-sidebar-scroll';
+    // One saved position per admin app (Corral's menu and Lando's menu scroll separately)
+    var key = 'admin-sidebar-scroll:' + (location.pathname.split('/')[2] || 'home');
     try {
       var saved = sessionStorage.getItem(key);
       if (saved !== null) side.scrollTop = +saved;
