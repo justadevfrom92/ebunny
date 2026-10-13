@@ -6,13 +6,14 @@
     @if (in_array($run->state(), ['queued', 'running']))<meta http-equiv="refresh" content="5">@endif
 @endsection
 
-{{-- One report run: what it read (its model), the parameters, the result, and Rerun at the top right. --}}
+{{-- One report run: what it read (its model), the parameters, the result, and Download (save icon) and Rerun (reload icon) at the top right. --}}
 @section('content')
     @include('backend.partials.page-head', [
         'title' => ($run->title ?? \Illuminate\Support\Str::headline($run->report)).' · #'.$run->id,
         'sub' => 'Model <span class="mono">'.e($run->model ?? '—').'</span> · '.view('backend.walker._state', ['run' => $run])->render(),
-        'actions' => ($run->file ? '<a class="btn ghost" href="'.route('walker.runs.download', $run).'">Download .xlsx</a>' : '')
-            .($def ? '<form method="post" action="'.route('walker.runs.rerun', $run).'" class="inline">'.csrf_field().'<button class="btn cyan">Rerun</button></form>' : ''),
+        'actions' => view('backend.partials.report-actions', ['size' => 'page', 'downloadLabel' => 'Download .xlsx',
+            'download' => $run->file ? route('walker.runs.download', $run) : null, 'rerun' => $def ? route('walker.runs.rerun', $run) : null,
+            'why' => in_array($run->state(), ['queued', 'running'], true) ? 'still running' : 'this run did not save a file'])->render(),
     ])
 
     @if ($run->state() === 'failed')<div class="alert bad"><b>Error</b> {{ $run->error ?? 'The report stopped with an error.' }}</div>@endif
@@ -60,7 +61,7 @@
 
     @if ($history->count())
         <div class="panel"><div class="panel-head"><h2>Other Runs of This Report</h2></div><div class="table-wrap"><table>
-            <tbody>@foreach ($history as $h)<tr class="click" data-href="{{ route('walker.runs.show', $h) }}"><td><a href="{{ route('walker.runs.show', $h) }}">#{{ $h->id }}</a></td><td>{{ $h->created_at->format('n/j/Y g:i A') }}</td><td>{{ $h->user?->name ?? 'System' }}</td><td>@include('backend.walker._state', ['run' => $h])</td></tr>@endforeach</tbody>
+            <tbody>@foreach ($history as $h)<tr class="click" data-href="{{ route('walker.runs.show', $h) }}"><td><a href="{{ route('walker.runs.show', $h) }}">#{{ $h->id }}</a></td><td>{{ $h->created_at->format('n/j/Y g:i A') }}</td><td>{{ $h->user?->name ?? 'System' }}</td><td>@include('backend.walker._state', ['run' => $h])</td><td class="actions">@include('backend.walker._row-actions', ['run' => $h])</td></tr>@endforeach</tbody>
         </table></div></div>
     @endif
 @endsection

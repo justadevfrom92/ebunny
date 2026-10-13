@@ -1,7 +1,7 @@
 @extends('backend.layouts.app')
 
 @section('content')
-    @include('backend.partials.page-head', ['title' => 'Notes Report', 'sub' => 'Account notes by agent, date, text and priority. "System" notes are the ones written automatically.'])
+    @include('backend.partials.page-head', ['title' => 'Notes Report', 'sub' => 'Account notes by agent, date, text and priority. "System" notes are the ones written automatically.', 'actions' => view('backend.corral.reports._head-actions', ['f' => $f])->render()])
 
     <div class="search-layout">
     <aside class="search-side">

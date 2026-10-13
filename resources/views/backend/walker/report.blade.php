@@ -3,7 +3,13 @@
 @section('crumb', $def['title'])
 
 @section('content')
-    @include('backend.partials.page-head', ['title' => $def['title'], 'sub' => e($def['description']).' · Model <span class="mono">'.e($def['model']).'</span>'])
+    @php $latest = $runs->first(); $latestFile = $runs->firstWhere('file', '!=', null); @endphp
+    {{-- Top right: download the latest saved file (save icon) and rerun the latest run's settings, or run with the defaults (reload icon) --}}
+    @include('backend.partials.page-head', ['title' => $def['title'], 'sub' => e($def['description']).' · Model <span class="mono">'.e($def['model']).'</span>'
+        .($latest ? ' · Last run #'.$latest->id.' '.$latest->created_at->diffForHumans() : ''),
+        'actions' => view('backend.partials.report-actions', ['size' => 'page', 'downloadLabel' => 'Download latest .xlsx',
+            'download' => $latestFile ? route('walker.runs.download', $latestFile) : null, 'why' => $latest ? 'no saved file yet' : 'not run yet',
+            'rerun' => $latest ? route('walker.runs.rerun', $latest) : route('walker.reports.run', $def['key'])])->render()])
 
     <div class="search-layout">
         <aside class="search-side">
@@ -30,11 +36,11 @@
         <div class="search-main">
             <div class="panel" style="margin-bottom:20px"><div class="panel-head"><h2>Columns</h2></div><div class="panel-body muted">{{ implode(' · ', $columns) }}</div></div>
             <div class="panel"><div class="panel-head"><h2>Recent Runs</h2></div><div class="table-wrap"><table>
-                <thead><tr><th>Run</th><th>Requested</th><th>By</th><th class="num">Rows</th><th>Status</th></tr></thead>
+                <thead><tr><th>Run</th><th>Requested</th><th>By</th><th class="num">Rows</th><th>Status</th><th><span class="sr-only">Download or rerun</span></th></tr></thead>
                 <tbody>@forelse ($runs as $run)
                     <tr class="click" data-href="{{ route('walker.runs.show', $run) }}"><td><a href="{{ route('walker.runs.show', $run) }}">#{{ $run->id }}</a></td><td>{{ $run->created_at->format('n/j/Y g:i A') }}</td>
-                        <td>{{ $run->user?->name ?? 'System' }}</td><td class="num">{{ $run->status === 'done' ? number_format($run->rows) : '—' }}</td><td>@include('backend.walker._state')</td></tr>
-                @empty <tr><td colspan="5" class="empty">Not run yet.</td></tr> @endforelse</tbody>
+                        <td>{{ $run->user?->name ?? 'System' }}</td><td class="num">{{ $run->status === 'done' ? number_format($run->rows) : '—' }}</td><td>@include('backend.walker._state')</td><td class="actions">@include('backend.walker._row-actions')</td></tr>
+                @empty <tr><td colspan="6" class="empty">Not run yet.</td></tr> @endforelse</tbody>
             </table></div></div>
         </div>
     </div>

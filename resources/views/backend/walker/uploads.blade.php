@@ -12,7 +12,7 @@
                 <tr><td><b>{{ $u->title }}</b>@if ($u->description)<br><span class="help">{{ $u->description }}</span>@endif</td><td>{{ $u->category }}</td>
                     <td class="mono help">{{ $u->original_name }}<br>{{ number_format($u->size / 1024, 1) }} KB</td>
                     <td>{{ $u->created_at->format('n/j/Y') }}<br><span class="help">{{ $u->user?->name }}</span></td>
-                    <td class="actions"><a class="btn sm ghost" href="{{ route('walker.uploads.download', $u) }}">Download</a>
+                    <td class="actions">@include('backend.partials.report-actions', ['size' => 'row', 'download' => route('walker.uploads.download', $u), 'downloadLabel' => 'Download '.$u->original_name, 'rerun' => null])
                         @can('delete')<form method="post" action="{{ route('walker.uploads.destroy', $u) }}" class="inline" data-confirm="Delete {{ $u->title }}?|The file is removed for everyone.|Delete">@csrf @method('delete')<button class="btn sm ghost">Delete</button></form>@endcan</td></tr>
             @empty <tr><td colspan="5" class="empty">No uploaded reports{{ $category ? ' in '.$category : '' }}.</td></tr> @endforelse</tbody>
         </table></div>

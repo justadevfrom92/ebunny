@@ -550,3 +550,11 @@ tr.row-new td { background: var(--info-bg); }
   .sv-cat-head { flex-wrap: wrap; } .sv-cat-head h2 { flex: 1 0 100%; }
   .content .panel[style*="max-width"], .content form[style*="max-width"] { max-width: none !important; }
 }
+
+/* ---------- Report buttons: save (download) and reload (rerun) icons ---------- */
+.report-actions { display: inline-flex; gap: 6px; align-items: center; flex-wrap: nowrap; }
+.report-actions form { margin: 0; }
+.report-actions .btn { display: inline-flex; align-items: center; gap: 6px; }
+.report-actions .btn.icon { padding: 5px 7px; line-height: 0; }
+.report-actions .btn.disabled { opacity: .4; cursor: not-allowed; }
+.report-actions .ri { flex-shrink: 0; }

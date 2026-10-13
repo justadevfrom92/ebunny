@@ -1,7 +1,7 @@
 @extends('backend.layouts.app')
 
 @section('content')
-    @include('backend.partials.page-head', ['title' => 'Orders Report', 'sub' => 'Pull orders by date range and status. CSV downloads include every column.'])
+    @include('backend.partials.page-head', ['title' => 'Orders Report', 'sub' => 'Pull orders by date range and status. CSV downloads include every column.', 'actions' => view('backend.corral.reports._head-actions', ['f' => $f])->render()])
 
     <div class="search-layout">
     <aside class="search-side">

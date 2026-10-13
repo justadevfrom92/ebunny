@@ -118,7 +118,7 @@ class AccountTest extends TestCase
                 $this->get('/admin/corral/reports/'.$report.'?run=1&start=2020-01-01&output='.$output)->assertOk();
             }
             $this->get('/admin/corral/reports/'.$report.'?run=1&start=2020-01-01&output=csv')->assertOk()->assertHeader('content-type', 'text/csv; charset=utf-8');
-            $this->get('/admin/corral/reports/'.$report)->assertOk()->assertSee('Recent Results')->assertSee('Run again');
+            $this->get('/admin/corral/reports/'.$report)->assertOk()->assertSee('Recent Results')->assertSee('aria-label="Rerun report"', false);
         }
         $this->get('/admin/corral/reports/notes?run=1&start=2020-01-01&priorities[]=System')->assertOk()->assertSee('Enrollment submitted');
 

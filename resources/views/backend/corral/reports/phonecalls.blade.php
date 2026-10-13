@@ -1,7 +1,7 @@
 @extends('backend.layouts.app')
 
 @section('content')
-    @include('backend.partials.page-head', ['title' => 'Phonecalls Report', 'sub' => 'Search calls by date, account, agent id or phone number.'])
+    @include('backend.partials.page-head', ['title' => 'Phonecalls Report', 'sub' => 'Search calls by date, account, agent id or phone number.', 'actions' => view('backend.corral.reports._head-actions', ['f' => $f])->render()])
 
     <div class="search-layout">
     <aside class="search-side">
