@@ -215,6 +215,8 @@ Route::prefix('admin')->group(function () {
             Route::post('work-items/{item}/resolve', [Backend\Corral\QueueController::class, 'resolve'])->name('queues.resolve');
             Route::get('messages', [Backend\Corral\MessageController::class, 'index'])->name('messages.index');
             Route::post('messages/{message}/handled', [Backend\Corral\MessageController::class, 'handled'])->name('messages.handled');
+            Route::get('messages/{message}', [Backend\Corral\MessageController::class, 'show'])->name('messages.show');
+            Route::post('messages/{message}/reply', [Backend\Corral\MessageController::class, 'reply'])->name('messages.reply');
         });
 
         // Website pages, plan groups and plans: Lando's screens, which Astro's menu also has.

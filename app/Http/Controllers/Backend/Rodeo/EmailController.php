@@ -133,7 +133,6 @@ class EmailController extends Controller
         ]);
     }
 
-
     // ---------- Categories ----------
 
     public function categories(): View

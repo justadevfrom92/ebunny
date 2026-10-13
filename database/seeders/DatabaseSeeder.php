@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             WalkerSeeder::class,
             SiteTrafficSeeder::class,
             CookieConsentSeeder::class,
+            ContactMessageSeeder::class,
             DeputySeeder::class,
         ]);
     }
