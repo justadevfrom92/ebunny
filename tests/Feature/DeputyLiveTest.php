@@ -31,7 +31,9 @@ class DeputyLiveTest extends TestCase
         $ai = User::where('email', 'ai@example.com')->firstOrFail();
         $this->actingAs($ai);
         $this->get(route('deputy.conversations'))->assertOk()->assertSee('Needs a Person')->assertSee('Live Now')->assertSee('Take Over');
-        $this->get(route('deputy.automations'))->assertOk()->assertSee('Enrollment Fixer')->assertSee('Every 15 minutes')->assertSee('Next Run');
+        // Scheduled automations live in Sheriff, not Deputy
+        $this->get('/admin/deputy/automations')->assertNotFound();
+        $this->get(route('deputy.agents'))->assertOk()->assertDontSee('Enrollment Fixer');
         $this->get('/admin/walker')->assertRedirect();
         $this->get('/admin')->assertOk()->assertDontSee('Walker');
     }
@@ -94,17 +96,15 @@ class DeputyLiveTest extends TestCase
         $this->postJson(route('myaccount.chat.send'), ['message' => 'Hello?'])->assertJsonPath('status', 'waiting');
     }
 
-    public function test_automation_agents_need_a_schedule(): void
+    public function test_deputy_agents_only_talk_to_customers(): void
     {
         $this->actingAs($this->admin());
         $model = AiAgent::firstOrFail()->ai_model_id;
         $base = ['name' => 'Fixer', 'ai_model_id' => $model, 'temperature' => 0, 'max_tokens' => 500, 'system_prompt' => 'Fix things.', 'active' => 1];
-        $this->get(route('deputy.agents.create'))->assertOk()->assertSee('Automation: runs on a schedule')->assertDontSee('<select id="activity"', false);
-        $this->post(route('deputy.agents.store'), $base + ['activity' => 'payments'])->assertSessionHasErrors('schedule');
-        $this->post(route('deputy.agents.store'), $base + ['activity' => 'payments', 'schedule' => 'often'])->assertSessionHasErrors('schedule');
-        $this->post(route('deputy.agents.store'), $base + ['activity' => 'payments', 'schedule' => '*/10 * * * *'])->assertRedirect(route('deputy.agents'));
+        $this->get(route('deputy.agents.create'))->assertOk()->assertDontSee('Automation: runs on a schedule')->assertDontSee('<select id="activity"', false);
+        // Scheduled activities are added in Sheriff → Cron Automations
+        $this->post(route('deputy.agents.store'), $base + ['activity' => 'payments', 'schedule' => '*/10 * * * *'])->assertSessionHasErrors('activity');
         $this->post(route('deputy.agents.store'), ['name' => 'Chatty', 'activity' => 'chat', 'schedule' => '* * * * *'] + $base)->assertRedirect();
         $this->assertNull(AiAgent::where('name', 'Chatty')->value('schedule'));
-        $this->assertSame('*/10 * * * *', AiAgent::where('name', 'Fixer')->value('schedule'));
     }
 }

@@ -4,12 +4,10 @@ namespace App\Http\Controllers\Backend\Deputy;
 
 use App\Http\Controllers\Controller;
 use App\Models\AiAgent;
-use App\Models\AiAutomationRun;
 use App\Models\AiConversation;
 use App\Models\AiModel;
 use App\Services\Deputy\AgentRunner;
 use App\Services\Deputy\LiveConversation;
-use Cron\CronExpression;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,7 +18,7 @@ use Illuminate\View\View;
 /**
  * Deputy — AI agents on open-weight models. Which model each agent runs on (downloaded to
  * the local server or hosted behind an OpenAI-compatible API); conversations with customers by
- * text and in the My Account chat, where a person can take over, reply or call; automations
+ * text and in the My Account chat, where a person can take over, reply or call (scheduled automations are in Sheriff)
  * that run on a schedule to fix issues; and a place to test an agent.
  */
 class DeputyController extends Controller
@@ -36,7 +34,7 @@ class DeputyController extends Controller
         $total = $byAgent->sum('n');
 
         return view('backend.deputy.dashboard', [
-            'agents' => AiAgent::with(['model', 'fallback'])->orderByDesc('active')->orderBy('name')->get(),
+            'agents' => AiAgent::talking()->with(['model', 'fallback'])->orderByDesc('active')->orderBy('name')->get(),
             'models' => AiModel::withCount('agents')->orderBy('provider')->orderBy('name')->get(),
             'byAgent' => $byAgent,
             'byModel' => $byModel,
@@ -47,8 +45,6 @@ class DeputyController extends Controller
             'local' => AiModel::where('provider', 'local')->count(),
             'ready' => ['hosted' => filled(config('admin.integrations.open_models.env.OPEN_MODELS_URL')), 'local' => filled(config('admin.integrations.local_models.env.LOCAL_MODELS_URL'))],
             'live' => AiConversation::whereIn('status', ['waiting', 'agent', 'bot'])->selectRaw('status, count(*) as n')->groupBy('status')->pluck('n', 'status'),
-            'runs' => AiAutomationRun::where('started_at', '>=', today()->subDays(6))->selectRaw('ai_agent_id, count(*) as n, sum(fixed) as fixed, sum(flagged) as flagged, sum(case when status = \'failed\' then 1 else 0 end) as failed, sum(input_tokens + output_tokens) as tokens')
-                ->groupBy('ai_agent_id')->get()->keyBy('ai_agent_id'),
             'recent' => AiConversation::with(['agent', 'model', 'customer'])->whereIn('channel', ['sms', 'chat'])->latest('started_at')->limit(8)->get(),
         ]);
     }
@@ -136,29 +132,17 @@ class DeputyController extends Controller
     // ---------- Automations ----------
 
     /** Agents that run on a schedule to fix issues in the background, and what each run did. */
-    public function automations(Request $request): View
-    {
-        $agents = AiAgent::automations()->with(['model', 'fallback'])->orderByDesc('active')->orderBy('name')->get();
-        $week = AiAutomationRun::where('started_at', '>=', today()->subDays(6))->selectRaw('ai_agent_id, count(*) as n, sum(checked) as checked, sum(fixed) as fixed, sum(flagged) as flagged, sum(case when status = \'failed\' then 1 else 0 end) as failed')
-            ->groupBy('ai_agent_id')->get()->keyBy('ai_agent_id');
-        $agent = $request->integer('agent') ?: null;
-
-        return view('backend.deputy.automations', [
-            'agents' => $agents, 'week' => $week, 'agent' => $agent,
-            'last' => AiAutomationRun::whereIn('id', AiAutomationRun::selectRaw('max(id)')->groupBy('ai_agent_id'))->get()->keyBy('ai_agent_id'),
-            'runs' => AiAutomationRun::with(['agent', 'model'])->when($agent, fn ($q) => $q->where('ai_agent_id', $agent))->latest('started_at')->latest('id')->paginate(50)->withQueryString(),
-        ]);
-    }
-
     // ---------- Agents ----------
 
     public function agents(): View
     {
-        return view('backend.deputy.agents', ['agents' => AiAgent::with(['model', 'fallback'])->withCount(['conversations' => fn ($q) => $q->where('channel', '!=', 'test'), 'runs'])->withMax('conversations', 'started_at')->withMax('runs', 'started_at')->orderByDesc('active')->orderBy('name')->get()]);
+        return view('backend.deputy.agents', ['agents' => AiAgent::talking()->with(['model', 'fallback'])->withCount(['conversations' => fn ($q) => $q->where('channel', '!=', 'test')])->withMax('conversations', 'started_at')->orderByDesc('active')->orderBy('name')->get()]);
     }
 
     public function agentForm(?AiAgent $agent = null): View
     {
+        abort_if($agent && ! $agent->talksToCustomers(), 404);   // scheduled automations are edited in Sheriff
+
         return view('backend.deputy.agent-form', [
             'agent' => $agent ?? new AiAgent(['temperature' => 0.3, 'max_tokens' => 2000, 'active' => true]),
             'models' => AiModel::orderBy('provider')->orderBy('name')->get(),
@@ -169,7 +153,7 @@ class DeputyController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:80'],
-            'activity' => ['required', Rule::in(array_keys(config('deputy.activities')))],
+            'activity' => ['required', Rule::in(config('deputy.conversation_activities'))],
             'description' => ['nullable', 'string', 'max:250'],
             'ai_model_id' => ['required', 'exists:ai_models,id'],
             'fallback_model_id' => ['nullable', 'different:ai_model_id', 'exists:ai_models,id'],
@@ -177,15 +161,11 @@ class DeputyController extends Controller
             'max_tokens' => ['required', 'integer', 'min:256', 'max:64000'],
             'system_prompt' => ['required', 'string', 'max:20000'],
             'active' => ['nullable', 'boolean'],
-            'schedule' => ['nullable', 'string', 'max:60', fn ($a, $v, $fail) => CronExpression::isValidExpression((string) $v) || $fail('Use a cron schedule like */15 * * * * (every 15 minutes) or 0 6 * * * (6am daily).')],
         ], ['fallback_model_id.different' => 'Pick a different model as the fallback.']);
         $data['active'] = (bool) ($data['active'] ?? false);
-        // Agents that talk to customers answer as messages come in; automations need a schedule
-        if (in_array($data['activity'], config('deputy.conversation_activities'), true)) {
-            $data['schedule'] = null;
-        } elseif (blank($data['schedule'] ?? null)) {
-            return back()->withInput()->withErrors(['schedule' => 'Automations run on a schedule. Enter one, like */15 * * * *.']);
-        }
+        // Agents here talk to customers and answer as messages come in; scheduled automations are in Sheriff → Cron Automations
+        abort_if($agent && ! $agent->talksToCustomers(), 404);
+        $data['schedule'] = null;
         $agent ? $agent->update($data) : AiAgent::create($data);
 
         return redirect()->route('deputy.agents')->with('status', 'Agent saved');
@@ -194,6 +174,8 @@ class DeputyController extends Controller
     /** Test an agent: send it a message and see what its model answers. Saved as a Test conversation. */
     public function testForm(AiAgent $agent): View
     {
+        abort_unless($agent->talksToCustomers(), 404);
+
         return view('backend.deputy.agent-test', ['agent' => $agent->load(['model', 'fallback']),
             'tests' => $agent->conversations()->with('model', 'user')->where('channel', 'test')->latest('started_at')->limit(10)->get()]);
     }

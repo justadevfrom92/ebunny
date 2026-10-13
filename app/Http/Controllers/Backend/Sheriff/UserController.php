@@ -123,6 +123,9 @@ class UserController extends Controller
             }
         }
         unset($data['access']);
+        if (! $data['extra_perms'] && ! $data['denied_perms']) {
+            $data['access_note'] = null;   // no exceptions, nothing to explain
+        }
         if (empty($data['password'])) {
             unset($data['password']);
         }

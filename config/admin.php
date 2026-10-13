@@ -198,14 +198,13 @@ return [
         ],
         'deputy' => [
             'name' => 'Deputy',
-            'desc' => 'AI agents on open-weight models (Qwen, Kimi, DeepSeek, Llama…): texts and the My Account chat with take-over by a person, scheduled automations, models and testing.',
+            'desc' => 'AI agents on open-weight models (Qwen, Kimi, DeepSeek, Llama…): texts and the My Account chat with take-over by a person, models and testing.',
             'icon' => 'bolt',
             'home' => 'deputy.dashboard',
             'menu' => [
                 'AI Agents' => [
                     ['Dashboard', 'deputy.dashboard'],
                     ['Conversations', 'deputy.conversations', 'ai_waiting'],
-                    ['Automations', 'deputy.automations'],
                 ],
                 'Setup' => [
                     ['Agents', 'deputy.agents'],
@@ -217,7 +216,7 @@ return [
         ],
         'sheriff' => [
             'name' => 'Sheriff',
-            'desc' => 'Settings: employees and their access, roles, markets, API integrations and scheduled jobs.',
+            'desc' => 'Settings: employees and their access, roles, markets, API integrations, scheduled jobs and cron automations.',
             'icon' => 'star',
             'home' => 'sheriff.users.index',
             'menu' => [
@@ -227,6 +226,7 @@ return [
                 ],
                 'Config' => [
                     ['Crons', 'sheriff.jobs.index', 'failed_jobs'],
+                    ['Cron Automations', 'sheriff.automations'],
                     ['Update Sitemap', 'sheriff.sitemap'],
                     ['Cached Tables', 'sheriff.cache'],
                 ],

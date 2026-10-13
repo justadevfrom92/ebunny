@@ -45,6 +45,13 @@ class AiAgent extends Model
         return in_array($this->activity, config('deputy.conversation_activities'), true);
     }
 
+    /** Agents that talk to customers (texts, My Account chat): Deputy. */
+    public function scopeTalking($q)
+    {
+        return $q->whereIn('activity', config('deputy.conversation_activities'));
+    }
+
+    /** Agents that run on a cron schedule: Sheriff → Cron Automations. */
     public function scopeAutomations($q)
     {
         return $q->whereNotIn('activity', config('deputy.conversation_activities'));

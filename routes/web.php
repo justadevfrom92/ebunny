@@ -434,7 +434,6 @@ Route::prefix('admin')->group(function () {
             Route::post('conversations/{conversation}/hand-back', 'handBack')->name('conversations.handback');
             Route::post('conversations/{conversation}/close', 'close')->name('conversations.close');
             Route::post('conversations/{conversation}/call', 'call')->middleware('throttle:20,1')->name('conversations.call');
-            Route::get('automations', 'automations')->name('automations');
             Route::get('agents', 'agents')->name('agents');
             Route::get('agents/new', 'agentForm')->name('agents.create');
             Route::post('agents', 'saveAgent')->name('agents.store');
@@ -461,6 +460,15 @@ Route::prefix('admin')->group(function () {
             Route::get('users/{user}/history', [Backend\HistoryController::class, 'user'])->name('users.history');
             Route::get('history/{item}', [Backend\HistoryController::class, 'show'])->name('history.show');
             Route::get('roles', [Backend\Sheriff\RoleController::class, 'index'])->name('roles.index');
+            Route::controller(Backend\Sheriff\AutomationController::class)->prefix('automations')->name('automations')->group(function () {
+                Route::get('/', 'index');
+                Route::get('new', 'create')->name('.create');
+                Route::post('/', 'store')->name('.store');
+                Route::get('{agent}', 'show')->name('.show');
+                Route::get('{agent}/edit', 'edit')->name('.edit');
+                Route::put('{agent}', 'update')->name('.update');
+                Route::post('{agent}/toggle', 'toggle')->name('.toggle');
+            });
             Route::put('roles', [Backend\Sheriff\RoleController::class, 'update'])->name('roles.update');
             Route::get('integrations', [Backend\Sheriff\SystemController::class, 'integrations'])->name('integrations.index');
             Route::get('integrations/{integration}', [Backend\Sheriff\SystemController::class, 'integration'])->name('integrations.show');

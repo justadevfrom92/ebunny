@@ -54,8 +54,10 @@
                     @endforeach
                 </tbody>
             </table></div>
-            <div class="panel-body form-grid">
-                <label for="access_note">Why it differs</label><input id="access_note" name="access_note" maxlength="250" value="{{ old('access_note', $u->access_note) }}" placeholder="e.g. Deletes go through the CS Lead">
+            {{-- Shown when this person has an Allow or Deny: a short reason, listed under their rights on the Users page --}}
+            <div class="panel-body form-grid" id="access-reason">
+                <label for="access_note">Reason for the exceptions</label><div><input id="access_note" name="access_note" maxlength="250" value="{{ old('access_note', $u->access_note) }}" placeholder="e.g. Deletes go through the CS Lead">
+                    <div class="help">Why this person gets more or less than their role (the Allow and Deny choices above). It shows under their rights on the Users list.</div></div>
             </div>
         </div>
 
@@ -74,6 +76,10 @@
             });
         }
         sel.addEventListener('change', show); show();
+        // The reason only matters when something is allowed or denied for this person
+        var reason = document.getElementById('access-reason');
+        function exceptions() { reason.hidden = !document.querySelector('.access-table input[value=allow]:checked, .access-table input[value=deny]:checked'); }
+        document.querySelectorAll('.access-table input[type=radio]').forEach(function (r) { r.addEventListener('change', exceptions); }); exceptions();
     })();
     </script>
 @endsection
