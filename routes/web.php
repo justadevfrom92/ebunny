@@ -195,6 +195,27 @@ Route::prefix('admin')->group(function () {
             Route::get('customers/{customer}/contact-log', [Backend\Corral\AccountController::class, 'contactLog'])->name('customers.contact-log');
             Route::post('customers/{customer}/contact-log/marketing', [Backend\Corral\AccountController::class, 'toggleMarketing'])->name('customers.marketing-toggle');
             Route::get('customers/{customer}/api-log', [Backend\Corral\AccountController::class, 'apiLog'])->name('customers.api-log');
+            // CRM: pipeline, leads, follow-ups, brokers and partners
+            Route::controller(Backend\Corral\CrmController::class)->prefix('crm')->name('crm.')->group(function () {
+                Route::get('/', 'pipeline')->name('pipeline');
+                Route::get('leads', 'leads')->name('leads');
+                Route::get('leads/new', 'createLead')->name('leads.create');
+                Route::post('leads', 'saveLead')->name('leads.store');
+                Route::get('leads/{lead}', 'showLead')->name('leads.show');
+                Route::get('leads/{lead}/edit', 'editLead')->name('leads.edit');
+                Route::put('leads/{lead}', 'saveLead')->name('leads.update');
+                Route::post('leads/{lead}/stage', 'moveStage')->name('leads.stage');
+                Route::post('leads/{lead}/activities', 'logActivity')->name('leads.activity');
+                Route::get('follow-ups', 'tasks')->name('tasks');
+                Route::post('follow-ups/{activity}', 'completeTask')->name('tasks.complete');
+                Route::get('partners', 'partners')->name('partners');
+                Route::get('partners/new', 'createPartner')->name('partners.create');
+                Route::post('partners', 'savePartner')->name('partners.store');
+                Route::get('partners/{partner}', 'showPartner')->name('partners.show');
+                Route::get('partners/{partner}/edit', 'editPartner')->name('partners.edit');
+                Route::put('partners/{partner}', 'savePartner')->name('partners.update');
+                Route::post('partners/{partner}/activities', 'logPartnerActivity')->name('partners.activity');
+            });
             Route::get('esiid', [Backend\Corral\EsiidController::class, 'index'])->name('esiid');
             Route::get('orders/create', [Backend\Corral\OrderController::class, 'create'])->name('orders.create');
             Route::get('orders/create-biz', [Backend\Corral\OrderController::class, 'createBiz'])->name('orders.create-biz');

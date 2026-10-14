@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\AiConversation;
 use App\Models\ContactLog;
 use App\Models\ContactMessage;
+use App\Models\CrmActivity;
 use App\Models\JobRun;
 use App\Models\LedgerEntry;
 use App\Models\Refund;
@@ -99,6 +100,7 @@ class AdminMenu
             $key === 'ai_waiting' => AiConversation::where('status', 'waiting')->count(),
             $key === 'ledger_pending' => LedgerEntry::where('status', 'pending')->count(),
             $key === 'refunds_pending' => Refund::whereIn('status', ['requested', 'approved'])->count(),
+            $key === 'crm_due' => CrmActivity::whereNotNull('due_on')->whereNull('done_at')->where('due_on', '<=', today())->count(),
             $key === 'redemptions_open' => StarEntry::whereNotNull('reward_offer_id')->where('fulfillment', 'pending')->count(),
             default => 0,
         };

@@ -24,7 +24,7 @@ return [
     'apps' => [
         'corral' => [
             'name' => 'Corral',
-            'desc' => 'Customer service: search accounts, create orders, work exception queues.',
+            'desc' => 'Customer service and CRM: search accounts, create orders, work exception queues, and the sales pipeline of leads, follow-ups and partners.',
             'icon' => 'users',
             'home' => 'corral.customers.index',
             // Same order as the original Corral menu. Unnamed (numbered) groups have no heading.
@@ -36,6 +36,12 @@ return [
                     ['Create Order - Biz', 'corral.orders.create-biz'],
                     ['SMS', 'corral.sms', 'sms'],
                     ['Phone Calls', 'corral.calls'],
+                ],
+                'CRM' => [
+                    ['Pipeline', 'corral.crm.pipeline'],
+                    ['Leads', 'corral.crm.leads'],
+                    ['Follow-ups', 'corral.crm.tasks', 'crm_due'],
+                    ['Partners & Brokers', 'corral.crm.partners'],
                 ],
                 'Reports' => [
                     ['Orders', 'corral.reports.orders'],

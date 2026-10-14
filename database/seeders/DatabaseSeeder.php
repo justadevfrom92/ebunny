@@ -34,6 +34,7 @@ class DatabaseSeeder extends Seeder
             CookieConsentSeeder::class,
             ContactMessageSeeder::class,
             DeputySeeder::class,
+            CrmSeeder::class,
             FillTablesSeeder::class, // rows for every admin table that would otherwise be empty
             CampaignSeeder::class,   // after the account data (phone types, AutoPay) it targets
         ]);
