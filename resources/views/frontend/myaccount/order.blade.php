@@ -2,6 +2,7 @@
 @section('title', 'Order '.$o->number)
 @section('crumb')<a href="{{ route('myaccount.dashboard') }}">My Account</a> / <a href="{{ route('myaccount.orders') }}">Orders</a>@endsection
 @section('heading', 'My Account')
+@section('no-banner', '1')
 @section('main')
 <x-frontend.myaccount :c="$c" :title="'Order '.$o->number">
   <p class="msg-back"><a href="{{ route('myaccount.orders') }}">‹ All orders</a></p>

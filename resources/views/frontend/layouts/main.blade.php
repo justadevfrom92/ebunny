@@ -22,6 +22,8 @@
   @yield('notice')
 
   <main>
+    {{-- Pages can turn the banner off with @section('no-banner', '1') (the signed-in My Account pages) --}}
+    @unless (View::hasSection('no-banner'))
     <section class="page-banner">
       <div class="wrap">
         <div class="crumbs"><a href="/">Home</a> / @yield('crumb')</div>
@@ -30,6 +32,7 @@
         @yield('banner')
       </div>
     </section>
+    @endunless
     @yield('main')
   </main>
 

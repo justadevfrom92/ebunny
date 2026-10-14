@@ -2,6 +2,7 @@
 @section('title', 'My Rewards')
 @section('crumb', 'My Account')
 @section('heading', 'My Account')
+@section('no-banner', '1')
 @section('main')
 <x-frontend.myaccount :c="$c" title="My Rewards">
   <div class="co-card"><p>You have <b>{{ number_format($c->stars) }} stars</b>. Earn stars for on-time payments, paperless billing and referrals.</p></div>

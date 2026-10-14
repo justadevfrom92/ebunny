@@ -2,6 +2,7 @@
 @section('title', 'Products & Protections')
 @section('crumb', 'My Account')
 @section('heading', 'My Account')
+@section('no-banner', '1')
 @section('main')
 <x-frontend.myaccount :c="$c" title="Products & Protections">
   <p style="margin-bottom:20px">Everything you can add to your account: billing options, rewards, smart home and protection plans. Turn the free ones on and off here; for the rest, we'll set it up with you.</p>

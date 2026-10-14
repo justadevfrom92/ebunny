@@ -2,6 +2,7 @@
 @section('title', 'Orders')
 @section('crumb', 'My Account')
 @section('heading', 'My Account')
+@section('no-banner', '1')
 @section('main')
 <x-frontend.myaccount :c="$c" title="Orders">
   <div class="co-card"><div class="ma-table"><table class="price-table">

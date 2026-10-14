@@ -2,6 +2,7 @@
 @section('title', 'Checkout')
 @section('crumb', 'My Account')
 @section('heading', 'My Account')
+@section('no-banner', '1')
 @section('main')
 <x-frontend.myaccount :c="$c" title="Checkout">
   @error('cart')<div class="site-alert error" role="alert">{{ $message }}</div>@enderror

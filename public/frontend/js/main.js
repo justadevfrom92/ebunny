@@ -22,11 +22,14 @@
     return (
       '<header class="site-header"><div class="wrap">' +
       '<a class="logo" href="' + ET.root + 'index.html" aria-label="' + esc(B.name) + ' home">' + LOGO + '</a>' +
-      '<button class="menu-toggle" aria-label="Menu" aria-expanded="false"><span></span></button>' +
-      '<nav class="nav" id="main-nav">' + links +
+      // Main menu links stay the same whatever else shows; My Account and Sign Out sit after them, and the cart is on the far right
+      '<div class="nav-panel" id="main-nav">' +
+      '<nav class="nav" aria-label="Main">' + links + '</nav>' +
+      '<div class="nav-actions"><a class="btn" href="' + ET.root + 'myaccount">My Account</a></div>' +
+      '</div>' +
       '<a class="nav-cart" href="' + ET.root + 'shop/cart" aria-label="Cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.7 12.4a2 2 0 0 0 2 1.6h8.6a2 2 0 0 0 2-1.6L22 7H6"/></svg><span class="nav-cart-label">Cart</span><span class="cart-n" hidden>0</span></a>' +
-      '<a class="btn" href="' + ET.root + 'myaccount">My Account</a>' +
-      '</nav></div></header>'
+      '<button class="menu-toggle" aria-label="Menu" aria-expanded="false" aria-controls="main-nav"><span></span></button>' +
+      '</div></header>'
     );
   }
 
@@ -455,7 +458,7 @@
   }
   function signOutButton() {
     loadSession().then(function (s) {
-      var nav = document.getElementById('main-nav'), test = !!B.signoutTest;
+      var nav = document.querySelector('#main-nav .nav-actions'), test = !!B.signoutTest;
       if (!nav || nav.querySelector('.nav-out') || !(s.customer || test)) return;
       var out = document.createElement('form');
       out.method = 'post'; out.action = ET.root + 'myaccount/logout'; out.className = 'nav-out';

@@ -2,6 +2,7 @@
 @section('title', 'Profile & Preferences')
 @section('crumb', 'My Account')
 @section('heading', 'My Account')
+@section('no-banner', '1')
 @section('main')
 <x-frontend.myaccount :c="$c" title="Profile & Preferences">
   <form method="post" action="{{ route('myaccount.profile.update') }}" class="co-card">@csrf @method('put')
