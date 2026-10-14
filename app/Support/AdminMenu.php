@@ -6,11 +6,6 @@ use App\Models\AiConversation;
 use App\Models\ContactLog;
 use App\Models\ContactMessage;
 use App\Models\CrmActivity;
-use App\Models\ErmCase;
-use App\Models\ErmChecklistItem;
-use App\Models\ErmEnrollment;
-use App\Models\ErmReview;
-use App\Models\ErmTimeOff;
 use App\Models\JobRun;
 use App\Models\LedgerEntry;
 use App\Models\Refund;
@@ -105,11 +100,6 @@ class AdminMenu
             $key === 'ai_waiting' => AiConversation::where('status', 'waiting')->count(),
             $key === 'ledger_pending' => LedgerEntry::where('status', 'pending')->count(),
             $key === 'refunds_pending' => Refund::whereIn('status', ['requested', 'approved'])->count(),
-            $key === 'erm_reviews' => ErmReview::where('status', '!=', 'complete')->where('due_on', '<', today())->count(),
-            $key === 'erm_training' => ErmEnrollment::whereNull('completed_on')->where('due_on', '<', today())->count(),
-            $key === 'erm_time_off' => ErmTimeOff::where('status', 'requested')->count(),
-            $key === 'erm_cases' => ErmCase::where('status', 'open')->count(),
-            $key === 'erm_checklist' => ErmChecklistItem::whereNull('done_at')->where('due_on', '<', today())->count(),
             $key === 'crm_due' => CrmActivity::whereNotNull('due_on')->whereNull('done_at')->where('due_on', '<=', today())->count(),
             $key === 'redemptions_open' => StarEntry::whereNotNull('reward_offer_id')->where('fulfillment', 'pending')->count(),
             default => 0,

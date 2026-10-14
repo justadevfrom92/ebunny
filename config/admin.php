@@ -220,29 +220,6 @@ return [
                 ],
             ],
         ],
-        'bunkhouse' => [
-            'name' => 'Bunkhouse',
-            'desc' => 'Employee relationship management: people (employees and 3rd-party users), reviews, one-on-ones, training, kudos, time off, HR cases, onboarding and offboarding.',
-            'icon' => 'badge',
-            'home' => 'bunkhouse.dashboard',
-            'menu' => [
-                'People' => [
-                    ['Dashboard', 'bunkhouse.dashboard'],
-                    ['Directory', 'bunkhouse.people'],
-                    ['Onboarding & Offboarding', 'bunkhouse.lifecycle', 'erm_checklist'],
-                ],
-                'Growth' => [
-                    ['Reviews', 'bunkhouse.reviews', 'erm_reviews'],
-                    ['Check-ins', 'bunkhouse.checkins'],
-                    ['Training', 'bunkhouse.training', 'erm_training'],
-                    ['Kudos', 'bunkhouse.kudos'],
-                ],
-                'Care' => [
-                    ['Time Off', 'bunkhouse.time-off', 'erm_time_off'],
-                    ['HR Cases', 'bunkhouse.cases', 'erm_cases'],
-                ],
-            ],
-        ],
         'sheriff' => [
             'name' => 'Sheriff',
             'desc' => 'Settings: employees and their access, roles, markets, API integrations, scheduled jobs and cron automations.',
@@ -280,7 +257,7 @@ return [
         && filter_var(env('ADMIN_TEST_LOGINS', true), FILTER_VALIDATE_BOOL),
 
     // Departments admin users (employees) belong to
-    'departments' => ['Customer Service', 'Pricing', 'Marketing', 'Finance', 'Human Resources', 'AI Operations', 'IT', 'Management'],
+    'departments' => ['Customer Service', 'Pricing', 'Marketing', 'Finance', 'AI Operations', 'IT', 'Management'],
 
     // Extra permissions a role can hold besides app access
     'permissions' => [

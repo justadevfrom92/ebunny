@@ -148,23 +148,5 @@
   "extra": [],
   "denied": [],
   "note": null
- },
- {
-  "id": 9,
-  "name": "HR Demo",
-  "email": "hr@example.com",
-  "role": "Human Resources",
-  "last": "2026-10-12 08:30",
-  "active": true,
-  "employee_id": "E-1012",
-  "title": "HR Manager",
-  "department": "Human Resources",
-  "manager": "admin@example.com",
-  "ext": "2701",
-  "location": "Austin HQ",
-  "hired": "2020-05-18",
-  "extra": [],
-  "denied": [],
-  "note": null
  }
 ]

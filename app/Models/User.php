@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -53,33 +52,6 @@ class User extends Authenticatable
     public function manager(): BelongsTo
     {
         return $this->belongsTo(User::class, 'manager_id');
-    }
-
-    /** Direct reports (Bunkhouse org chart). */
-    public function reports(): HasMany
-    {
-        return $this->hasMany(User::class, 'manager_id');
-    }
-
-    public function checklistItems(): HasMany
-    {
-        return $this->hasMany(ErmChecklistItem::class);
-    }
-
-    public function isExternal(): bool
-    {
-        return filled($this->company);
-    }
-
-    /** "3 years, 2 months" since hired_on. */
-    public function tenure(): ?string
-    {
-        if (! $this->hired_on) {
-            return null;
-        }
-        $d = $this->hired_on->diff(now());
-
-        return trim(($d->y ? $d->y.' '.str('year')->plural($d->y).' ' : '').($d->m ? $d->m.' '.str('month')->plural($d->m) : ($d->y ? '' : 'under a month')));
     }
 
     /**
