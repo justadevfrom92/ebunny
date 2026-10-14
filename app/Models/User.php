@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -52,6 +53,47 @@ class User extends Authenticatable
     public function manager(): BelongsTo
     {
         return $this->belongsTo(User::class, 'manager_id');
+    }
+
+    /** People who report to this person (or, for a 3rd-party user's contact, the users they look after). */
+    public function reports(): HasMany
+    {
+        return $this->hasMany(User::class, 'manager_id');
+    }
+
+    /** "3 years, 2 months" since hired_on. */
+    public function tenure(): ?string
+    {
+        if (! $this->hired_on || $this->hired_on->isFuture()) {
+            return null;
+        }
+        $d = $this->hired_on->diff(now());
+
+        return trim(($d->y ? $d->y.' '.str('year')->plural($d->y).' ' : '').($d->m ? $d->m.' '.str('month')->plural($d->m) : ($d->y ? '' : 'under a month')));
+    }
+
+    /** Every app and right this person has. */
+    public function perms(): array
+    {
+        $all = array_merge(array_keys(AdminApps::all()), array_keys(config('admin.permissions')));
+
+        return array_values(array_filter($all, fn ($p) => $this->hasPerm($p)));
+    }
+
+    /**
+     * Log in as: allowed for someone with Sheriff, for an active person other than themselves,
+     * and only when the target has nothing the signed-in person lacks (no gaining access that way).
+     * Returns null when allowed, or the reason it isn't.
+     */
+    public function cannotLogInAs(User $target): ?string
+    {
+        return match (true) {
+            ! $this->hasPerm('sheriff') => 'Needs Sheriff.',
+            $this->is($target) => 'This is you.',
+            ! $target->active => 'Their sign-in is disabled.',
+            (bool) array_diff($target->perms(), $this->perms()) => 'They have access you don\'t ('.collect(array_diff($target->perms(), $this->perms()))->map(fn ($p) => AdminApps::get($p)['name'] ?? ucfirst($p))->implode(', ').').',
+            default => null,
+        };
     }
 
     /**

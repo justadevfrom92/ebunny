@@ -17,6 +17,7 @@
     <title>@yield('title', $activeLabel) · {{ $app['name'] }} · {{ config('brand.name') }} Admin</title>
 </head>
 <body>
+@include('backend.partials.login-as-bar')
 <div class="shell">
     <aside class="sidebar" id="sidebar">
         <div class="brand">

@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Backend\Sheriff;
 
 use App\Http\Controllers\Controller;
+use App\Models\HistoryItem;
 use App\Models\Role;
 use App\Models\User;
 use App\Support\AdminApps;
+use App\Support\History;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
@@ -20,7 +23,10 @@ class UserController extends Controller
 {
     public function index(Request $request): View
     {
-        $users = User::with(['role', 'manager'])->orderByDesc('active')->orderBy('name')->get();
+        $q = trim((string) $request->query('q'));
+        $users = User::with(['role', 'manager'])->orderByDesc('active')->orderBy('name')
+            ->when($q !== '', fn ($w) => $w->where(fn ($x) => $x->where('name', 'like', "%$q%")->orWhere('title', 'like', "%$q%")->orWhere('email', 'like', "%$q%")
+                ->orWhere('department', 'like', "%$q%")->orWhere('company', 'like', "%$q%")->orWhere('employee_id', 'like', "%$q%")))->get();
 
         return view('backend.sheriff.users', [
             // Employees by department, then 3rd-party company users by company
@@ -29,12 +35,48 @@ class UserController extends Controller
             'disabled' => $users->where('active', false),
             'apps' => AdminApps::all(),
             'rights' => config('admin.permissions'),
+            'q' => $q,
         ]);
     }
 
     public function create(): View
     {
         return $this->form(new User(['active' => true]));
+    }
+
+    /** Directory profile: who they are, their team, what they can open and do, recent activity, and Log in as. */
+    public function show(User $user): View
+    {
+        $user->load(['role', 'manager', 'reports' => fn ($q) => $q->orderBy('name')]);
+
+        return view('backend.sheriff.user-show', [
+            'u' => $user,
+            'apps' => AdminApps::all(),
+            'rights' => config('admin.permissions'),
+            'changes' => $user->accessChanges(),
+            'blocked' => request()->user()->cannotLogInAs($user),
+            'activity' => HistoryItem::with('customer')->where('user_id', $user->id)->latest('created_at')->latest('id')->limit(12)->get(),
+            'logins' => HistoryItem::where('model', 'AdminLogin_model')->where('record_id', $user->id)->latest('created_at')->limit(6)->get(),
+            'sameRole' => User::where('role_id', $user->role_id)->where('active', true)->whereKeyNot($user->id)->orderBy('name')->get(['id', 'name', 'title']),
+        ]);
+    }
+
+    /** Sign in as this person to see the admin the way they do. The session remembers who you are so you can switch back. */
+    public function logInAs(Request $request, User $user): RedirectResponse
+    {
+        if ($why = $request->user()->cannotLogInAs($user)) {
+            return back()->withErrors(['login_as' => 'Can\'t log in as '.$user->name.': '.$why]);
+        }
+        $me = $request->user();
+        History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $me->id, 'action' => 'logged', 'summary' => 'Logged in as '.$user->name.' (from Sheriff)']);
+        // Stay "logged in as" across a chain: the first person is who you go back to
+        $original = $request->session()->get('impersonator_id', $me->id);
+        Auth::login($user);
+        $request->session()->regenerate();
+        $request->session()->put('impersonator_id', $original);
+        History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $user->id, 'action' => 'logged', 'summary' => 'Signed in by '.$me->name.' with Log in as']);
+
+        return redirect()->route('admin.launcher')->with('status', 'You are logged in as '.$user->name.'. Use "Back to '.$me->name.'" at the top to return.');
     }
 
     public function edit(User $user): View
@@ -58,7 +100,7 @@ class UserController extends Controller
         $data = $this->validated($request, null);
         $user = User::create($data + ['active' => true]);
 
-        return redirect()->route('sheriff.users.index')->with('status', $user->name.' added. Share the temporary password with them securely.');
+        return redirect()->route('sheriff.users.show', $user)->with('status', $user->name.' added. Share the temporary password with them securely.');
     }
 
     /** The edit form, or a quick change from the list (enable/disable). */
@@ -84,7 +126,7 @@ class UserController extends Controller
         }
         $user->update($data);
 
-        return redirect()->route('sheriff.users.index')->with('status', $user->name.' saved');
+        return redirect()->route('sheriff.users.show', $user)->with('status', $user->name.' saved');
     }
 
     private function validated(Request $request, ?User $user): array

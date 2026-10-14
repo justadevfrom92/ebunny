@@ -601,3 +601,5 @@ tr.row-new td { background: var(--info-bg); }
 [hidden] { display: none !important; }
 /* chips inside a form field read as normal text, not as the field's uppercase label */
 .field .chips label { text-transform: none; letter-spacing: normal; font-size: inherit; color: var(--ink); font-weight: 400; margin: 0; }
+/* Log in as: a bar across the top of every admin page */
+.login-as-bar { position: sticky; top: 0; z-index: 60; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; padding: 8px 16px; background: var(--warn-bg); color: var(--warn); border-bottom: 1px solid var(--warn); font-size: .88rem; text-align: center; }

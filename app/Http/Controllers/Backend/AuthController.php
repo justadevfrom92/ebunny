@@ -33,6 +33,7 @@ class AuthController extends Controller
         }
         Auth::login($user);
         $request->session()->regenerate();
+        $request->session()->forget('impersonator_id');
         $user->forceFill(['last_login_at' => now()])->save();
         History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $user->id, 'action' => 'logged', 'summary' => 'Signed in to the admin as a test user']);
 
@@ -54,6 +55,7 @@ class AuthController extends Controller
         }
 
         $request->session()->regenerate();
+        $request->session()->forget('impersonator_id');
         $request->user()->forceFill(['last_login_at' => now()])->save();
         History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $request->user()->id,
             'action' => 'logged', 'summary' => 'Signed in to the admin', 'data' => ['user_agent' => substr((string) $request->userAgent(), 0, 250)]]);
@@ -62,6 +64,21 @@ class AuthController extends Controller
         $intended = (string) $request->session()->pull('url.intended');
 
         return redirect(str_starts_with($intended, url('admin')) ? $intended : route('admin.launcher'));
+    }
+
+    /** End "Log in as": switch back to the person who started it. */
+    public function returnToSelf(Request $request): RedirectResponse
+    {
+        $original = User::where('active', true)->find($request->session()->get('impersonator_id'));
+        abort_unless($original, 404);
+        $was = $request->user();
+        History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $was->id, 'action' => 'logged', 'summary' => 'Log in as ended; back to '.$original->name]);
+        Auth::login($original);
+        $request->session()->regenerate();
+        $request->session()->forget('impersonator_id');
+        History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $original->id, 'action' => 'logged', 'summary' => 'Back from logging in as '.$was->name]);
+
+        return redirect()->route('sheriff.users.show', $was)->with('status', 'Back to '.$original->name.'.');
     }
 
     public function logout(Request $request): RedirectResponse

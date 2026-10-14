@@ -164,7 +164,6 @@
     if (html && frame) {
       // Variables ({{name}} or {{name|default}}) show their default text (or [name]) in the preview, and are listed under it
       var varList = $('#b-vars');
-      var esc = function (t) { var d = document.createElement('div'); d.textContent = t; return d.innerHTML; };
       var preview = function () {
         var seen = {}, rows = [];
         var filled = html.value.replace(/\{\{\s*([a-z][a-z0-9_]*)\s*(?:\|([^}]*))?\}\}/gi, function (m, name, def) {

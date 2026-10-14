@@ -142,6 +142,7 @@ Route::prefix('admin')->group(function () {
     // Every admin page keeps a cached copy of its table (Sheriff → Cached Tables)
     Route::middleware(['auth:web', CacheAdminTables::class])->group(function () {
         Route::post('logout', [Backend\AuthController::class, 'logout'])->name('admin.logout');
+        Route::post('log-in-as/return', [Backend\AuthController::class, 'returnToSelf'])->name('admin.login-as.return');
         Route::get('/', Backend\LauncherController::class)->name('admin.launcher');
 
         // Admin apps created from the launcher's "New Admin App" button
@@ -476,6 +477,8 @@ Route::prefix('admin')->group(function () {
             Route::get('users', [Backend\Sheriff\UserController::class, 'index'])->name('users.index');
             Route::post('users', [Backend\Sheriff\UserController::class, 'store'])->name('users.store');
             Route::get('users/new', [Backend\Sheriff\UserController::class, 'create'])->name('users.create');
+            Route::get('users/{user}', [Backend\Sheriff\UserController::class, 'show'])->name('users.show');
+            Route::post('users/{user}/log-in-as', [Backend\Sheriff\UserController::class, 'logInAs'])->name('users.login-as');
             Route::get('users/{user}/edit', [Backend\Sheriff\UserController::class, 'edit'])->name('users.edit');
             Route::patch('users/{user}', [Backend\Sheriff\UserController::class, 'update'])->name('users.update');
             Route::get('users/{user}/history', [Backend\HistoryController::class, 'user'])->name('users.history');

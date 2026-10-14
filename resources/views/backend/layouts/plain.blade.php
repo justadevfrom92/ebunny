@@ -7,6 +7,7 @@
     <title>@yield('title') · {{ config('brand.name') }} Admin</title>
 </head>
 <body>
+@include('backend.partials.login-as-bar')
 <div class="launcher">
     <header class="launcher-top"><div class="in">
         <a class="brand" href="{{ route('admin.launcher') }}" style="color:#fff;text-decoration:none"><img src="/shared/img/logo-mark-on-dark.svg" alt="" width="36" height="36"><div><strong>{{ config('brand.wordmark') }}</strong><span>Admin Tools</span></div></a>

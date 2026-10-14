@@ -222,12 +222,12 @@ return [
         ],
         'sheriff' => [
             'name' => 'Sheriff',
-            'desc' => 'Settings: employees and their access, roles, markets, API integrations, scheduled jobs and cron automations.',
+            'desc' => 'Settings: the staff directory (profiles, permissions, log in as), roles, markets, API integrations, scheduled jobs and cron automations.',
             'icon' => 'star',
             'home' => 'sheriff.users.index',
             'menu' => [
                 'Access' => [
-                    ['Users', 'sheriff.users.index'],
+                    ['Staff Directory', 'sheriff.users.index'],
                     ['Roles', 'sheriff.roles.index'],
                 ],
                 'Config' => [
