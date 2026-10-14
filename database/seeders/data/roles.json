@@ -6,6 +6,7 @@
    "lando",
    "astro",
    "walker",
+   "bunkhouse",
    "sheriff",
    "delete",
    "refunds",
@@ -60,6 +61,12 @@
   "name": "AI Operations",
   "perms": [
    "deputy"
+  ]
+ },
+ {
+  "name": "Human Resources",
+  "perms": [
+   "bunkhouse"
   ]
  }
 ]

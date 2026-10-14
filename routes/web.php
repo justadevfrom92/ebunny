@@ -347,6 +347,40 @@ Route::prefix('admin')->group(function () {
             Route::get('journal', 'journal')->name('journal');
         });
 
+        // Bunkhouse — employee relationship management
+        Route::prefix('bunkhouse')->name('bunkhouse.')->middleware('app:bunkhouse')->controller(Backend\Bunkhouse\PeopleController::class)->group(function () {
+            Route::get('/', 'dashboard')->name('dashboard');
+            Route::get('people', 'index')->name('people');
+            Route::get('people/{user}', 'person')->name('people.show');
+            Route::get('reviews', 'reviews')->name('reviews');
+            Route::get('reviews/new', 'reviewForm')->name('reviews.create');
+            Route::post('reviews', 'scheduleReview')->name('reviews.store');
+            Route::get('reviews/{review}', 'review')->name('reviews.show');
+            Route::put('reviews/{review}', 'saveReview')->name('reviews.update');
+            Route::get('check-ins', 'checkins')->name('checkins');
+            Route::get('check-ins/new', 'checkinForm')->name('checkins.create');
+            Route::post('check-ins', 'saveCheckin')->name('checkins.store');
+            Route::get('check-ins/{checkin}', 'checkin')->name('checkins.show');
+            Route::get('training', 'training')->name('training');
+            Route::get('training/{course}', 'course')->name('training.show');
+            Route::post('training/{course}/assign', 'assignCourse')->name('training.assign');
+            Route::post('enrollments/{enrollment}', 'completeEnrollment')->name('training.complete');
+            Route::get('kudos', 'kudos')->name('kudos');
+            Route::post('kudos', 'giveKudos')->name('kudos.store');
+            Route::get('time-off', 'timeOff')->name('time-off');
+            Route::get('time-off/new', 'timeOffForm')->name('time-off.create');
+            Route::post('time-off', 'requestTimeOff')->name('time-off.store');
+            Route::post('time-off/{timeOff}', 'decideTimeOff')->name('time-off.decide');
+            Route::get('cases', 'cases')->name('cases');
+            Route::get('cases/new', 'caseForm')->name('cases.create');
+            Route::post('cases', 'openCase')->name('cases.store');
+            Route::get('cases/{case}', 'showCase')->name('cases.show');
+            Route::put('cases/{case}', 'updateCase')->name('cases.update');
+            Route::get('onboarding', 'lifecycle')->name('lifecycle');
+            Route::post('onboarding', 'startChecklist')->name('lifecycle.start');
+            Route::post('checklist/{item}', 'toggleChecklistItem')->name('lifecycle.toggle');
+        });
+
         // Bounty — rewards
         Route::prefix('bounty')->name('bounty.')->middleware('app:bounty')->controller(Backend\Bounty\RewardsController::class)->group(function () use ($dataTables) {
             $dataTables();

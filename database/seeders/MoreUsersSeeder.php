@@ -37,6 +37,7 @@ class MoreUsersSeeder extends Seeder
             ['Emerson Botley', 'AI Operations Analyst', 'AI Operations', 'AI Operations', 'ai@example.com', 'Remote', '2611', '2025-06-02', [], [], null],
             ['Reese Kernel', 'Systems Administrator', 'IT', 'Administrator', 'admin@example.com', 'Austin HQ', '2111', '2020-10-12', [], [], null],
             ['Sawyer Stackman', 'Developer', 'IT', 'Administrator', 'admin@example.com', 'Remote', '2112', '2024-03-04', ['configure'], [], 'API settings stay with the IT Director'],
+            ['Rory Kindwell', 'HR Generalist', 'Human Resources', 'Human Resources', 'hr@example.com', 'Austin HQ', '2702', '2023-08-07', [], [], null],
             ['Dakota Chiefly', 'VP of Operations', 'Management', 'Customer Service Lead', null, 'Austin HQ', '2001', '2018-01-15', [], ['caboose', 'walker'], 'Reads finance and reports'],
         ];
         foreach ($staff as $i => [$name, $title, $dept, $r, $manager, $loc, $ext, $hired, $denied, $extra, $note]) {
@@ -45,6 +46,11 @@ class MoreUsersSeeder extends Seeder
                 'title' => $title, 'department' => $dept, 'role_id' => $role($r), 'manager_id' => $manager ? $mgr($manager) : null, 'location' => $loc,
                 'phone_ext' => $ext, 'hired_on' => $hired, 'denied_perms' => $denied, 'extra_perms' => $extra, 'access_note' => $note,
             ], $password);
+        }
+
+        // The VP of Operations manages the department leads
+        if ($vp = User::where('email', 'like', 'dakota.chiefly@%')->value('id')) {
+            User::whereIn('email', ['lead@example.com', 'finance@example.com', 'marketing@example.com', 'pricing@example.com', 'hr@example.com'])->update(['manager_id' => $vp]);
         }
 
         // 3rd-party companies: [company, domain, contact (manager) email, contract end, [[name, title, role, denied, extra, note]]]

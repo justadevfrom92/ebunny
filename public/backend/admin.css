@@ -601,3 +601,8 @@ tr.row-new td { background: var(--info-bg); }
 [hidden] { display: none !important; }
 /* chips inside a form field read as normal text, not as the field's uppercase label */
 .field .chips label { text-transform: none; letter-spacing: normal; font-size: inherit; color: var(--ink); font-weight: 400; margin: 0; }
+/* Bunkhouse: who's-out grid */
+.out-grid th, .out-grid td { text-align: center; padding-left: 6px; padding-right: 6px; }
+.out-grid th:first-child, .out-grid td:first-child { text-align: left; }
+.out-grid .wkend { background: var(--row); }
+.out-grid td.off { background: var(--warn-bg); color: var(--warn); font-weight: 600; font-size: .78rem; }
