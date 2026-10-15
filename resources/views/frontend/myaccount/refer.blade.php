@@ -1,7 +1,6 @@
 @extends('frontend.layouts.main')
 @section('title', 'Refer a Friend')
 @section('heading', 'My Account')
-@section('no-banner', '1')
 @section('main')
 <x-frontend.myaccount :c="$c" title="Refer a Friend">
   <div class="co-card">

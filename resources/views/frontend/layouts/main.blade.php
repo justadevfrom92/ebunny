@@ -22,16 +22,18 @@
   @yield('notice')
 
   <main>
-    {{-- Pages can turn the banner off with @section('no-banner', '1') (the signed-in My Account pages) --}}
-    @unless (View::hasSection('no-banner'))
-    <section class="page-banner">
-      <div class="wrap">
+    {{-- No page banners. Pages whose title is content people need (a plan or product name, sign-up steps,
+         a survey) ask for a plain heading on the page with @section('show-title', '1'); the rest keep the
+         heading for screen readers only. --}}
+    @hasSection('show-title')
+    <div class="page-title"><div class="wrap">
         @hasSection('eyebrow')<p class="eyebrow">@yield('eyebrow')</p>@endif
         <h1>@yield('heading')</h1>
         @yield('banner')
-      </div>
-    </section>
-    @endunless
+    </div></div>
+    @else
+    <h1 class="sr-only">@yield('heading')</h1>
+    @endif
     @yield('main')
   </main>
 

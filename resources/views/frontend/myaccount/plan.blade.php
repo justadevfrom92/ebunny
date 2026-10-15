@@ -1,7 +1,6 @@
 @extends('frontend.layouts.main')
 @section('title', 'Current Plan & Renew')
 @section('heading', 'My Account')
-@section('no-banner', '1')
 @section('main')
 <x-frontend.myaccount :c="$c" title="Current Plan & Renew">
   <div class="co-card">

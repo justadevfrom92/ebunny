@@ -1,6 +1,7 @@
 @extends('frontend.layouts.main')
 @section('title', 'About You')
 @section('heading', 'Tell us about you')
+@section('show-title', '1')
 @section('banner')<p>We use this to set up your account and run a soft credit check, which doesn't affect your credit score.</p>@endsection
 @section('main')
 <x-frontend.checkout :d="$d" :step="$step" :intro="$intro">

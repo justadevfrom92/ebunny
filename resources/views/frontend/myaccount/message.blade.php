@@ -1,7 +1,6 @@
 @extends('frontend.layouts.main')
 @section('title', $m->template.' · Message Center')
 @section('heading', 'My Account')
-@section('no-banner', '1')
 @section('main')
 @php
     $when = $m->sent_at ?? $m->created_at;

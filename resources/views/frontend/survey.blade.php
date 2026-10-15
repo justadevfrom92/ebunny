@@ -1,6 +1,7 @@
 @extends('frontend.layouts.main')
 @section('title', $survey->title)
 @section('heading', $survey->title)
+@section('show-title', '1')
 @section('banner')@if ($survey->intro)<p>{{ $survey->intro }}</p>@endif @endsection
 @section('main')
 <section class="section"><div class="wrap narrow">

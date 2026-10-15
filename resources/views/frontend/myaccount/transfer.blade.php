@@ -1,7 +1,6 @@
 @extends('frontend.layouts.main')
 @section('title', 'Transfer Service')
 @section('heading', 'My Account')
-@section('no-banner', '1')
 @section('main')
 <x-frontend.myaccount :c="$c" title="Transfer Service">
   <form method="post" action="{{ route('myaccount.transfer.store') }}" class="co-card">@csrf

@@ -1,8 +1,6 @@
 @extends('frontend.layouts.main')
 @section('title', 'Shop')
-@section('eyebrow', 'Energy-saving gear')
 @section('heading', 'Shop')
-@section('banner')<p class="lead" style="color:rgba(255,255,255,.85);max-width:620px">Smart thermostats, EV chargers, lighting and protection plans. Many earn Rangler Rewards stars.</p>@endsection
 @section('main')
 @php
     $active = collect([

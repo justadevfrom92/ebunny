@@ -1,6 +1,7 @@
 @extends('frontend.layouts.main')
 @section('title', 'Sign Up')
 @section('heading', 'Sign up for electricity')
+@section('show-title', '1')
 @section('banner')<p>It takes about five minutes. You'll need your service address and, if you have it, your ESIID.</p>@endsection
 @section('main')
 <x-frontend.checkout :d="$d" :step="$step" :intro="$intro">

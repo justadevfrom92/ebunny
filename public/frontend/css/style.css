@@ -803,7 +803,7 @@ fieldset.field { border: 0; padding: 0; }
 .err { color: var(--red); font-weight: 600; display: block; margin-top: 4px; }
 .shop-cart .btn { padding: 8px 14px; font-size: .8rem; } .shop-cart .btn::after { display: none; } .shop-cart .btn-outline { color: var(--white); border-color: rgba(255,255,255,.5); }
 .nav-cart { position: relative; display: inline-flex; align-items: center; gap: 6px; }
-.nav-cart svg { width: 22px; height: 22px; } .nav-cart .cart-n { position: absolute; top: -6px; right: -10px; background: var(--red); color: var(--white); border-radius: 999px; font-size: .68rem; font-weight: 800; padding: 1px 6px; }
+.nav-cart .cart-n { background: var(--red); color: var(--white); border-radius: 999px; font-size: .68rem; font-weight: 800; padding: 1px 6px; }
 .nav-cart .cart-n[hidden] { display: none; }
 @media (max-width: 900px) { .cart-grid { grid-template-columns: 1fr; } }
 
@@ -857,10 +857,22 @@ fieldset.field { border: 0; padding: 0; }
 @media (max-width: 400px) { .site-header .wrap { gap: 10px; } .logo { gap: 8px; } .logo-mark { width: 38px; height: 38px; } .logo-text strong { font-size: 1.2rem; } }
 @media (max-width: 1180px) and (min-width: 1025px) { .site-header .logo-text { display: none; } }
 /* Header icons never shrink away; the cart lines up with the right edge of the page content */
-.site-header .nav-cart svg, .nav-actions .nav-out svg { flex: none; width: 20px; height: 20px; }
+.nav-actions .nav-out svg { flex: none; }
 .nav-actions .nav-out svg { width: 16px; height: 16px; }
 .site-header .nav-cart { justify-content: flex-end; text-align: right; gap: 6px; }
 .site-header .wrap { gap: 20px; } .nav-panel { gap: 22px; } .nav { gap: 22px; }
 .site-header .logo { flex: none; }
 @media (max-width: 1280px) and (min-width: 1025px) { .site-header .logo-text { display: none; } }
 @media (max-width: 380px) { .logo-text strong { font-size: 1rem; } .logo-text span { font-size: .55rem; letter-spacing: .18em; } .logo-mark { width: 32px; height: 32px; } .site-header .wrap { gap: 8px; } }
+
+/* Plain page title (no banner) for plan, product, sign-up and survey pages */
+.page-title { padding: 40px 0 0; }
+.page-title h1 { color: var(--navy); font-size: clamp(1.8rem, 3.5vw, 2.6rem); margin: 0 0 8px; }
+.page-title .eyebrow { margin-bottom: 6px; }
+.page-title p { color: var(--grey); max-width: 760px; margin: 0; }
+.page-title + .section { padding-top: 28px; }
+.zip-note { margin: 6px 0 0; color: var(--grey); font-size: .95rem; }
+.zip-note[hidden] { display: none; }
+/* Cart in the header: just the word "Cart" (no icon), right-aligned, with the item count beside it */
+.site-header .nav-cart { display: inline-flex; align-items: center; justify-content: flex-end; text-align: right; gap: 6px; }
+.site-header .nav-cart .cart-n { position: static; font-size: .72rem; padding: 1px 7px; }

@@ -2,6 +2,7 @@
 @section('title', $p['name'])
 @section('eyebrow', $cats[$p['cat']])
 @section('heading', $p['name'])
+@section('show-title', '1')
 @section('main')
 <section class="section shop">
   <div class="wrap">

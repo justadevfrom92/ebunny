@@ -1,7 +1,6 @@
 @extends('frontend.layouts.main')
 @section('title', 'Order '.$o->number)
 @section('heading', 'My Account')
-@section('no-banner', '1')
 @section('main')
 <x-frontend.myaccount :c="$c" :title="'Order '.$o->number">
   <p class="msg-back"><a href="{{ route('myaccount.orders') }}">‹ All orders</a></p>

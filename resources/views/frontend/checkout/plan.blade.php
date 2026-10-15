@@ -1,6 +1,7 @@
 @extends('frontend.layouts.main')
 @section('title', 'Choose a Plan')
 @section('heading', 'Choose your plan')
+@section('show-title', '1')
 @section('banner')<p>Prices for {{ $market->description }}, including delivery charges, at 1,000 kWh a month.</p>@endsection
 @section('main')
 <x-frontend.checkout :d="$d" :step="$step" :intro="$intro">

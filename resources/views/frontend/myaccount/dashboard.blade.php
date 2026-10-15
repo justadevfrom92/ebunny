@@ -1,7 +1,6 @@
 @extends('frontend.layouts.main')
 @section('title', 'Dashboard')
 @section('heading', 'My Account')
-@section('no-banner', '1')
 @section('main')
 <x-frontend.myaccount :c="$c" title="Dashboard">
   <div class="ma-cards">

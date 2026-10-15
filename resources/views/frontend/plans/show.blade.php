@@ -18,7 +18,8 @@
 @section('title', $plan->name)
 @section('eyebrow', ($biz ? 'Business' : 'Home').' electricity plan')
 @section('heading', $plan->name)
-@section('banner')<p class="lead" style="color:rgba(255,255,255,.85)">{{ $termLabel }}@if ($plan->green) · {{ $plan->green }}% renewable @endif</p>@endsection
+@section('show-title', '1')
+@section('banner')<p class="lead">{{ $termLabel }}@if ($plan->green) · {{ $plan->green }}% renewable @endif</p>@endsection
 @section('main')
 <section class="section plan-page">
   <div class="wrap">

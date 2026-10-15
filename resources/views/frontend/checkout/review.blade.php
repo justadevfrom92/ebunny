@@ -1,6 +1,7 @@
 @extends('frontend.layouts.main')
 @section('title', 'Review & Sign Up')
 @section('heading', 'Review and sign up')
+@section('show-title', '1')
 @section('main')
 <x-frontend.checkout :d="$d" :step="$step" :intro="$intro">
   <form method="post" action="{{ route('checkout.submit') }}">@csrf

@@ -1,7 +1,6 @@
 @extends('frontend.layouts.main')
 @section('title', 'Message Center')
 @section('heading', 'My Account')
-@section('no-banner', '1')
 @section('main')
 <x-frontend.myaccount :c="$c" title="Message Center">
   <div class="co-card"><div class="ma-table"><table class="price-table msg-list">

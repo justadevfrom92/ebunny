@@ -1,6 +1,7 @@
 @extends('frontend.layouts.main')
 @section('title', 'Finish by Phone')
 @section('heading', 'Finish your sign-up by phone')
+@section('show-title', '1')
 @section('main')
 <section class="section"><div class="wrap narrow"><div class="co-card">
   @if ($intro)<div class="cms-content">{!! $intro !!}</div>@endif

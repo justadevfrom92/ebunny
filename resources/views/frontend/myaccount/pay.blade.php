@@ -1,7 +1,6 @@
 @extends('frontend.layouts.main')
 @section('title', 'Pay Bill')
 @section('heading', 'My Account')
-@section('no-banner', '1')
 @section('main')
 <x-frontend.myaccount :c="$c" title="Pay Bill">
   @if ($properties->count() > 1)

@@ -1,7 +1,6 @@
 @extends('frontend.layouts.main')
 @section('title', 'Energy Insights')
 @section('heading', 'My Account')
-@section('no-banner', '1')
 @section('main')
 <x-frontend.myaccount :c="$c" title="Energy Insights">
   <div class="ma-cards">
