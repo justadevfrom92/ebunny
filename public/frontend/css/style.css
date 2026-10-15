@@ -876,3 +876,8 @@ fieldset.field { border: 0; padding: 0; }
 /* Cart in the header: just the word "Cart" (no icon), right-aligned, with the item count beside it */
 .site-header .nav-cart { display: inline-flex; align-items: center; justify-content: flex-end; text-align: right; gap: 6px; }
 .site-header .nav-cart .cart-n { position: static; font-size: .72rem; padding: 1px 7px; }
+/* Cart: pinned to the right-hand edge of the screen (not the centred content column) */
+.site-header .nav-cart { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); margin: 0; }
+/* Keep the header content clear of the cart when the side margin is narrower than the cart */
+.site-header .wrap { padding-right: max(0px, calc(100px - (100vw - min(90vw, var(--wrap))) / 2)); }
+@media (max-width: 1024px) { .site-header .nav-cart { right: 16px; } .site-header .wrap { padding-right: max(0px, calc(86px - 5vw)); } }
