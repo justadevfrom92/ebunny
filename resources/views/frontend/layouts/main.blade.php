@@ -26,7 +26,6 @@
     @unless (View::hasSection('no-banner'))
     <section class="page-banner">
       <div class="wrap">
-        <div class="crumbs"><a href="/">Home</a> / @yield('crumb')</div>
         @hasSection('eyebrow')<p class="eyebrow">@yield('eyebrow')</p>@endif
         <h1>@yield('heading')</h1>
         @yield('banner')

@@ -1,6 +1,5 @@
 @extends('frontend.layouts.main')
 @section('title', 'Reset Password')
-@section('crumb', 'My Account')
 @section('heading', 'Choose a new password')
 @section('main')
 <section class="section"><div class="wrap narrow"><div class="co-card">

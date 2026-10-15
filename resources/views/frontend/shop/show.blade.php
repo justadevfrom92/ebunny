@@ -1,6 +1,5 @@
 @extends('frontend.layouts.main')
 @section('title', $p['name'])
-@section('crumb')<a href="{{ route('shop') }}">Shop</a> / <a href="{{ route('shop', ['cat' => [$p['cat']]]) }}">{{ $cats[$p['cat']] }}</a> / {{ $p['name'] }}@endsection
 @section('eyebrow', $cats[$p['cat']])
 @section('heading', $p['name'])
 @section('main')

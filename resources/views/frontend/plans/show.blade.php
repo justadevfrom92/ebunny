@@ -16,7 +16,6 @@
     ])));
 @endphp
 @section('title', $plan->name)
-@section('crumb')<a href="/{{ $biz ? 'business.html' : 'plans.html' }}">{{ $biz ? 'Business Plans' : 'Plans' }}</a> / {{ $plan->name }}@endsection
 @section('eyebrow', ($biz ? 'Business' : 'Home').' electricity plan')
 @section('heading', $plan->name)
 @section('banner')<p class="lead" style="color:rgba(255,255,255,.85)">{{ $termLabel }}@if ($plan->green) · {{ $plan->green }}% renewable @endif</p>@endsection

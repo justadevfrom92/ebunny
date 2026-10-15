@@ -1,6 +1,5 @@
 @extends('frontend.layouts.main')
 @section('title', 'Credit Freeze')
-@section('crumb', 'Sign Up')
 @section('heading', 'Your credit file is frozen')
 @section('main')
 <section class="section"><div class="wrap narrow"><div class="co-card">

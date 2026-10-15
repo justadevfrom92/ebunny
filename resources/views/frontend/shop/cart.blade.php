@@ -1,6 +1,5 @@
 @extends('frontend.layouts.main')
 @section('title', 'Your Cart')
-@section('crumb')<a href="{{ route('shop') }}">Shop</a> / Cart @endsection
 @section('heading', 'Your Cart')
 @section('main')
 <section class="section shop">

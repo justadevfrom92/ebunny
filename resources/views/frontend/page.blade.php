@@ -15,7 +15,6 @@
 @section('notice')
   @if ($page->status !== 'Published')<div style="background:#fff3d6;color:#7a5000;text-align:center;padding:8px;font-weight:600">Draft — only signed-in admin users can see this page.</div>@endif
 @endsection
-@section('crumb', $page->title)
 @if ($page->market_label) @section('eyebrow', $page->market_label) @endif
 @section('heading', $title)
 @section('banner')

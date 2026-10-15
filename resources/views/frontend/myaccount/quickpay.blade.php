@@ -1,6 +1,5 @@
 @extends('frontend.layouts.main')
 @section('title', 'QuickPay')
-@section('crumb', 'Pay My Bill')
 @section('heading', 'QuickPay')
 @section('banner')<p>Check your balance and pay without signing in.</p>@endsection
 @section('main')

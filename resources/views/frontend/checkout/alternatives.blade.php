@@ -1,6 +1,5 @@
 @extends('frontend.layouts.main')
 @section('title', 'Deposit Alternatives')
-@section('crumb', 'Sign Up')
 @section('heading', 'Deposit alternatives')
 @section('main')
 <section class="section"><div class="wrap narrow"><div class="co-card">

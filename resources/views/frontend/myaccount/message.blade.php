@@ -1,6 +1,5 @@
 @extends('frontend.layouts.main')
 @section('title', $m->template.' · Message Center')
-@section('crumb')<a href="{{ route('myaccount.dashboard') }}">My Account</a> / <a href="{{ route('myaccount.messages') }}">Message Center</a>@endsection
 @section('heading', 'My Account')
 @section('no-banner', '1')
 @section('main')

@@ -1,6 +1,5 @@
 @extends('frontend.layouts.main')
 @section('title', 'Something Went Wrong')
-@section('crumb', 'Sign Up')
 @section('heading', 'Something went wrong')
 @section('main')
 <section class="section"><div class="wrap narrow"><div class="co-card">

@@ -1,6 +1,5 @@
 @extends('frontend.layouts.main')
 @section('title', 'About You')
-@section('crumb', 'Sign Up')
 @section('heading', 'Tell us about you')
 @section('banner')<p>We use this to set up your account and run a soft credit check, which doesn't affect your credit score.</p>@endsection
 @section('main')

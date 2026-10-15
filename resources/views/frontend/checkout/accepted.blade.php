@@ -1,6 +1,5 @@
 @extends('frontend.layouts.main')
 @section('title', 'You\'re Signed Up')
-@section('crumb', 'Sign Up')
 @section('heading', 'You\'re signed up!')
 @section('banner')<p>Thanks, {{ $c->first_name }}. Your confirmation number is <b>{{ $c->account }}</b>.</p>@endsection
 @section('main')

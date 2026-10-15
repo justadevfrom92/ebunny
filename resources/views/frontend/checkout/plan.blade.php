@@ -1,6 +1,5 @@
 @extends('frontend.layouts.main')
 @section('title', 'Choose a Plan')
-@section('crumb', 'Sign Up')
 @section('heading', 'Choose your plan')
 @section('banner')<p>Prices for {{ $market->description }}, including delivery charges, at 1,000 kWh a month.</p>@endsection
 @section('main')

@@ -1,6 +1,5 @@
 @extends('frontend.layouts.main')
 @section('title', 'My Account')
-@section('crumb', 'My Account')
 @section('heading', 'Sign in to My Account')
 @section('banner')<p>Pay your bill, check usage, renew your plan and redeem rewards.</p>@endsection
 @section('main')

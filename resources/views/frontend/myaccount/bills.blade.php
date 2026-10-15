@@ -1,6 +1,5 @@
 @extends('frontend.layouts.main')
 @section('title', 'View Bills')
-@section('crumb', 'My Account')
 @section('heading', 'My Account')
 @section('no-banner', '1')
 @section('main')

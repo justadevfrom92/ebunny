@@ -1,6 +1,5 @@
 @extends('frontend.layouts.main')
 @section('title', 'Order '.$o->number)
-@section('crumb')<a href="{{ route('myaccount.dashboard') }}">My Account</a> / <a href="{{ route('myaccount.orders') }}">Orders</a>@endsection
 @section('heading', 'My Account')
 @section('no-banner', '1')
 @section('main')

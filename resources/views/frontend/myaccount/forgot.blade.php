@@ -1,6 +1,5 @@
 @extends('frontend.layouts.main')
 @section('title', 'Forgot '.ucfirst($what))
-@section('crumb', 'My Account')
 @section('heading', 'Forgot your '.$what.'?')
 @section('main')
 <section class="section"><div class="wrap narrow"><div class="co-card">

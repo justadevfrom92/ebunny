@@ -1,6 +1,5 @@
 @extends('frontend.layouts.main')
 @section('title', 'Review & Sign Up')
-@section('crumb', 'Sign Up')
 @section('heading', 'Review and sign up')
 @section('main')
 <x-frontend.checkout :d="$d" :step="$step" :intro="$intro">
