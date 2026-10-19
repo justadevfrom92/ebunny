@@ -687,3 +687,19 @@ tr.row-new td { background: var(--info-bg); }
 .phone-ico { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); color: var(--cyan); background: #fff; }
 .phone-ico:hover { background: var(--info-bg); border-color: var(--cyan); text-decoration: none; }
 .resolution-form .chips { margin-top: 6px; }
+
+/* Account documents (Corral → a file) */
+.cust-doc h2 { margin-bottom: 12px; }
+.cust-doc p { line-height: 1.55; margin-bottom: 10px; max-width: 70ch; }
+.cust-doc-table { width: auto; min-width: 320px; margin-top: 8px; }
+.cust-doc-table th { text-transform: none; letter-spacing: 0; font-size: .85rem; color: var(--navy); background: var(--row); width: 45%; position: static; }
+[data-view-pane][hidden] { display: none !important; }
+.chips button.chip-link { cursor: pointer; font: inherit; font-size: .85rem; }
+.tl-ticket .tl-daterow th { text-transform: none; letter-spacing: 0; font-size: .85rem; color: var(--navy); font-weight: 600; position: static; }
+/* Numbered pager: ‹ 1 2 3 … 9 ›, with the range on the right */
+.pager { justify-content: flex-start; flex-wrap: wrap; gap: 6px; }
+.pager .btn { min-width: 34px; justify-content: center; text-align: center; }
+.pager .btn.on { background: var(--navy); color: #fff; border-color: var(--navy); }
+.pager .pager-of { margin-left: auto; border: 0; }
+.pager span.muted:not(.pager-of) { border: 0; padding: 4px 2px; }
+.tl-ticket td:first-child { white-space: nowrap; width: 12ch; } .tl-ticket td:nth-child(2) { width: 24ch; } .tl-ticket td:nth-child(3) { width: 60%; }

@@ -11,6 +11,32 @@
             .($log ? '<a class="btn ghost" href="'.route('corral.customers.ticket', $c).'">Account ticket</a>' : ''),
     ])
 
+    {{-- Two views of the same items (no second query): grouped by item type, or one timeline by date and time --}}
+    <div class="chips small" data-ticket-views role="tablist" aria-label="Ticket view">
+        <button type="button" class="chip-link on" data-view="grouped" role="tab" aria-selected="true">By Item Type</button>
+        <button type="button" class="chip-link" data-view="timeline" role="tab" aria-selected="false">Timeline</button>
+    </div>
+
+    <div data-view-pane="timeline" hidden>
+        @php
+            $timeline = $items->map(fn ($i) => ['at' => $i->created_at, 'id' => $i->id, 'what' => $i->model, 'summary' => $i->summary, 'who' => $i->user?->name ?? 'System', 'url' => route('corral.history.show', $i)])
+                ->concat(collect($dataItems)->map(fn ($i) => ['at' => $i['created'], 'id' => $i['id'], 'what' => $i['label'], 'summary' => $i['summary'], 'who' => '', 'url' => $i['url']]))
+                ->sortByDesc(fn ($e) => $e['at']->timestamp)->values();
+        @endphp
+        <div class="panel"><div class="panel-head"><h2>Timeline</h2><span class="muted">{{ $timeline->count() }} items, newest first</span></div>
+            <div class="table-wrap"><table class="hist tl-ticket">
+                <tbody>@forelse ($timeline->groupBy(fn ($e) => $e['at']->format('l, F j, Y')) as $day => $events)
+                    <tr class="tl-daterow"><th colspan="4">{{ $day }}</th></tr>
+                    @foreach ($events as $e)
+                        <tr class="click" data-href="{{ $e['url'] }}"><td style="width:10ch" class="nowrap">{{ $e['at']->format('g:i:s A') }}</td>
+                            <td style="width:22ch"><a class="mono" href="{{ $e['url'] }}">{{ $e['what'] }}</a></td><td class="wrap">{{ $e['summary'] }}</td><td class="muted" style="width:14ch">{{ $e['who'] }}</td></tr>
+                    @endforeach
+                @empty <tr><td class="empty">No items on this ticket yet.</td></tr> @endforelse</tbody>
+            </table></div>
+        </div>
+    </div>
+
+    <div data-view-pane="grouped" style="display:flex;flex-direction:column;gap:20px">
     @forelse ($groups as $model => $rows)
         <div class="panel">
             <div class="panel-head"><h2><span class="muted" style="font-weight:400">{{ $rows->count() }}</span> <span class="mono">{{ $model }}</span></h2></div>
@@ -29,6 +55,7 @@
     @empty
         <div class="panel empty">No items on this ticket yet.</div>
     @endforelse
+    </div>
 
     <div class="grid-2">
         <div class="panel"><div class="panel-head"><h2>Actions</h2></div><div class="panel-body actions">

@@ -68,6 +68,15 @@ class CustomerSeeder extends Seeder
                     'summary' => $name.' — needs review', 'created_at' => now()->subDays($k + 1),
                 ]);
             }
+            // History: items people already fixed over the last two months
+            $fixers = User::whereIn('email', ['csr@example.com', 'lead@example.com', 'admin@example.com', 'finance@example.com'])->pluck('id')->all();
+            for ($k = 0; $k < 12 + ($i * 7) % 20; $k++) {
+                $at = now()->subDays(2 + ($k * 3 + $i) % 60)->setTime(8 + $k % 9, ($k * 13) % 60);
+                WorkItem::create([
+                    'queue' => $keys[$i], 'customer_id' => $ids[($i * 3 + $k) % $ids->count()], 'summary' => $name.' — needs review',
+                    'created_at' => $at, 'resolved_at' => $at->copy()->addHours(1 + ($k * 5) % 70), 'resolved_by' => $fixers ? $fixers[$k % count($fixers)] : null,
+                ]);
+            }
         }
     }
 }

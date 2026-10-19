@@ -24,6 +24,11 @@ class WorkItem extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    public function resolver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'resolved_by');
+    }
+
     public function scopeOpen(Builder $query): void
     {
         $query->whereNull('resolved_at');

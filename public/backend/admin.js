@@ -310,6 +310,20 @@
       if (badge && um.dataset.notify) check();
     }
 
+    // Account ticket: switch between "By Item Type" and "Timeline" (both already on the page); remembered per browser
+    var tv = $('[data-ticket-views]');
+    if (tv) {
+      function showView(v) {
+        $$('[data-view]', tv).forEach(function (b) { var on = b.dataset.view === v; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+        $$('[data-view-pane]').forEach(function (p) { p.hidden = p.dataset.viewPane !== v; });
+        try { localStorage.setItem('ticket.view', v); } catch (e) {}
+      }
+      tv.addEventListener('click', function (e) { var b = e.target.closest('[data-view]'); if (b) showView(b.dataset.view); });
+      var saved = null; try { saved = localStorage.getItem('ticket.view'); } catch (e) {}
+      if (location.hash === '#timeline') saved = 'timeline';
+      if (saved === 'timeline') showView('timeline');
+    }
+
     // A select that shows its form's extra input only for one choice
     $$('select[data-reveal-when]').forEach(function (s) {
       var input = $('input:not([type=hidden])', s.form);

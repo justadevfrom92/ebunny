@@ -195,6 +195,9 @@ Route::prefix('admin')->group(function () {
             Route::delete('payment-methods/{method}', [Backend\Corral\AccountController::class, 'removeMethod'])->name('methods.remove');
             Route::post('customers/{customer}/files', [Backend\Corral\AccountController::class, 'uploadFile'])->name('customers.files.upload');
             Route::get('files/{file}', [Backend\Corral\AccountController::class, 'downloadFile'])->name('files.download');
+            Route::get('files/{file}/page', [Backend\Corral\CustomerFileController::class, 'show'])->name('files.show');
+            Route::get('files/{file}/print', [Backend\Corral\CustomerFileController::class, 'print'])->name('files.print');
+            Route::post('files/{file}/send', [Backend\Corral\CustomerFileController::class, 'send'])->middleware('throttle:20,1')->name('files.send');
             Route::patch('customers/{customer}/marketing', [Backend\Corral\AccountController::class, 'updateMarketing'])->name('customers.marketing');
             Route::get('customers/{customer}/stars', [Backend\Corral\AccountController::class, 'stars'])->name('customers.stars');
             Route::post('customers/{customer}/stars', [Backend\Corral\AccountController::class, 'redeem'])->name('customers.stars.redeem');

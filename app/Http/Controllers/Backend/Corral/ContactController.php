@@ -50,7 +50,7 @@ class ContactController extends Controller
                 'started_at' => now()->subMinutes((int) ($data['minutes'] ?? 0)), 'duration_sec' => (int) ($data['minutes'] ?? 0) * 60, 'disposition' => $data['issue'] ?? null,
                 'transcript' => $data['body']] + $resolved),
             'chat' => AiConversation::create(['ai_agent_id' => AiAgent::where('activity', 'chat')->value('id') ?? AiAgent::value('id'), 'customer_id' => $c->id, 'channel' => 'chat',
-                'topic' => $data['issue'] ?? 'Chat', 'status' => 'closed', 'user_id' => $u->id, 'transcript' => ($data['direction'] === 'in' ? 'Customer: ' : 'Agent: ').str_replace("\n", ' ', $data['body']),
+                'topic' => $data['issue'] ?? 'Chat', 'status' => 'closed', 'outcome' => $data['resolution'] === 'Resolved' ? 'resolved' : 'handed_off', 'user_id' => $u->id, 'transcript' => ($data['direction'] === 'in' ? 'Customer: ' : 'Agent: ').str_replace("\n", ' ', $data['body']),
                 'started_at' => now(), 'last_message_at' => now()] + $resolved),
             default => ContactLog::create(['customer_id' => $c->id, 'channel' => $data['channel'] === 'email' ? 'Email' : 'SMS', 'template' => $data['issue'] ?? 'Logged by hand',
                 'body' => $data['body'], 'status' => 'logged', 'direction' => $data['direction'], 'phone' => $data['channel'] === 'sms' ? $c->phone : null,

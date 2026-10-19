@@ -8,7 +8,7 @@
         <thead><tr><th>Account</th><th>Customer</th><th>Plan</th><th>Status</th><th>Item</th><th>Age</th><th></th></tr></thead>
         <tbody>@forelse ($items as $item)
             <tr>
-                <td class="mono">@if ($item->customer)<a href="{{ route('corral.customers.show', $item->customer) }}">{{ $item->customer->account }}</a>@endif</td>
+                <td>@include('backend.partials.account-link', ['c' => $item->customer])</td>
                 <td>{{ $item->customer?->name }}</td><td>{{ $item->customer?->plan?->name }}</td>
                 <td>@if ($item->customer)@include('backend.partials.pill', ['text' => $item->customer->status, 'tone' => $item->customer->statusTone()])@endif</td>
                 <td class="wrap">{{ $item->summary }}</td>
@@ -17,4 +17,5 @@
             </tr>
         @empty <tr><td colspan="7" class="empty">Queue is clear.</td></tr> @endforelse</tbody>
     </table></div></div>
+    @include('backend.corral._queue-history', ['history' => $history, 'showQueue' => false])
 @endsection

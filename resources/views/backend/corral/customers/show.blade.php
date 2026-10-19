@@ -191,9 +191,9 @@
             <input type="file" name="file" required aria-label="File to upload"><button class="btn sm">Upload</button><span class="help">PDF, image, text or Word, up to 10 MB.</span>
         </form>
         <div class="table-wrap" style="max-height:320px;overflow-y:auto"><table><tbody>@foreach ($c->files->sortByDesc('created_at') as $f)
-            <tr><td style="width:18ch">{{ $f->created_at->format('n/j/Y g:i A') }}</td>
-                <td>@if ($f->path)<a href="{{ route('corral.files.download', $f) }}">{{ $f->name }}</a>@else{{ $f->name }}@endif</td>
-                <td class="muted">{{ $f->kind }}</td></tr>
+            <tr class="click" data-href="{{ route('corral.files.show', $f) }}"><td style="width:18ch">{{ $f->created_at->format('n/j/Y g:i A') }}</td>
+                <td><a href="{{ route('corral.files.show', $f) }}">{{ $f->name }}</a></td>
+                <td class="muted">{{ strtoupper($f->kind) }}</td></tr>
         @endforeach</tbody></table></div>
     </div></div>
 

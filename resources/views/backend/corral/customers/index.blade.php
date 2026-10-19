@@ -39,7 +39,8 @@
         </div>
     @endunless
 
-    <div class="panel"><div class="panel-head"><h2>{{ $searched ? 'Search Results' : 'Recent Accounts' }}</h2><span class="muted">Showing {{ $results->count() }} of {{ $total }}</span></div>
+    <div class="panel"><div class="panel-head"><h2>{{ $searched ? 'Search Results' : 'Recent Accounts' }}</h2><span class="muted">Showing {{ $results->count() ? number_format($results->firstItem()).'–'.number_format($results->lastItem()) : 0 }} of {{ number_format($total) }}</span></div>
         @include('backend.corral.customers._rows', ['customers' => $results, 'empty' => 'No accounts match. Try fewer filters.'])
+        @include('backend.partials.pager', ['p' => $results])
     </div>
 @endsection

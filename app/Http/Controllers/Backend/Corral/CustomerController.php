@@ -32,7 +32,8 @@ class CustomerController extends Controller
         $query = Customer::with(['plan', 'market'])->latest();
         $this->applyFilters($query, $filters);
         $total = (clone $query)->count();
-        $results = $limit ? $query->limit($limit)->get() : $query->get();
+        // Pages of the chosen size (All = one page)
+        $results = $query->paginate($limit ?: max(1, $total))->withQueryString();
 
         $searched = collect($filters)->except('limit')->filter()->isNotEmpty();
 

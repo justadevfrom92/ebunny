@@ -10,4 +10,5 @@
                 <td class="num">@include('backend.partials.pill', ['text' => $n, 'tone' => $n === 0 ? 'ok' : ($n > 5 ? 'bad' : 'warn')])</td></tr>
         @endforeach</tbody>
     </table></div></div>
+    @include('backend.corral._queue-history', ['history' => $history, 'showQueue' => true])
 @endsection
