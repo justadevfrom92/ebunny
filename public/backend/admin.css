@@ -603,3 +603,16 @@ tr.row-new td { background: var(--info-bg); }
 .field .chips label { text-transform: none; letter-spacing: normal; font-size: inherit; color: var(--ink); font-weight: 400; margin: 0; }
 /* Log in as: a bar across the top of every admin page */
 .login-as-bar { position: sticky; top: 0; z-index: 60; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; padding: 8px 16px; background: var(--warn-bg); color: var(--warn); border-bottom: 1px solid var(--warn); font-size: .88rem; text-align: center; }
+/* Sheriff user form: Access table fits the page (choices wrap instead of scrolling sideways) */
+.access-table { width: 100%; table-layout: auto; }
+.access-table td.access-choices { white-space: normal; }
+.access-table td.access-choices .check { display: inline-flex; margin: 2px 14px 2px 0; }
+.user-form-top { align-items: start; }
+/* Search box with an icon (filters as you type) */
+.search-box { position: relative; display: flex; align-items: center; margin-bottom: 16px; }
+.search-box svg { position: absolute; left: 14px; width: 18px; height: 18px; color: var(--muted); pointer-events: none; }
+.search-box input { flex: 1; min-width: 0; padding: 11px 120px 11px 42px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font: inherit; font-size: .95rem; box-shadow: 0 1px 2px rgba(16,34,71,.05); }
+.search-box input:focus { outline: 2px solid var(--cyan); outline-offset: -1px; border-color: var(--cyan); }
+.search-box .search-count { position: absolute; right: 14px; font-size: .82rem; }
+/* Pick lists wrap their text instead of scrolling sideways */
+.pick-list { overflow-x: hidden; } .pick-list table { width: 100%; table-layout: fixed; } .pick-list td { white-space: normal; overflow-wrap: anywhere; } .pick-list td:first-child { width: 36px; }

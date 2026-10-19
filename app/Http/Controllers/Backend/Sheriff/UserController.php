@@ -24,9 +24,7 @@ class UserController extends Controller
     public function index(Request $request): View
     {
         $q = trim((string) $request->query('q'));
-        $users = User::with(['role', 'manager'])->orderByDesc('active')->orderBy('name')
-            ->when($q !== '', fn ($w) => $w->where(fn ($x) => $x->where('name', 'like', "%$q%")->orWhere('title', 'like', "%$q%")->orWhere('email', 'like', "%$q%")
-                ->orWhere('department', 'like', "%$q%")->orWhere('company', 'like', "%$q%")->orWhere('employee_id', 'like', "%$q%")))->get();
+        $users = User::with(['role', 'manager'])->orderByDesc('active')->orderBy('name')->get();
 
         return view('backend.sheriff.users', [
             // Employees by department, then 3rd-party company users by company
@@ -55,9 +53,8 @@ class UserController extends Controller
             'rights' => config('admin.permissions'),
             'changes' => $user->accessChanges(),
             'blocked' => request()->user()->cannotLogInAs($user),
-            'activity' => HistoryItem::with('customer')->where('user_id', $user->id)->latest('created_at')->latest('id')->limit(12)->get(),
+            'activity' => HistoryItem::with('customer')->where('user_id', $user->id)->latest('created_at')->latest('id')->limit(20)->get(),
             'logins' => HistoryItem::where('model', 'AdminLogin_model')->where('record_id', $user->id)->latest('created_at')->limit(6)->get(),
-            'sameRole' => User::where('role_id', $user->role_id)->where('active', true)->whereKeyNot($user->id)->orderBy('name')->get(['id', 'name', 'title']),
         ]);
     }
 

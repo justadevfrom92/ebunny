@@ -51,13 +51,13 @@
         <tbody>
             @foreach ($apps as $key => $a)
                 @php $has = $u->hasPerm($key); $ch = $changes[$key] ?? null; @endphp
-                <tr><td><b>{{ $a['name'] }}</b><div class="help">{{ Str::limit($a['desc'], 100) }}</div></td>
+                <tr><td><b>{{ $a['name'] }}</b></td>
                     <td>@include('backend.partials.pill', $has ? ['text' => 'Can open', 'tone' => 'ok'] : ['text' => 'No access', 'tone' => ''])</td>
                     <td class="help">{{ $ch === 'added' ? 'Added for this person' : ($ch === 'removed' ? 'Taken away for this person (their role has it)' : ($has ? 'From their role' : '—')) }}</td></tr>
             @endforeach
             @foreach ($rights as $key => $label)
                 @php $has = $u->hasPerm($key); $ch = $changes[$key] ?? null; @endphp
-                <tr><td><b>{{ $label }}</b><div class="help">Right</div></td>
+                <tr><td><b>{{ $label }}</b></td>
                     <td>@include('backend.partials.pill', $has ? ['text' => 'Allowed', 'tone' => 'ok'] : ['text' => 'Not allowed', 'tone' => ''])</td>
                     <td class="help">{{ $ch === 'added' ? 'Added for this person' : ($ch === 'removed' ? 'Taken away for this person (their role has it)' : ($has ? 'From their role' : '—')) }}</td></tr>
             @endforeach
@@ -66,15 +66,8 @@
     @if ($u->access_note)<div class="panel-body help">Reason for the exceptions: {{ $u->access_note }}</div>@endif
     </div>
 
-    <div class="grid-2">
-        <div class="panel"><div class="panel-head"><h2>Recent Activity</h2><a class="btn sm ghost" href="{{ route('sheriff.users.history', $u) }}">All History</a></div><div class="table-wrap"><table>
-            <tbody>@forelse ($activity as $h)<tr class="click" data-href="{{ route('sheriff.history.show', $h) }}"><td class="nowrap"><a href="{{ route('sheriff.history.show', $h) }}">{{ $h->created_at->format('n/j/Y g:i A') }}</a></td><td class="wrap">{{ Str::limit($h->summary, 90) }}</td></tr>
-            @empty <tr><td class="empty">No activity recorded.</td></tr> @endforelse</tbody>
-        </table></div></div>
-        <div class="panel"><div class="panel-head"><h2>Same Role</h2><span class="muted">{{ $u->role?->name }}</span></div>
-            @if ($sameRole->isNotEmpty())
-                <div class="table-wrap"><table><tbody>@foreach ($sameRole as $p)<tr class="click" data-href="{{ route('sheriff.users.show', $p) }}"><td><a href="{{ route('sheriff.users.show', $p) }}">{{ $p->name }}</a></td><td class="help">{{ $p->title }}</td></tr>@endforeach</tbody></table></div>
-            @else<div class="panel-body muted">Nobody else has this role.</div>@endif
-        </div>
-    </div>
+    <div class="panel"><div class="panel-head"><h2>Recent Activity</h2><a class="btn sm ghost" href="{{ route('sheriff.users.history', $u) }}">All History</a></div><div class="table-wrap"><table>
+        <tbody>@forelse ($activity as $h)<tr class="click" data-href="{{ route('sheriff.history.show', $h) }}"><td class="nowrap" style="width:180px"><a href="{{ route('sheriff.history.show', $h) }}">{{ $h->created_at->format('n/j/Y g:i A') }}</a></td><td class="wrap">{{ $h->summary }}</td></tr>
+        @empty <tr><td class="empty">No activity recorded.</td></tr> @endforelse</tbody>
+    </table></div></div>
 @endsection

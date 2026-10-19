@@ -18,7 +18,7 @@
         <p>No plans are available at this address right now. Please call us at {{ config('brand.phone') }}.</p>
       @endforelse
     </div>
-    <div class="co-actions"><a class="btn btn-outline" href="{{ route('checkout') }}">Back</a>@if ($plans->count())<button class="btn">Continue</button>@endif</div>
+    <div class="co-actions"><a class="btn btn-outline btn-back" href="{{ route('checkout') }}">Back</a>@if ($plans->count())<button class="btn">Continue</button>@endif</div>
   </form>
 </x-frontend.checkout>
 @endsection

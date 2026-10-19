@@ -7,13 +7,11 @@
    "astro",
    "walker",
    "sheriff",
-   "delete",
    "refunds",
    "caboose",
    "bounty",
    "rodeo",
-   "deputy",
-   "configure"
+   "deputy"
   ]
  },
  {
@@ -52,7 +50,6 @@
    "corral",
    "bounty",
    "rodeo",
-   "delete",
    "deputy"
   ]
  },

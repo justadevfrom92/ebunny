@@ -93,9 +93,10 @@ class OriginalItemsTest extends TestCase
         $bill = $c->bills()->firstOrFail();
         $this->post(route('corral.items.act', [$bill->id, 'ItemFileBill_model', 'check_account']))->assertSessionHas('item_notice');
 
-        // Delete needs the delete right; account-level items can't be deleted on their own
+        // Account-level items can't be deleted on their own; someone without Corral can't delete at all
         $this->delete(route('corral.items.destroy', [$c->id, 'ItemPersonShopper_model']))->assertStatus(422);
-        $this->actingAs(User::where('email', 'csr@example.com')->firstOrFail());
-        $this->delete(route('corral.items.destroy', [$p->id, 'ItemPayment_model']))->assertForbidden();
+        $this->actingAs(User::where('email', 'pricing@example.com')->firstOrFail());
+        $this->delete(route('corral.items.destroy', [$p->id, 'ItemPayment_model']))->assertRedirect();
+        $this->assertNotNull(Payment::find($p->id));
     }
 }

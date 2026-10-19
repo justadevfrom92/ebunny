@@ -544,7 +544,7 @@ fieldset.field { border: 0; padding: 0; }
 .ma-props button:hover { background: rgba(255,255,255,.08); } .ma-props button.on { border-left-color: var(--cyan); background: rgba(255,255,255,.1); }
 .ma-products a { font-weight: 500; font-size: .9rem; padding-top: 6px; padding-bottom: 6px; }
 /* The account menu always shows in full: no height cap, no scroll box, and it runs the full height of the page area */
-.ma-nav { background: var(--navy); color: var(--white); border-radius: 14px; padding: 18px 0; align-self: stretch; }
+.ma-nav { background: var(--navy); color: var(--white); border-radius: 14px; padding: 18px 0; align-self: start; }
 .ma-who { padding: 0 20px 14px; border-bottom: 1px solid rgba(255,255,255,.15); display: flex; flex-direction: column; } .ma-who span { opacity: .7; font-size: .85rem; }
 .ma-nav h4 { color: rgba(255,255,255,.55); font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; padding: 16px 20px 6px; margin: 0; }
 .ma-nav a { display: block; padding: 8px 20px; color: var(--white); border-left: 3px solid transparent; font-weight: 600; }
@@ -881,3 +881,11 @@ fieldset.field { border: 0; padding: 0; }
 /* Keep the header content clear of the cart when the side margin is narrower than the cart */
 .site-header .wrap { padding-right: max(0px, calc(100px - (100vw - min(90vw, var(--wrap))) / 2)); }
 @media (max-width: 1024px) { .site-header .nav-cart { right: 16px; } .site-header .wrap { padding-right: max(0px, calc(86px - 5vw)); } }
+
+/* Back buttons: "‹ Back" — the chevron sits before the text and points left */
+.btn.btn-back::after { display: none; }
+.btn.btn-back::before { content: ''; width: 8px; height: 8px; border-top: 3px solid currentColor; border-left: 3px solid currentColor; transform: rotate(-45deg); }
+
+/* Fields side by side line up: the "space between stacked fields" rule doesn't apply inside a row */
+.form-2 > .field + .field, .form-3 > .field + .field, .grid-2 > .field + .field, .grid-3 > .field + .field { margin-top: 0; }
+.form-2, .form-3 { align-items: start; }

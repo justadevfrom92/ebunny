@@ -235,12 +235,12 @@
             <div class="panel"><div class="panel-head"><h2>Billing Summary</h2></div><div class="table-wrap" style="max-height:360px;overflow-y:auto"><table>
                 <thead><tr><th>Date</th><th class="num">Billed</th><th class="num">Paid</th><th>Notes</th></tr></thead>
                 <tbody>@forelse ($summary as $s)<tr><td>{{ $s['date']->format('n/j/Y') }}</td><td class="num">{{ $s['billed'] !== null ? $money($s['billed']) : '-' }}</td><td class="num">{{ $s['paid'] !== null ? $money($s['paid']) : '-' }}</td><td class="mono">{{ $s['note'] }}</td></tr>
-                @empty <tr><td colspan="4" class="empty">No billing yet{{ $customer->bills->isEmpty() ? ': service hasn\'t started, the first bill comes about 30 days after the switch' : '' }}.</td></tr> @endforelse</tbody>
+                @empty <tr><td colspan="4" class="empty">No billing yet{{ $c->bills->isEmpty() ? ': service hasn\'t started, the first bill comes about 30 days after the switch' : '' }}.</td></tr> @endforelse</tbody>
             </table></div></div>
             <div class="panel"><div class="panel-head"><h2>Usage History</h2><span class="muted">kWh</span></div><div class="table-wrap"><table>
                 <thead><tr><th>Year</th>@foreach (range(1, 12) as $m)<th class="num">{{ date('M', mktime(0, 0, 0, $m, 1)) }}</th>@endforeach</tr></thead>
                 <tbody>@forelse ($usage as $year => $months)<tr><td><b>{{ $year }}</b></td>@foreach (range(1, 12) as $m)<td class="num">{{ isset($months[$m]) ? number_format($months[$m]) : '-' }}</td>@endforeach</tr>
-                @empty <tr><td colspan="13" class="empty">No usage yet{{ $customer->bills->isEmpty() ? ': usage shows after the first bill' : '' }}.</td></tr> @endforelse</tbody>
+                @empty <tr><td colspan="13" class="empty">No usage yet{{ $c->bills->isEmpty() ? ': usage shows after the first bill' : '' }}.</td></tr> @endforelse</tbody>
             </table></div></div>
         </div>
 
@@ -250,7 +250,7 @@
                 <tr><td class="mono">{{ $b->reference }}</td><td>{{ $b->bill_type }}</td><td>{{ $b->period_start?->format('n/j/Y') }} - {{ $b->period_end?->format('n/j/Y') }}</td><td class="num">{{ number_format($b->kwh) }}</td>
                     <td>{{ $b->billed_on->format('n/j/Y') }}</td><td>{{ $b->due_on?->format('n/j/Y') }}</td><td>{{ $b->paid_on?->format('n/j/Y') ?? '—' }}</td>
                     <td class="num">{{ $money($b->amount) }}</td><td class="num">{{ $money($b->amount_paid) }}</td><td class="num">{{ $money($b->balance_after) }}</td><td class="mono">{{ $b->invoice }}</td><td>{{ $b->ontime ? 'Yes' : 'No' }}</td></tr>
-            @empty <tr><td colspan="12" class="empty">No bills yet{{ $customer->bills->isEmpty() ? ': service hasn\'t started' : '' }}.</td></tr> @endforelse</tbody>
+            @empty <tr><td colspan="12" class="empty">No bills yet{{ $c->bills->isEmpty() ? ': service hasn\'t started' : '' }}.</td></tr> @endforelse</tbody>
         </table></div></div>
 
         <div class="panel" id="payments"><div class="panel-head"><h2>Payment Details</h2>
@@ -267,7 +267,7 @@
                             @if ($canRefund && $p->status === 'Success')
                                 <form method="post" action="{{ route('corral.payments.reverse', $p) }}" class="inline" data-confirm="Reverse payment?|{{ $p->reference }} for {{ $money($p->amount) }} will be reversed and added back to the balance.|Reverse Payment">@csrf<button class="link-btn">[ reverse ]</button></form>
                             @endif</td></tr>
-                @empty <tr><td colspan="9" class="empty">No payments yet{{ $customer->bills->isEmpty() ? ': nothing is due until the first bill' : '' }}.</td></tr> @endforelse</tbody>
+                @empty <tr><td colspan="9" class="empty">No payments yet{{ $c->bills->isEmpty() ? ': nothing is due until the first bill' : '' }}.</td></tr> @endforelse</tbody>
             </table></div>
         </div>
 

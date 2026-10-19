@@ -5,4 +5,6 @@
 <link rel="icon" href="/shared/img/logo-mark.svg">
 <link rel="stylesheet" href="/backend/admin.css">
 <script src="/backend/admin.js" defer></script>
+<script src="/shared/password-toggle.js" defer></script>
+<script src="/shared/datepicker.js" defer></script>
 @yield('head')

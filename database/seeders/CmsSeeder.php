@@ -43,9 +43,9 @@ class CmsSeeder extends Seeder
             ]);
         }
 
-        // The rewards band as a component on the plans page and the About Us sidebar
+        // The rewards band as a component in the About Us sidebar
         $band = ContentBlock::where('slug', 'rewards-promo-band')->first();
-        foreach (['plans' => 'top', 'about-us' => 'sidebar'] as $path => $zone) {
+        foreach (['about-us' => 'sidebar'] as $path => $zone) {
             $page = Page::where('path', $path)->first();
             if ($band && $page) {
                 PageComponent::create(['page_id' => $page->id, 'content_block_id' => $band->id, 'zone' => $zone]);

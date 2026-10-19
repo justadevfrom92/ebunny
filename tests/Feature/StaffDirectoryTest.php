@@ -24,8 +24,11 @@ class StaffDirectoryTest extends TestCase
         $this->actingAs($this->admin());
         $csr = User::where('email', 'csr@example.com')->firstOrFail();
         $this->get(route('sheriff.users.index'))->assertOk()->assertSee('Staff Directory')->assertSee(route('sheriff.users.show', $csr), false);
-        $this->get(route('sheriff.users.index', ['q' => 'Brightline']))->assertOk()->assertSee('Alex Overflow')->assertDontSee('"'.route('sheriff.users.show', $csr).'"', false);
-        $this->get(route('sheriff.users.show', $csr))->assertOk()->assertSee('Admin Permissions')->assertSee('Taken away for this person')
+        // Search filters in the page as you type; ?q= fills the box
+        $this->get(route('sheriff.users.index', ['q' => 'Brightline']))->assertOk()->assertSee('data-live-filter', false)->assertSee('value="Brightline"', false)->assertSee('data-filter-row', false);
+        $avery = User::where('email', 'like', 'avery.ledgerly@%')->firstOrFail();   // Finance, refunds taken away
+        $this->get(route('sheriff.users.show', $avery))->assertOk()->assertSee('Taken away for this person');
+        $this->get(route('sheriff.users.show', $csr))->assertOk()->assertSee('Admin Permissions')
             ->assertSee('Log in as CSR')->assertSee(route('sheriff.users.login-as', $csr), false)->assertSee(route('sheriff.users.edit', $csr), false);
         $ext = User::whereNotNull('company')->where('active', true)->firstOrFail();
         $this->get(route('sheriff.users.show', $ext))->assertOk()->assertSee($ext->company)->assertSee('Access Ends');
@@ -62,7 +65,7 @@ class StaffDirectoryTest extends TestCase
         $this->assertAuthenticatedAs($admin);
 
         // Someone with Sheriff but fewer rights can't log in as an administrator
-        $it = User::where('email', 'like', 'sawyer.stackman@%')->firstOrFail();   // Administrator role without "configure"
+        $it = User::where('email', 'like', 'jessie.p@%')->firstOrFail();   // Administrator role without refunds
         $this->actingAs($it)->post(route('sheriff.users.login-as', $admin))->assertSessionHasErrors('login_as');
         $this->assertAuthenticatedAs($it);
         $this->get(route('sheriff.users.show', $admin))->assertSee('They have access you don');

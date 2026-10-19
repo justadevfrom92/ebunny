@@ -24,11 +24,11 @@ class MoreUsersSeeder extends Seeder
 
         // [name, title, department, role, manager email, location, ext, hired, denied, extra, note]
         $staff = [
-            ['Morgan Placeholder', 'Customer Service Rep', 'Customer Service', 'Customer Service', 'lead@example.com', 'Houston Call Center', '2241', '2024-02-05', ['delete'], [], 'Deletes go through the CS Lead'],
-            ['Jordan Sampleton', 'Customer Service Rep', 'Customer Service', 'Customer Service', 'lead@example.com', 'Houston Call Center', '2242', '2024-08-19', ['delete'], [], null],
+            ['Morgan Placeholder', 'Customer Service Rep', 'Customer Service', 'Customer Service', 'lead@example.com', 'Houston Call Center', '2241', '2024-02-05', [], [], null],
+            ['Jordan Sampleton', 'Customer Service Rep', 'Customer Service', 'Customer Service', 'lead@example.com', 'Houston Call Center', '2242', '2024-08-19', [], [], null],
             ['Riley Testwood', 'Senior Customer Service Rep', 'Customer Service', 'Customer Service', 'lead@example.com', 'Houston Call Center', '2243', '2021-11-01', [], ['rodeo'], 'Covers text replies for the lead'],
-            ['Quinn Mockridge', 'Bilingual Customer Service Rep', 'Customer Service', 'Customer Service', 'lead@example.com', 'Houston Call Center', '2244', '2025-01-13', ['delete'], [], null],
-            ['Taylor Demoson', 'Retention Specialist', 'Customer Service', 'Customer Service Lead', 'lead@example.com', 'Austin HQ', '2250', '2022-04-25', ['delete'], [], null],
+            ['Quinn Mockridge', 'Bilingual Customer Service Rep', 'Customer Service', 'Customer Service', 'lead@example.com', 'Houston Call Center', '2244', '2025-01-13', [], [], null],
+            ['Taylor Demoson', 'Retention Specialist', 'Customer Service', 'Customer Service Lead', 'lead@example.com', 'Austin HQ', '2250', '2022-04-25', [], [], null],
             ['Parker Fictive', 'Pricing Analyst', 'Pricing', 'Pricing', 'pricing@example.com', 'Austin HQ', '2311', '2023-09-11', [], [], null],
             ['Casey Notreal', 'Marketing Coordinator', 'Marketing', 'Content Editor', 'marketing@example.com', 'Austin HQ', '2412', '2024-05-06', [], [], null],
             ['Drew Specimen', 'Web Content Specialist', 'Marketing', 'Content Editor', 'marketing@example.com', 'Remote', '2413', '2025-03-17', [], [], null],
@@ -36,7 +36,7 @@ class MoreUsersSeeder extends Seeder
             ['Hayden Sumwell', 'Staff Accountant', 'Finance', 'Finance', 'finance@example.com', 'Austin HQ', '2512', '2023-01-09', [], [], null],
             ['Emerson Botley', 'AI Operations Analyst', 'AI Operations', 'AI Operations', 'ai@example.com', 'Remote', '2611', '2025-06-02', [], [], null],
             ['Reese Kernel', 'Systems Administrator', 'IT', 'Administrator', 'admin@example.com', 'Austin HQ', '2111', '2020-10-12', [], [], null],
-            ['Sawyer Stackman', 'Developer', 'IT', 'Administrator', 'admin@example.com', 'Remote', '2112', '2024-03-04', ['configure'], [], 'API settings stay with the IT Director'],
+            ['Sawyer Stackman', 'Developer', 'IT', 'Administrator', 'admin@example.com', 'Remote', '2112', '2024-03-04', [], [], null],
             ['Dakota Chiefly', 'VP of Operations', 'Management', 'Customer Service Lead', null, 'Austin HQ', '2001', '2018-01-15', [], ['caboose', 'walker'], 'Reads finance and reports'],
         ];
         foreach ($staff as $i => [$name, $title, $dept, $r, $manager, $loc, $ext, $hired, $denied, $extra, $note]) {
@@ -50,10 +50,10 @@ class MoreUsersSeeder extends Seeder
         // 3rd-party companies: [company, domain, contact (manager) email, contract end, [[name, title, role, denied, extra, note]]]
         $companies = [
             ['Brightline Contact Solutions', 'brightline.example.net', 'lead@example.com', '+8 months', [
-                ['Alex Overflow', 'Contract Agent — Overflow Queue', 'Customer Service', ['delete', 'bounty'], [], 'Outsourced overflow calls; no rewards changes'],
-                ['Blair Afterhours', 'Contract Agent — After Hours', 'Customer Service', ['delete', 'bounty'], [], 'Outsourced overflow calls; no rewards changes'],
-                ['Cameron Weekender', 'Contract Agent — Weekends', 'Customer Service', ['delete', 'bounty'], [], null],
-                ['Devon Supervisor', 'Contract Team Supervisor', 'Customer Service Lead', ['delete', 'deputy'], [], 'Supervises the outsourced agents'],
+                ['Alex Overflow', 'Contract Agent — Overflow Queue', 'Customer Service', ['bounty'], [], 'Outsourced overflow calls; no rewards changes'],
+                ['Blair Afterhours', 'Contract Agent — After Hours', 'Customer Service', ['bounty'], [], 'Outsourced overflow calls; no rewards changes'],
+                ['Cameron Weekender', 'Contract Agent — Weekends', 'Customer Service', ['bounty'], [], null],
+                ['Devon Supervisor', 'Contract Team Supervisor', 'Customer Service Lead', ['deputy'], [], 'Supervises the outsourced agents'],
             ]],
             ['Lone Prairie Recovery Services', 'loneprairie.example.net', 'finance@example.com', '+5 months', [
                 ['Ellis Collector', 'Collections Agent', 'Finance', ['refunds', 'walker'], [], 'Collections only: past-due accounts'],
@@ -67,7 +67,7 @@ class MoreUsersSeeder extends Seeder
                 ['Indy Ratewell', 'Pricing Consultant', 'Pricing', ['lando'], ['walker'], 'Rates and reports, not the website'],
             ]],
             ['Trailhead IT Partners', 'trailhead.example.net', 'admin@example.com', '+11 months', [
-                ['Jessie Patchwell', 'Managed Services Engineer', 'Administrator', ['delete', 'configure', 'refunds'], [], 'Read-mostly support access'],
+                ['Jessie Patchwell', 'Managed Services Engineer', 'Administrator', ['refunds'], [], 'No refunds'],
             ]],
         ];
         foreach ($companies as [$company, $domain, $contact, $ends, $people]) {

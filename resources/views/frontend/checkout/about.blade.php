@@ -30,7 +30,7 @@
       <div class="field"><label for="password_confirmation">Confirm Password</label><input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password"></div>
     </div>
     <label class="check" style="margin-top:16px"><input type="hidden" name="marketing_opt_in" value="0"><input type="checkbox" name="marketing_opt_in" value="1" @checked(old('marketing_opt_in', $d['marketing_opt_in'] ?? true))> Email me offers and energy-saving tips</label>
-    <div class="co-actions"><a class="btn btn-outline" href="{{ route('checkout.plan') }}">Back</a><button class="btn">Continue</button></div>
+    <div class="co-actions"><a class="btn btn-outline btn-back" href="{{ route('checkout.plan') }}">Back</a><button class="btn">Continue</button></div>
   </form>
 </x-frontend.checkout>
 @endsection

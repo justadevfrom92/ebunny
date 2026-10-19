@@ -11,6 +11,6 @@
     <li>Come back and finish. Your details are kept for this visit; use “Save and finish later” to get a link by email.</li>
     <li>Or skip the credit check: choose a <a href="{{ route('checkout.page', 'alternatives') }}">deposit alternative</a> or pay a deposit.</li>
   </ol>
-  <div class="co-actions"><a class="btn btn-outline" href="{{ route('checkout.about') }}">Back</a><a class="btn" href="{{ route('checkout.review') }}">I lifted the freeze — continue</a></div>
+  <div class="co-actions"><a class="btn btn-outline btn-back" href="{{ route('checkout.about') }}">Back</a><a class="btn" href="{{ route('checkout.review') }}">I lifted the freeze — continue</a></div>
 </div></div></section>
 @endsection

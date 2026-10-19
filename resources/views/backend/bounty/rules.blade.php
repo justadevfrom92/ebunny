@@ -5,10 +5,11 @@
         @include('backend.partials.page-head', ['title' => 'Earning Rules', 'sub' => 'How customers earn stars. The "Rewards stars" job (Sheriff → Crons, nightly) awards them; each award is only given once.',
             'actions' => '<button class="btn cyan">Save Rules</button>'])
         <div class="panel"><div class="table-wrap"><table>
-            <thead><tr><th>Rule</th><th>Name on the Star History</th><th class="num">Stars</th><th>Active</th></tr></thead>
+            <thead><tr><th>Rule</th><th style="width:40%">Name on the Star History</th><th>Stars</th><th>Per</th><th>Active</th></tr></thead>
             <tbody>@foreach ($rules as $r)
-                <tr><td class="mono">{{ $r->key }}</td><td><input class="cell-input" name="r[{{ $r->id }}][label]" value="{{ $r->label }}" required aria-label="{{ $r->key }} label"></td>
-                    <td class="num"><input type="number" step="0.01" min="0" name="r[{{ $r->id }}][stars]" value="{{ $r->stars }}" required aria-label="{{ $r->key }} stars" style="width:9ch"> {{ $r->per_dollar ? 'per $1' : 'each' }}</td>
+                <tr><td class="mono">{{ $r->key }}</td><td><input class="cell-input" name="r[{{ $r->id }}][label]" value="{{ $r->label }}" required aria-label="{{ $r->key }} label" style="width:100%;min-width:220px"></td>
+                    <td><input type="number" step="0.01" min="0" name="r[{{ $r->id }}][stars]" value="{{ $r->stars }}" required aria-label="{{ $r->key }} stars" style="width:10ch;text-align:right"></td>
+                    <td class="nowrap muted">{{ $r->per_dollar ? 'per $1 paid' : 'each time' }}</td>
                     <td><input type="hidden" name="r[{{ $r->id }}][active]" value="0"><label class="check"><input type="checkbox" name="r[{{ $r->id }}][active]" value="1" @checked($r->active)> Active</label></td></tr>
             @endforeach</tbody>
         </table></div></div>

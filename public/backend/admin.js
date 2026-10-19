@@ -101,6 +101,20 @@
       if (e.key === 'Escape') $$('[data-multi][open]').forEach(function (d) { d.open = false; d.querySelector('summary').focus(); });
     });
 
+    // Live search: an input[data-live-filter] hides rows ([data-filter-row]) that don't contain every typed word,
+    // and whole groups ([data-filter-group]) with nothing left; [data-live-count] shows how many match
+    $$('[data-live-filter]').forEach(function (input) {
+      var rows = $$('[data-filter-row]'), groups = $$('[data-filter-group]'), count = $('[data-live-count]'), empty = $('[data-live-empty]');
+      function run() {
+        var words = input.value.toLowerCase().trim().split(/\s+/).filter(Boolean), shown = 0;
+        rows.forEach(function (r) { var hay = r.dataset.filterRow, ok = words.every(function (w) { return hay.indexOf(w) >= 0; }); r.hidden = !ok; if (ok) shown++; });
+        groups.forEach(function (g) { g.hidden = !g.querySelector('[data-filter-row]:not([hidden])'); });
+        if (count) count.textContent = words.length ? shown + ' of ' + rows.length : rows.length + ' people';
+        if (empty) empty.hidden = shown > 0;
+      }
+      input.addEventListener('input', run); run();
+    });
+
     // Clickable table rows (delegated, so rows swapped in later, like Walker's live tables, work too)
     document.addEventListener('click', function (e) {
       var tr = e.target.closest && e.target.closest('tr[data-href]');

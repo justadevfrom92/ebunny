@@ -16,6 +16,8 @@
   @yield('head')
   <link rel="stylesheet" href="/frontend/css/style.css">
   <script src="/shared/boot.js" data-then="/frontend/js/main.js"></script>
+  <script src="/shared/password-toggle.js" defer></script>
+  <script src="/shared/datepicker.js" defer></script>
 </head>
 <body @yield('body-attrs')>
   <div id="site-header"></div>

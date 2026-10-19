@@ -8,7 +8,7 @@
   <div class="co-card">
   @if (session('thanks'))
     <div class="site-alert ok" role="status">{{ $survey->thank_you ?: 'Thank you — your answers were received.' }}</div>
-    <p><a class="btn btn-outline" href="{{ url('/') }}">Back to the homepage</a></p>
+    <p><a class="btn btn-outline btn-back" href="{{ url('/') }}">Back to the homepage</a></p>
   @elseif (! $survey->isOpen())
     <p>{{ $survey->state() === 'scheduled' ? 'This survey opens '.$survey->opens_on->format('F j').'. Please come back then.' : 'This survey is closed. Thank you for your interest.' }}</p>
   @else

@@ -14,7 +14,7 @@ class RoleController extends Controller
 {
     public static function perms(): array
     {
-        return collect(AdminApps::all())->map(fn ($a) => $a['custom'] ? $a['name'] : $a['name'].' ('.explode(':', $a['desc'])[0].')')
+        return collect(AdminApps::all())->map(fn ($a) => $a['name'])
             ->merge(config('admin.permissions'))->all();
     }
 

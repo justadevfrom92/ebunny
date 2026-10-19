@@ -24,7 +24,7 @@
     <label class="check"><input type="checkbox" name="agree_efl" value="1" required> I have read the <a href="{{ url('historical-efls') }}" target="_blank">Electricity Facts Label</a> for this plan</label>
     <label class="check"><input type="checkbox" name="agree_tos" value="1" required> I agree to the <a href="{{ url('terms-of-use') }}" target="_blank">Terms of Service</a></label>
     <label class="check"><input type="checkbox" name="agree_yrac" value="1" required> I have read <a href="{{ url('your-rights-as-a-customer') }}" target="_blank">Your Rights as a Customer</a>, and I authorize the switch of my electric service</label>
-    <div class="co-actions"><a class="btn btn-outline" href="{{ route('checkout.about') }}">Back</a><button class="btn">Sign Up</button></div>
+    <div class="co-actions"><a class="btn btn-outline btn-back" href="{{ route('checkout.about') }}">Back</a><button class="btn">Sign Up</button></div>
   </form>
 </x-frontend.checkout>
 @endsection

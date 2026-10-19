@@ -101,11 +101,12 @@ class AccountTest extends TestCase
         $this->assertTrue($c->notes()->where('body', 'Called about the bill')->where('category', 'Billing')->exists());
     }
 
-    public function test_csr_cannot_delete_orders(): void
+    public function test_only_corral_users_can_delete_orders(): void
     {
-        $csr = User::where('email', 'csr@example.com')->firstOrFail();
+        // Deleting is open to everyone who can open Corral; someone without Corral can't reach it
+        $pricing = User::where('email', 'pricing@example.com')->firstOrFail();
         $c = Customer::firstOrFail();
-        $this->actingAs($csr)->post(route('corral.customers.action.run', [$c, 'delete-order']))->assertForbidden();
+        $this->actingAs($pricing)->post(route('corral.customers.action.run', [$c, 'delete-order']))->assertRedirect();
         $this->assertNotNull($c->fresh());
     }
 

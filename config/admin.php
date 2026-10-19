@@ -261,9 +261,7 @@ return [
 
     // Extra permissions a role can hold besides app access
     'permissions' => [
-        'delete' => 'Permanent deletes',
         'refunds' => 'Refunds & reversals',
-        'configure' => 'Change API settings (upload .env values)',
     ],
 
     // Sheriff → APIs → Configure writes uploaded values into this file

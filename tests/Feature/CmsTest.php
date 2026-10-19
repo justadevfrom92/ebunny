@@ -95,7 +95,9 @@ class CmsTest extends TestCase
         $this->get('/fall-savings')->assertOk()->assertSee('Fall promo: save 10%', false)->assertDontSee('[[unknown', false)->assertDontSee('Draft —');
 
         // Built-in pages get their components through /site/components
-        $this->getJson('/site/components?page=plans.html')->assertOk()->assertJsonPath('top', fn ($html) => str_contains($html, 'rewards-band'));
+        // (the plans page has none now; the rewards band sits in the About Us sidebar)
+        $this->getJson('/site/components?page=plans.html')->assertOk()->assertJsonPath('top', fn ($html) => ! str_contains((string) $html, 'rewards-band'));
+        $this->get('/about-us')->assertOk()->assertSee('rewards-band', false);
         // Redirects and reserved paths
         $this->get('/epicenter')->assertRedirect('/plans?msid=130001');
         $this->get('/admin/lando/nope/nope')->assertNotFound(); // never looked up as a website page

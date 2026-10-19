@@ -32,10 +32,8 @@
   "location": "Houston Call Center",
   "hired": "2023-06-12",
   "extra": [],
-  "denied": [
-   "delete"
-  ],
-  "note": "Deletes go through the CS Lead"
+  "denied": [],
+  "note": null
  },
  {
   "id": 3,
@@ -148,5 +146,27 @@
   "extra": [],
   "denied": [],
   "note": null
+ },
+ {
+  "id": 9,
+  "name": "Paige Gold",
+  "email": "paige@example.com",
+  "role": "Content Editor",
+  "last": "2026-10-16 09:12",
+  "active": true,
+  "employee_id": "E-1077",
+  "title": "Digital Operations Specialist",
+  "department": "Marketing",
+  "manager": "marketing@example.com",
+  "ext": "2414",
+  "location": "Austin HQ",
+  "hired": "2022-02-14",
+  "extra": [
+   "corral",
+   "walker",
+   "astro"
+  ],
+  "denied": [],
+  "note": "Works across the website, pricing, customer accounts and reports"
  }
 ]
