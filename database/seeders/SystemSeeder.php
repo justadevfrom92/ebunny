@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\IntegrationTest;
 use App\Models\JobRun;
 use App\Models\ReferenceRow;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 
@@ -31,6 +33,17 @@ class SystemSeeder extends Seeder
                 'message' => $c['status'] === 'Failed' ? 'Sample failure from seed data' : null,
                 'started_at' => $start, 'finished_at' => $start->copy()->addMilliseconds($c['ms']), 'duration_ms' => $c['ms'],
             ]);
+        }
+
+        // Test Connection results (Sheriff → APIs): a few per integration over the last month
+        $admin = User::where('email', 'admin@example.com')->value('id');
+        foreach (array_keys(config('admin.integrations')) as $n => $key) {
+            foreach (range(1, 3) as $k) {
+                $ok = ! ($key === 'innowatts' && $k === 1) && ! ($key === 'authnet' && $k <= 2);
+                IntegrationTest::create(['integration' => $key, 'ok' => $ok, 'response_ms' => mt_rand(90, 900), 'user_id' => $admin,
+                    'message' => $ok ? 'Connected (sample)' : ($key === 'authnet' ? 'Login ID not accepted (sample)' : 'Timed out after 10 seconds (sample)'),
+                    'created_at' => now()->subDays(($k - 1) * 9 + $n % 5)->subHours($n)]);
+            }
         }
     }
 }

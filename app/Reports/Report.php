@@ -76,6 +76,26 @@ abstract class Report
         return [array_column($map, 'title'), $records->map(fn ($r) => array_map(fn ($c) => self::cell(data_get($r, $c['key'])), $map))->values()];
     }
 
+    /**
+     * A nested key => title array, in running order, as export columns:
+     * ['customer' => ['name' => 'Name', 'email' => 'Email'], 'status' => 'Status']
+     * → [['key' => 'customer.name', 'title' => 'Name'], ['key' => 'customer.email', 'title' => 'Email'], ['key' => 'status', 'title' => 'Status']].
+     */
+    public static function flattenColumns(array $nested, string $prefix = ''): array
+    {
+        $out = [];
+        foreach ($nested as $k => $v) {
+            $key = $prefix.($k === '_all' ? '*' : $k);
+            if (is_array($v)) {
+                array_push($out, ...self::flattenColumns($v, $key.'.'));
+            } elseif (preg_match('/^[A-Za-z0-9_.*]+$/', $key)) {
+                $out[] = ['key' => $key, 'title' => (string) $v !== '' ? (string) $v : $key];
+            }
+        }
+
+        return $out;
+    }
+
     /** One exported value: lists are joined, dates formatted, models shown by name or id. */
     public static function cell(mixed $v): mixed
     {

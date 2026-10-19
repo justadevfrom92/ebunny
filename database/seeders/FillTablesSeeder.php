@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Jobs\RunReport;
 use App\Models\ApiLog;
 use App\Models\Bill;
 use App\Models\ContactLog;
@@ -244,11 +245,15 @@ class FillTablesSeeder extends Seeder
                             $f[$s] = today()->subDays(30 * $k)->toDateString();
                         }
                     }
-                    $f['output'] = $k % 2 ? 'screen' : 'summary';
                     $at = now()->subDays($k * mt_rand(1, 6))->setTime(mt_rand(8, 17), mt_rand(0, 59));
-                    ReportRun::create(['user_id' => $u->id, 'app' => 'corral', 'report' => $key, 'title' => $def['title'], 'model' => $def['model'],
-                        'params' => array_filter($f, fn ($v) => $v !== null && $v !== []), 'rows' => $report->query($f)->count(), 'status' => 'done',
-                        'created_at' => $at, 'started_at' => $at, 'finished_at' => $at->copy()->addSeconds(mt_rand(1, 9))]);
+                    $run = ReportRun::create(['user_id' => $u->id, 'app' => 'corral', 'report' => $key, 'title' => $def['title'], 'model' => $def['model'],
+                        'params' => array_filter($f, fn ($v) => $v !== null && $v !== []), 'format' => ['xlsx', 'csv', 'xlsx', 'txt'][$k - 1], 'summary' => $k % 2 === 0,
+                        'rows' => 0, 'status' => 'queued', 'created_at' => $at]);
+                    (new RunReport($run->id))->handle();
+                    // Everything's been looked at except each person's latest Orders run (the number by their name)
+                    $done = $at->copy()->addSeconds(mt_rand(1, 9));
+                    $run->update(['started_at' => $at, 'finished_at' => $done, 'duration_ms' => $done->diffInMilliseconds($at, true),
+                        'seen_at' => $key === 'orders' && $k === 1 ? null : $done]);
                 }
             }
         }

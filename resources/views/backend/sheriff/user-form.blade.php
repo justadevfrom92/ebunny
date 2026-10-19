@@ -4,7 +4,7 @@
 
 @section('content')
     @include('backend.partials.page-head', ['title' => $u->exists ? $u->name : 'New User', 'sub' => $u->exists ? e($u->title ?? 'Employee').' · '.e($u->company ? $u->company.' (3rd party)' : ($u->department ?? 'No department')) : 'An employee, or a 3rd-party company user, who signs in to the admin.',
-        'actions' => $u->exists ? '<a class="btn ghost" href="'.route('sheriff.users.show', $u).'">Profile</a><a class="btn ghost" href="'.route('sheriff.users.history', $u).'">History</a>'
+        'actions' => $u->exists ? '<a class="btn ghost" href="'.route('sheriff.users.show', $u).'">Profile</a><a class="btn ghost" href="'.route('sheriff.timeline', ['user' => $u->id]).'">Timeline</a><a class="btn ghost" href="'.route('sheriff.users.history', $u).'">History</a>'
             .(! $u->is(auth()->user()) ? '<button type="submit" form="toggle-user" class="btn '.($u->active ? 'red' : 'cyan').'">'.($u->active ? 'Disable' : 'Enable').'</button>' : '') : null])
 
     @php

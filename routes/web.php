@@ -321,7 +321,7 @@ Route::prefix('admin')->group(function () {
             Route::post('uploads/byop', [Backend\Astro\PricingController::class, 'byopImport'])->name('byop.import');
         });
 
-        // Walker — reporting: report runs by status, report library, uploaded reports
+        // Walker — files & reporting: report runs by status, report library, file folders, ETL feeds
         Route::prefix('walker')->name('walker.')->middleware('app:walker')->group(function () {
             Route::get('/', [Backend\Walker\ReportController::class, 'home'])->name('home');
             Route::get('runs/{run}', [Backend\Walker\ReportController::class, 'show'])->name('runs.show');
@@ -331,6 +331,10 @@ Route::prefix('admin')->group(function () {
             Route::get('reports/{key}', [Backend\Walker\ReportController::class, 'report'])->name('reports.show');
             Route::post('reports/{key}', [Backend\Walker\ReportController::class, 'run'])->name('reports.run');
             Route::get('uploads', [Backend\Walker\UploadController::class, 'index'])->name('uploads.index');
+            Route::get('files/{folder}', [Backend\Walker\UploadController::class, 'index'])->name('folder');
+            Route::get('etl', [Backend\Walker\EtlController::class, 'index'])->name('etl');
+            Route::get('etl/{feed}', [Backend\Walker\EtlController::class, 'show'])->name('etl.show');
+            Route::post('reports/{key}/columns', [Backend\Walker\ReportController::class, 'saveColumns'])->name('reports.columns');
             Route::get('uploads/new', [Backend\Walker\UploadController::class, 'create'])->name('uploads.create');
             Route::post('uploads', [Backend\Walker\UploadController::class, 'store'])->name('uploads.store');
             Route::get('uploads/{upload}', [Backend\Walker\UploadController::class, 'download'])->name('uploads.download');
@@ -494,6 +498,7 @@ Route::prefix('admin')->group(function () {
             Route::get('users/{user}/history', [Backend\HistoryController::class, 'user'])->name('users.history');
             Route::get('history/{item}', [Backend\HistoryController::class, 'show'])->name('history.show');
             Route::get('roles', [Backend\Sheriff\RoleController::class, 'index'])->name('roles.index');
+            Route::get('timeline', [Backend\Sheriff\TimelineController::class, 'index'])->name('timeline');
             Route::controller(Backend\Sheriff\AutomationController::class)->prefix('automations')->name('automations')->group(function () {
                 Route::get('/', 'index');
                 Route::get('new', 'create')->name('.create');

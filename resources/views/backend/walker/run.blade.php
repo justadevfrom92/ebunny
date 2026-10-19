@@ -11,7 +11,7 @@
     @include('backend.partials.page-head', [
         'title' => ($run->title ?? \Illuminate\Support\Str::headline($run->report)).' · #'.$run->id,
         'sub' => 'Model <span class="mono">'.e($run->model ?? '—').'</span> · '.view('backend.walker._state', ['run' => $run])->render(),
-        'actions' => view('backend.partials.report-actions', ['size' => 'page', 'downloadLabel' => 'Download .xlsx',
+        'actions' => view('backend.partials.report-actions', ['size' => 'page', 'downloadLabel' => 'Download '.$run->formatLabel(),
             'download' => $run->file ? route('walker.runs.download', $run) : null, 'rerun' => $def ? route('walker.runs.rerun', $run) : null,
             'why' => in_array($run->state(), ['queued', 'running'], true) ? 'still running' : 'this run did not save a file'])->render(),
     ])
@@ -20,7 +20,7 @@
     @if ($run->state() === 'stalled')<div class="alert bad"><b>Did not finish</b> This run was still {{ $run->status }} after {{ config('walker.timeout_minutes') }} minutes. Check that the queue worker is running (<span class="mono">php artisan queue:work</span>), then Rerun.</div>@endif
     @if (in_array($run->state(), ['queued', 'running']))<div class="alert info"><b>{{ $run->state() === 'queued' ? 'Waiting for the queue worker' : 'Running' }}</b> This page refreshes every few seconds.</div>@endif
 
-    <div class="grid-3">
+    <div class="grid-2">
         <div class="panel"><div class="panel-head"><h2>Run</h2></div><div class="panel-body"><dl class="kv">
             <dt>Report</dt><dd>@if ($def)<a href="{{ route('walker.reports.show', $run->report) }}">{{ $def['title'] }}</a>@else{{ $run->report }}@endif</dd>
             <dt>Requested By</dt><dd>{{ $run->user?->name ?? 'System' }}</dd>
@@ -38,6 +38,15 @@
             @empty <dt>None</dt><dd>—</dd> @endforelse
         </dl></div></div>
 
+        <div class="panel"><div class="panel-head"><h2>File</h2></div><div class="panel-body"><dl class="kv">
+            <dt>Name</dt><dd class="mono">{{ $run->file ? basename($run->file) : '—' }}</dd>
+            <dt>Format</dt><dd>{{ $run->formatLabel() }}{{ $run->summary ? ' · summary' : '' }}</dd>
+            <dt>Size</dt><dd>{{ $run->file ? $run->sizeLabel() : '—' }}</dd>
+            <dt>Saved In</dt><dd class="mono">{{ $run->file ? dirname($run->file).'/' : '—' }}</dd>
+            <dt>Rows</dt><dd>{{ $run->status === 'done' ? number_format($run->rows) : '—' }}</dd>
+            <dt>Status</dt><dd>@if ($run->file)<a href="{{ route('walker.runs.download', $run) }}">Download</a>@elseif (in_array($run->state(), ['queued', 'running'], true)) Saving when the run finishes @else No file — {{ $run->state() === 'failed' ? 'the run failed' : 'the run did not finish' }}. Rerun it. @endif</dd>
+        </dl></div></div>
+
         <div class="panel"><div class="panel-head"><h2>Model Reference</h2></div><div class="panel-body">
             <p><span class="mono"><b>{{ $run->model ?? '—' }}</b></span></p>
             @if ($def)<p class="muted" style="margin:8px 0 12px">{{ $def['description'] }}</p>@endif
@@ -45,7 +54,7 @@
         </div></div>
     </div>
 
-    <div class="panel"><div class="panel-head"><h2>Results</h2><span class="muted">@if ($run->preview){{ min(50, $run->rows) }} of {{ number_format($run->rows) }} rows shown @if ($run->file)· download for all @endif @endif</span></div>
+    <div class="panel"><div class="panel-head"><h2>Results</h2><span class="muted">@if ($run->preview){{ count($run->preview['rows'] ?? []) }} of {{ number_format($run->rows) }} rows shown @if ($run->file)· download for all @endif @endif</span></div>
         @if ($run->preview)
             <div class="table-wrap"><table>
                 <thead><tr>@foreach ($run->preview['header'] as $h)<th>{{ $h }}</th>@endforeach</tr></thead>
@@ -53,7 +62,7 @@
                 @empty <tr><td colspan="{{ count($run->preview['header']) }}" class="empty">No rows.</td></tr> @endforelse</tbody>
             </table></div>
         @elseif ($run->status === 'done')
-            <div class="panel-body muted">This run was viewed on screen or downloaded from Corral; its rows weren't saved. Rerun it to keep a copy here.</div>
+            <div class="panel-body muted">The file is saved ({{ $run->file ? basename($run->file) : 'no rows' }}); the first rows weren't kept for this older run. Download the file to see them.</div>
         @else
             <div class="panel-body muted">Results show here when the run completes.</div>
         @endif

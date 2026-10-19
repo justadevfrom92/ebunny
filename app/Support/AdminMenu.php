@@ -96,6 +96,7 @@ class AdminMenu
             $key === 'sms' => self::unansweredTexts(),
             $key === 'messages' => ContactMessage::open()->count(),
             $key === 'failed_jobs' => self::failedJobs(),
+            $key === 'etl_failed' => collect(array_keys(config('walker.etl')))->filter(fn ($k) => JobRun::where('command', 'etl:'.$k)->latest('started_at')->value('status') === 'Failed')->count(),
             $key === 'report_problems' => ReportRun::inState('problem')->count(),
             $key === 'ai_waiting' => AiConversation::where('status', 'waiting')->count(),
             $key === 'ledger_pending' => LedgerEntry::where('status', 'pending')->count(),

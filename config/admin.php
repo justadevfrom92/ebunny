@@ -119,7 +119,7 @@ return [
         ],
         'walker' => [
             'name' => 'Walker',
-            'desc' => 'Reporting: report runs and their status, the report library, and uploaded reports.',
+            'desc' => 'Files & reporting: ETL feeds, legal documents, customer templates, and reports with their status.',
             'icon' => 'file',
             'home' => 'walker.home',
             'menu' => [
@@ -128,7 +128,14 @@ return [
                     ['Run a Report', 'walker.reports.index'],
                 ],
                 'Files' => [
-                    ['Uploaded Reports', 'walker.uploads.index'],
+                    ['All Files', 'walker.uploads.index'],
+                    ['ETL Feeds', 'walker.etl', 'etl_failed'],
+                    ['ETL Files', 'walker.folder', null, ['folder' => 'etl']],
+                    ['Legal Documents', 'walker.folder', null, ['folder' => 'legal']],
+                    ['Customer Templates', 'walker.folder', null, ['folder' => 'templates']],
+                    ['Finance', 'walker.folder', null, ['folder' => 'finance']],
+                    ['Utility / ERCOT', 'walker.folder', null, ['folder' => 'ercot']],
+                    ['Vendor', 'walker.folder', null, ['folder' => 'vendor']],
                 ],
             ],
         ],
@@ -222,7 +229,7 @@ return [
         ],
         'sheriff' => [
             'name' => 'Sheriff',
-            'desc' => 'Settings: the staff directory (profiles, permissions, log in as), roles, markets, API integrations, scheduled jobs and cron automations.',
+            'desc' => 'Settings: the staff directory (profiles, permissions, log in as), roles, markets, API integrations, scheduled jobs, cron automations and the timeline of everything that ran.',
             'icon' => 'star',
             'home' => 'sheriff.users.index',
             'menu' => [
@@ -231,6 +238,7 @@ return [
                     ['Roles', 'sheriff.roles.index'],
                 ],
                 'Config' => [
+                    ['Timeline', 'sheriff.timeline'],
                     ['Crons', 'sheriff.jobs.index', 'failed_jobs'],
                     ['Cron Automations', 'sheriff.automations'],
                     ['Update Sitemap', 'sheriff.sitemap'],

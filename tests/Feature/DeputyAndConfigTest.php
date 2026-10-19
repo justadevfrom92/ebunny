@@ -33,7 +33,7 @@ class DeputyAndConfigTest extends TestCase
         $ai = User::where('email', 'ai@example.com')->firstOrFail();
         $this->post(route('admin.login.test', $ai))->assertRedirect(route('admin.launcher'));
         $this->assertAuthenticatedAs($ai);
-        $this->get('/admin')->assertOk()->assertSee('Deputy')->assertSee('Switch test user');
+        $this->get('/admin')->assertOk()->assertSee('Deputy')->assertSee('Switch user');
         $this->get('/admin/corral')->assertRedirect();   // no Corral access for this role
 
         // Switch to another sample admin from the header
@@ -80,12 +80,13 @@ class DeputyAndConfigTest extends TestCase
         $this->assertFalse($csr->can('configure'));
 
         // Test Connection: missing settings, then a real (faked) call
+        $before = IntegrationTest::where('integration', 'stripe')->count();   // the sample data has a few
         $this->post(route('sheriff.integrations.test', 'stripe'))->assertRedirect()->assertSessionHas('test_result', fn ($r) => ! $r['ok'] && str_contains($r['message'], 'Not set'));
         config(['admin.integrations.stripe.env' => ['STRIPE_KEY' => 'pk', 'STRIPE_SECRET' => 'sk', 'STRIPE_WEBHOOK_SECRET' => 'wh']]);
         Http::fake(['api.stripe.com/*' => Http::sequence()->push(['object' => 'balance'], 200)->push(['error' => ['message' => 'Invalid API Key']], 401)]);
         $this->post(route('sheriff.integrations.test', 'stripe'))->assertSessionHas('test_result', fn ($r) => $r['ok']);
         $this->post(route('sheriff.integrations.test', 'stripe'))->assertSessionHas('test_result', fn ($r) => ! $r['ok'] && str_contains($r['message'], 'Rejected'));
-        $this->assertSame(3, IntegrationTest::where('integration', 'stripe')->count());
+        $this->assertSame($before + 3, IntegrationTest::where('integration', 'stripe')->count());
         $this->get(route('sheriff.integrations.configure', 'stripe'))->assertSee('Recent Tests')->assertSee('Rejected');
         @unlink($env);
     }

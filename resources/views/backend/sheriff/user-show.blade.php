@@ -11,7 +11,7 @@
     @endphp
     @include('backend.partials.page-head', ['title' => $u->name,
         'sub' => e($u->title ?? 'Employee').' · '.e($u->company ? $u->company.' (3rd party)' : ($u->department ?? 'No department')).($u->active ? '' : ' · <b>Sign-in disabled</b>'),
-        'actions' => '<a class="btn ghost" href="'.route('sheriff.users.history', $u).'">History</a><a class="btn ghost" href="'.route('sheriff.users.edit', $u).'">Edit</a>'.$loginBtn])
+        'actions' => '<a class="btn ghost" href="'.route('sheriff.timeline', ['user' => $u->id]).'">Timeline</a><a class="btn ghost" href="'.route('sheriff.users.history', $u).'">History</a><a class="btn ghost" href="'.route('sheriff.users.edit', $u).'">Edit</a>'.$loginBtn])
     @error('login_as')<div class="alert bad" role="alert">{{ $message }}</div>@enderror
 
     <div class="grid-3">

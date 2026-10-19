@@ -12,12 +12,13 @@ use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-/** Walker → Uploaded Reports: report files people share (from utilities, vendors, finance…). */
+/** Walker → Files: documents and report files by folder (ETL, legal documents, customer templates, finance, vendors…). */
 class UploadController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request, ?string $folder = null): View
     {
-        $category = in_array($request->query('category'), config('walker.upload_categories'), true) ? $request->query('category') : null;
+        abort_if($folder && ! config('walker.folders.'.$folder), 404);
+        $category = $folder ? config('walker.folders.'.$folder) : (in_array($request->query('category'), config('walker.upload_categories'), true) ? $request->query('category') : null);
 
         return view('backend.walker.uploads', ['category' => $category,
             'uploads' => ReportUpload::with('user')->when($category, fn ($q, $c) => $q->where('category', $c))->latest()->paginate(25)->withQueryString(),
@@ -42,7 +43,9 @@ class UploadController extends Controller
         ReportUpload::create(['title' => $data['title'], 'category' => $data['category'], 'description' => $data['description'] ?? null,
             'path' => $file->store('report-uploads', 'local'), 'original_name' => $file->getClientOriginalName(), 'size' => $file->getSize(), 'user_id' => $request->user()->id]);
 
-        return redirect()->route('walker.uploads.index')->with('status', 'Uploaded '.$data['title']);
+        $folder = array_search($data['category'], config('walker.folders'), true);
+
+        return redirect()->route($folder ? 'walker.folder' : 'walker.uploads.index', $folder ? ['folder' => $folder] : [])->with('status', 'Uploaded '.$data['title']);
     }
 
     public function download(ReportUpload $upload): StreamedResponse

@@ -80,7 +80,7 @@ class FilesController extends Controller
 
         return response()->json([
             'count' => ReportRun::unseenFor($request->user()->id)->count(),
-            'running' => ReportRun::where('user_id', $request->user()->id)->whereIn('status', ['queued', 'running'])->count(),
+            'running' => ReportRun::inState('running')->where('user_id', $request->user()->id)->count(),
             'items' => $items->map(fn ($r) => ['id' => $r->id, 'title' => $r->label(), 'ok' => $r->status === 'done', 'rows' => $r->rows, 'format' => $r->formatLabel(),
                 'url' => route('admin.files.show', $r), 'download' => $r->file ? route('admin.files.download', $r) : null])->values(),
         ]);

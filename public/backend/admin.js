@@ -255,6 +255,61 @@
       filter();
     });
 
+    // User menu (top right): click your name for My Files, Switch user and Logout
+    var um = $('[data-user-menu]');
+    if (um) {
+      var toggle = $('[data-user-toggle]', um), pop = $('[data-user-pop]', um), search = $('[data-up-search]', um);
+      function setOpen(open) {
+        pop.hidden = !open;
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open && search) search.focus();
+      }
+      toggle.addEventListener('click', function (e) { e.stopPropagation(); setOpen(pop.hidden); });
+      document.addEventListener('click', function (e) { if (!pop.hidden && !um.contains(e.target)) setOpen(false); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !pop.hidden) { setOpen(false); toggle.focus(); } });
+      if (search) search.addEventListener('input', function () {
+        var q = search.value.trim().toLowerCase();
+        $$('.up-users button', um).forEach(function (b) { b.hidden = q && b.dataset.name.indexOf(q) < 0; });
+      });
+
+      // Background reports: the badge counts finished files you haven't seen; a popup says when each one is ready
+      var badge = $('[data-files-badge]', um), box = null, KEY = 'admin.notified';
+      function notified() { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { return []; } }
+      function remember(ids) { try { localStorage.setItem(KEY, JSON.stringify(ids.slice(-100))); } catch (e) {} }
+      function popup(it) {
+        if (!box) { box = document.createElement('div'); box.className = 'notices'; box.setAttribute('aria-live', 'polite'); document.body.appendChild(box); }
+        var n = document.createElement('div');
+        n.className = 'notice-pop' + (it.ok ? '' : ' bad');
+        n.innerHTML = '<div class="np-body"><b>' + (it.ok ? 'Report ready' : 'Report failed') + '</b><div class="np-sub">' + esc(it.title) +
+          (it.ok ? ' · ' + Number(it.rows).toLocaleString() + ' rows · ' + esc(it.format) : '') + '</div><div class="np-links">' +
+          (it.ok && it.download ? '<a class="btn sm cyan" href="' + esc(it.download) + '">Download</a>' : '') +
+          '<a class="btn sm ghost" href="' + esc(it.url) + '">View</a></div></div><button type="button" class="np-x" aria-label="Close">&times;</button>';
+        $('.np-x', n).addEventListener('click', function () { n.remove(); });
+        box.appendChild(n);
+        setTimeout(function () { n.remove(); }, 15000);
+      }
+      function check() {
+        fetch(um.dataset.notify, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (d) {
+            if (!d) return;
+            var before = Number(badge.textContent) || 0;
+            badge.textContent = d.count;
+            badge.hidden = !d.count;
+            badge.setAttribute('aria-label', d.count + ' new ' + (d.count === 1 ? 'file' : 'files'));
+            if (d.count > before) { badge.classList.remove('bump'); void badge.offsetWidth; badge.classList.add('bump'); }
+            var seen = notified(), fresh = d.items.filter(function (it) { return seen.indexOf(it.id) < 0; });
+            fresh.slice(0, 3).forEach(popup);
+            if (fresh.length) remember(seen.concat(fresh.map(function (it) { return it.id; })));
+            // Check more often while something of yours is still running
+            clearTimeout(check.t);
+            check.t = setTimeout(check, d.running ? 5000 : 20000);
+          })
+          .catch(function () { clearTimeout(check.t); check.t = setTimeout(check, 60000); });
+      }
+      if (badge && um.dataset.notify) check();
+    }
+
     // A select that shows its form's extra input only for one choice
     $$('select[data-reveal-when]').forEach(function (s) {
       var input = $('input:not([type=hidden])', s.form);
@@ -272,6 +327,32 @@
       if (b.dataset.move === '1' && li.nextElementSibling) li.parentNode.insertBefore(li.nextElementSibling, li);
       b.focus();
     });
+
+    // Walker → Export Columns: click a model key to add it; move rows up and down; keep the order numbers in step
+    var ec = $('#export-columns');
+    if (ec) {
+      var body = $('#export-rows', ec);
+      function renumber() { $$('tr', body).forEach(function (tr, i) { var o = $('.ec-order', tr); if (o) o.value = i + 1; }); }
+      ec.addEventListener('click', function (e) {
+        var mv = e.target.closest('[data-ec-move]'), rm = e.target.closest('[data-ec-remove]'), add = e.target.closest('[data-ec-add]');
+        if (mv) {
+          var tr = mv.closest('tr');
+          if (mv.dataset.ecMove === '-1' && tr.previousElementSibling) body.insertBefore(tr, tr.previousElementSibling);
+          if (mv.dataset.ecMove === '1' && tr.nextElementSibling) body.insertBefore(tr.nextElementSibling, tr);
+          renumber(); mv.focus();
+        } else if (rm) {
+          rm.closest('tr').remove(); renumber();
+        } else if (add) {
+          var key = add.dataset.ecAdd, last = key.split('.').pop();
+          body.insertAdjacentHTML('beforeend', $('#export-row').innerHTML.replace(/__i__/g, 'n' + Date.now()));
+          var row = body.lastElementChild, ins = $$('input', row);
+          ins[1].value = key;
+          ins[2].value = last.replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+          renumber();
+        }
+      });
+      $$('[data-clone="#export-row"]', ec).forEach(function (b) { b.addEventListener('click', function () { setTimeout(renumber); }); });
+    }
 
     // Add a row from a <template>: data-clone="#template" data-into="#tbody"; __i__ becomes a unique index
     $$('[data-clone]').forEach(function (btn) {

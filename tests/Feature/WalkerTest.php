@@ -103,8 +103,8 @@ class WalkerTest extends TestCase
         $run = ReportRun::where('report', 'payments')->firstOrFail();
         // Top right of a run's page and of each report's page: save icon (download) and reload icon (rerun)
         $this->get('/admin/walker/runs/'.$run->id)->assertOk()->assertSee('report-actions ra-page', false)
-            ->assertSee('aria-label="Download .xlsx"', false)->assertSee('aria-label="Rerun report"', false)->assertSee(route('walker.runs.rerun', $run), false);
-        $this->get('/admin/walker/reports/payments')->assertOk()->assertSee('Download latest .xlsx')->assertSee(route('walker.runs.rerun', $run), false);
+            ->assertSee('aria-label="Download Excel (.xlsx)"', false)->assertSee('aria-label="Rerun report"', false)->assertSee(route('walker.runs.rerun', $run), false);
+        $this->get('/admin/walker/reports/payments')->assertOk()->assertSee('Download latest Excel (.xlsx)')->assertSee(route('walker.runs.rerun', $run), false);
         $this->get('/admin/walker/reports/orders')->assertOk()->assertSee(route('walker.reports.run', 'orders'), false);   // never run: reload runs it
         // Every run row in Report Status has both icons (the tables are paged)
         $html = $this->get('/admin/walker')->getContent();
