@@ -1,7 +1,7 @@
 @extends('backend.layouts.app')
 
 @section('content')
-    @include('backend.partials.page-head', ['title' => 'Orders Report', 'sub' => 'Pull orders by date range and status. CSV downloads include every column.', 'actions' => view('backend.corral.reports._head-actions', ['f' => $f])->render()])
+    @include('backend.partials.page-head', ['title' => 'Orders Report', 'sub' => 'Pull orders by date range and status. Runs in the background and saves a file you can download.'])
 
     <div class="search-layout">
     <aside class="search-side">
@@ -19,20 +19,6 @@
     </div></form>
     </aside>
     <div class="search-main">
-
-
-    @if ($records !== null)
-        <div class="panel">
-            @if ($f['output'] === 'summary')
-                <div class="panel-head"><h2>Summary</h2><span class="muted">{{ $records->count() }} orders</span></div>
-                @include('backend.corral.reports._summary')
-            @else
-                <div class="panel-head"><h2>Orders</h2><span class="muted">{{ $records->count() }} orders</span></div>
-                @include('backend.corral.customers._rows', ['customers' => $records, 'empty' => 'No orders in this range.'])
-            @endif
-        </div>
-    @endif
-
     @include('backend.corral.reports._recent', ['route' => 'corral.reports.orders'])
     </div>
     </div>

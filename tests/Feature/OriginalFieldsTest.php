@@ -88,11 +88,12 @@ class OriginalFieldsTest extends TestCase
         $this->actingAs($this->admin());
 
         foreach (['orders', 'notes', 'phonecalls'] as $report) {
-            foreach (['xls', 'xls-summary'] as $out) {
-                $res = $this->get("/admin/corral/reports/$report?run=1&start=2020-01-01&output=$out")->assertOk()
-                    ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            foreach ([0, 1] as $summary) {
+                $this->get("/admin/corral/reports/$report?run=1&start=2020-01-01&format=xlsx&summary=$summary")->assertRedirect();
+                $run = ReportRun::where('report', $report)->latest('id')->firstOrFail();
+                $this->assertSame((bool) $summary, $run->summary);
                 $tmp = tempnam(sys_get_temp_dir(), 'x');
-                file_put_contents($tmp, $res->getContent());
+                file_put_contents($tmp, Storage::disk('local')->get($run->file));
                 $zip = new ZipArchive;
                 $this->assertTrue($zip->open($tmp) === true);
                 $this->assertStringContainsString('<sheetData>', $zip->getFromName('xl/worksheets/sheet1.xml'));
@@ -101,7 +102,7 @@ class OriginalFieldsTest extends TestCase
             }
         }
 
-        $this->from('/admin/corral/reports/orders')->get('/admin/corral/reports/orders?run=1&start=2020-01-01&output=backend')->assertRedirect();
+        $this->from('/admin/corral/reports/orders')->get('/admin/corral/reports/orders?run=1&start=2020-01-01')->assertRedirect();
         $run = ReportRun::where('report', 'orders')->latest('id')->firstOrFail();
         $this->assertSame('done', $run->status);
         $this->assertGreaterThan(0, $run->rows);

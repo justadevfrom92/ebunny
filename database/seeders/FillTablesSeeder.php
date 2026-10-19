@@ -207,7 +207,7 @@ class FillTablesSeeder extends Seeder
     private function apiCalls(): void
     {
         $actions = [
-            'AIG' => ['policy.quote', 'policy.bind', 'claim.status'], 'Amazon' => ['giftcard.create', 'giftcard.status'], 'Apple' => ['applepay.session', 'applepay.validate'],
+            'AIG' => ['policy.quote', 'policy.bind', 'claim.status'], 'Amazon' => ['s3.PutObject customer-files/', 's3.PutObject reports/', 's3.GetObject bills/', 's3.ListObjectsV2', 's3.DeleteObject customer-files/'], 'Apple' => ['applepay.session', 'applepay.validate'],
             'Auth.net' => ['transaction.authCapture', 'transaction.void', 'customerProfile.create'], 'IBM' => ['weather.forecast', 'weather.history'],
             'Innowatts' => ['forecast.load', 'forecast.usage', 'meter.intervals'], 'Plaid' => ['link.token.create', 'auth.get', 'item.public_token.exchange'],
             'QuickBooks' => ['journalentry.create', 'customer.query', 'deposit.create'], 'SalesForce' => ['email.send', 'contact.upsert', 'journey.event'],

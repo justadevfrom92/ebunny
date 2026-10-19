@@ -338,7 +338,7 @@ return [
     // Third-party integrations. Put the values in .env — never in the database or repo.
     'integrations' => [
         'aig' => $integration('AIG', 'Home protection products', ['AIG_ENDPOINT', 'AIG_PARTNER_ID', 'AIG_API_KEY']),
-        'amazon' => $integration('Amazon', 'S3 document storage & SES email', ['AWS_DEFAULT_REGION', 'AWS_BUCKET', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY']),
+        'amazon' => $integration('Amazon', 'S3 bucket for uploaded documents (customer files, bills, report files)', ['AWS_DEFAULT_REGION', 'AWS_BUCKET', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY']),
         'apple' => $integration('Apple', 'Push notifications (APNs)', ['APNS_TEAM_ID', 'APNS_KEY_ID', 'APNS_BUNDLE_ID', 'APNS_PRIVATE_KEY']),
         'authnet' => $integration('Auth.net', 'Card processing (legacy)', ['AUTHNET_LOGIN_ID', 'AUTHNET_TRANSACTION_KEY']),
         'ibm' => $integration('IBM', 'Weather data for forecasting', ['IBM_WEATHER_ENDPOINT', 'IBM_WEATHER_API_KEY']),

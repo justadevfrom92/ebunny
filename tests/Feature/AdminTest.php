@@ -10,6 +10,7 @@ use App\Models\HistoryItem;
 use App\Models\Market;
 use App\Models\Payment;
 use App\Models\Plan;
+use App\Models\ReportRun;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\WorkItem;
@@ -54,7 +55,7 @@ class AdminTest extends TestCase
         $urls = ['/admin', '/admin/corral', '/admin/corral?q=houston', '/admin/corral?exception=*&limit=0',
             '/admin/corral/customers/'.$customer->account, '/admin/corral/esiid?q=Example', '/admin/corral/orders/create',
             '/admin/corral/orders/create-biz', '/admin/corral/orders/create?renew='.$customer->account,
-            '/admin/corral/reports/orders', '/admin/corral/reports/orders?run=1&output=summary', '/admin/corral/queues',
+            '/admin/corral/reports/orders', '/admin/corral/queues',
             '/admin/corral/queues/unapplied-payments', '/admin/corral/messages',
             '/admin/lando/pages', '/admin/lando/pages/create', '/admin/lando/pages/1/edit', '/admin/lando/templates',
             '/admin/lando/blocks', '/admin/lando/blocks/create', '/admin/lando/blocks/8/edit', '/admin/astro/plans',
@@ -258,8 +259,10 @@ class AdminTest extends TestCase
     public function test_csv_report_downloads(): void
     {
         $this->actingAs($this->user())
-            ->get('/admin/corral/reports/orders?run=1&output=csv&start=2026-01-01&end='.today()->toDateString())
-            ->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
+            ->get('/admin/corral/reports/orders?run=1&format=csv&start=2026-01-01&end='.today()->toDateString())->assertRedirect();
+        $run = ReportRun::where('report', 'orders')->latest('id')->firstOrFail();
+        $this->get(route('admin.files.download', $run))->assertOk()->assertDownload(basename($run->file));
+        $this->get(route('admin.files.show', $run))->assertOk()->assertSee('CSV');
     }
 
     public function test_users_cannot_lock_themselves_out(): void

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Backend\Sheriff;
 
 use App\Http\Controllers\Controller;
 use App\Models\ApiLog;
+use App\Models\IntegrationTest;
 use App\Models\JobRun;
 use App\Models\ReferenceRow;
 use App\Support\AdminMenu;
@@ -27,7 +28,9 @@ class SystemController extends Controller
             'configured' => collect($i['env'])->every(fn ($v) => filled($v)),
         ]);
 
-        return view('backend.sheriff.integrations', ['integrations' => $integrations]);
+        $tests = IntegrationTest::with('user')->latest('created_at')->latest('id')->get()->unique('integration')->keyBy('integration');
+
+        return view('backend.sheriff.integrations', ['integrations' => $integrations, 'tests' => $tests]);
     }
 
     /** One integration: which settings are present and its recent calls. */

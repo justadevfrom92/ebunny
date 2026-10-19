@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use App\Models\ReportRun;
 use App\Reports\Report;
-use App\Support\Xlsx;
+use App\Support\Export;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Storage;
@@ -32,13 +32,18 @@ class RunReport implements ShouldQueue
 
         $report = Report::make($run->report);
         $records = $report->query($run->params + $report->defaults());
-        [$header, $rows] = $report->detail($records);
-        $file = 'reports/'.$run->report.'-'.$run->id.'.xlsx';
-        Storage::disk('local')->put($file, Xlsx::build($header, $rows, $run->title ?? $run->report));
+        // A summary (counts) or every row with the report's export columns
+        [$header, $rows] = $run->summary ? $report->summary($records) : $report->detail($records, $run->report);
+        $rows = collect($rows)->values();
+        $format = array_key_exists($run->format, Export::FORMATS) ? $run->format : 'xlsx';
+        $file = 'reports/'.$run->report.($run->summary ? '-summary' : '').'-'.$run->id.'.'.Export::FORMATS[$format][1];
+        $content = Export::build($format, $header, $rows, $run->title ?? $run->report);
+        Storage::disk('local')->put($file, $content);
 
-        $run->update(['status' => 'done', 'file' => $file, 'rows' => $records->count(), 'finished_at' => now(),
+        // The first rows are kept with the run so its page can show them without running the report again
+        $run->update(['status' => 'done', 'file' => $file, 'file_size' => strlen($content), 'rows' => $records->count(), 'finished_at' => now(),
             'duration_ms' => (int) round((microtime(true) - $started) * 1000),
-            'preview' => ['header' => $header, 'rows' => $rows->take(50)->values()->all()]]);
+            'preview' => ['header' => $header, 'rows' => $rows->take(25)->map(fn ($r) => array_values((array) $r))->all()]]);
     }
 
     public function failed(Throwable $e): void

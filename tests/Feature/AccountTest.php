@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\CustomerFlag;
 use App\Models\EmailTemplate;
 use App\Models\Phonecall;
+use App\Models\ReportRun;
 use App\Models\RewardOffer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -114,14 +115,18 @@ class AccountTest extends TestCase
     {
         $this->actingAs($this->admin());
 
+        // Reports always run in the background and save a file in the chosen format
         foreach (['orders', 'notes', 'phonecalls'] as $report) {
-            foreach (['screen', 'summary'] as $output) {
-                $this->get('/admin/corral/reports/'.$report.'?run=1&start=2020-01-01&output='.$output)->assertOk();
+            foreach (['xlsx', 'csv', 'txt', 'json'] as $format) {
+                $this->get('/admin/corral/reports/'.$report.'?run=1&start=2020-01-01&format='.$format)->assertRedirect();
+                $run = ReportRun::where('report', $report)->latest('id')->firstOrFail();
+                $this->assertSame('done', $run->status);
+                $this->assertStringEndsWith('.'.$format, $run->file);
             }
-            $this->get('/admin/corral/reports/'.$report.'?run=1&start=2020-01-01&output=csv')->assertOk()->assertHeader('content-type', 'text/csv; charset=utf-8');
-            $this->get('/admin/corral/reports/'.$report)->assertOk()->assertSee('Recent Results')->assertSee('aria-label="Rerun report"', false);
+            $this->get('/admin/corral/reports/'.$report)->assertOk()->assertSee('Your Runs')->assertSee('aria-label="Rerun report"', false);
         }
-        $this->get('/admin/corral/reports/notes?run=1&start=2020-01-01&priorities[]=System')->assertOk()->assertSee('Enrollment submitted');
+        $this->get('/admin/corral/reports/notes?run=1&start=2020-01-01&priorities[]=System&format=json')->assertRedirect();
+        $this->assertStringContainsString('Enrollment submitted', json_encode(ReportRun::where('report', 'notes')->latest('id')->first()->preview));
 
         $this->get('/admin/corral/ercot')->assertOk()->assertSee('814_16');
         $this->get('/admin/corral/ercot?type=814_16&status=linked')->assertOk();

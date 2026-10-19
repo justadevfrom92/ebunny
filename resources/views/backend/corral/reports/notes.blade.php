@@ -1,7 +1,7 @@
 @extends('backend.layouts.app')
 
 @section('content')
-    @include('backend.partials.page-head', ['title' => 'Notes Report', 'sub' => 'Account notes by agent, date, text and priority. "System" notes are the ones written automatically.', 'actions' => view('backend.corral.reports._head-actions', ['f' => $f])->render()])
+    @include('backend.partials.page-head', ['title' => 'Notes Report', 'sub' => 'Account notes by agent, date, text and priority. "System" notes are the ones written automatically.'])
 
     <div class="search-layout">
     <aside class="search-side">
@@ -22,27 +22,6 @@
     </div></form>
     </aside>
     <div class="search-main">
-
-
-    @if ($records !== null)
-        <div class="panel">
-            @if ($f['output'] === 'summary')
-                <div class="panel-head"><h2>Summary</h2><span class="muted">{{ $records->count() }} notes</span></div>
-                @include('backend.corral.reports._summary')
-            @else
-                <div class="panel-head"><h2>Notes</h2><span class="muted">{{ $records->count() }} notes</span></div>
-                <div class="table-wrap"><table><thead><tr><th>Date</th><th>Account</th><th>Author</th><th>Category / Action</th><th>Priority</th><th>Note</th></tr></thead><tbody>
-                    @forelse ($records as $n)
-                        <tr><td>{{ $n->created_at->format('n/j/Y g:i A') }}</td>
-                            <td>@if ($n->customer)<a href="{{ route('corral.customers.show', $n->customer) }}#notes">{{ $n->customer->account }}</a><br><span class="help">{{ $n->customer->name }}</span>@endif</td>
-                            <td>{{ $n->author ?? 'System' }}</td><td>{{ $n->category ?? '—' }}@if ($n->action)<br><span class="help">{{ $n->action }}</span>@endif</td>
-                            <td>{{ $n->user_id ? ($n->priority ?? '—') : 'System' }}</td><td>{{ $n->body }}</td></tr>
-                    @empty <tr><td colspan="6" class="empty">No notes match.</td></tr> @endforelse
-                </tbody></table></div>
-            @endif
-        </div>
-    @endif
-
     @include('backend.corral.reports._recent', ['route' => 'corral.reports.notes'])
     </div>
     </div>

@@ -143,6 +143,16 @@ Route::prefix('admin')->group(function () {
     Route::middleware(['auth:web', CacheAdminTables::class])->group(function () {
         Route::post('logout', [Backend\AuthController::class, 'logout'])->name('admin.logout');
         Route::post('log-in-as/return', [Backend\AuthController::class, 'returnToSelf'])->name('admin.login-as.return');
+
+        // My Files (user menu): your report runs from every app, and the "report ready" notices
+        Route::controller(Backend\FilesController::class)->group(function () {
+            Route::get('files', 'index')->name('admin.files');
+            Route::post('files/seen', 'seen')->name('admin.files.seen');
+            Route::get('files/{run}', 'show')->name('admin.files.show');
+            Route::get('files/{run}/download', 'download')->name('admin.files.download');
+            Route::post('files/{run}/rerun', 'rerun')->name('admin.files.rerun');
+            Route::get('notifications', 'notifications')->name('admin.notifications');
+        });
         Route::get('/', Backend\LauncherController::class)->name('admin.launcher');
 
         // Admin apps created from the launcher's "New Admin App" button
@@ -500,6 +510,7 @@ Route::prefix('admin')->group(function () {
             Route::get('cached-tables/{snapshot}', [Backend\Sheriff\CacheController::class, 'show'])->name('cache.show');
             Route::get('integrations/{integration}/configure', [Backend\Sheriff\IntegrationConfigController::class, 'show'])->name('integrations.configure');
             Route::post('integrations/{integration}/configure', [Backend\Sheriff\IntegrationConfigController::class, 'upload'])->middleware('throttle:20,1')->name('integrations.upload');
+            Route::post('integrations/test-all', [Backend\Sheriff\IntegrationConfigController::class, 'testAll'])->middleware('throttle:6,1')->name('integrations.test-all');
             Route::post('integrations/{integration}/test', [Backend\Sheriff\IntegrationConfigController::class, 'test'])->middleware('throttle:20,1')->name('integrations.test');
             Route::get('sitemap', [Backend\Sheriff\SystemController::class, 'sitemap'])->name('sitemap');
             Route::post('sitemap', [Backend\Lando\PageController::class, 'sitemap'])->name('sitemap.run');

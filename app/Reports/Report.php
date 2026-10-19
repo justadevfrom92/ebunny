@@ -2,6 +2,8 @@
 
 namespace App\Reports;
 
+use App\Models\ReportColumn;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
@@ -59,10 +61,51 @@ abstract class Report
         return ['start' => now()->startOfYear()->toDateString(), 'end' => today()->toDateString()];
     }
 
-    /** [header, rows] for the file outputs. */
-    public function detail(Collection $records): array
+    /**
+     * [header, rows] for the file outputs. When the report has export columns (Walker → a report →
+     * Export Columns) each column is a model key on the record, like "customer.name" or
+     * "customer.payments.*.amount", given the title chosen for it, in the running order.
+     */
+    public function detail(Collection $records, ?string $key = null): array
     {
-        return [$this->columns(), $records->map(fn ($r) => $this->row($r))->values()];
+        $map = $key ? ReportColumn::where('report', $key)->value('columns') : null;
+        if (! $map) {
+            return [$this->columns(), $records->map(fn ($r) => $this->row($r))->values()];
+        }
+
+        return [array_column($map, 'title'), $records->map(fn ($r) => array_map(fn ($c) => self::cell(data_get($r, $c['key'])), $map))->values()];
+    }
+
+    /** One exported value: lists are joined, dates formatted, models shown by name or id. */
+    public static function cell(mixed $v): mixed
+    {
+        return match (true) {
+            $v instanceof \DateTimeInterface => $v->format('Y-m-d H:i:s'),
+            $v instanceof Collection, is_array($v) => collect($v)->flatten()->map(fn ($x) => self::cell($x))->implode(', '),
+            $v instanceof Model => $v->getAttribute('name') ?? $v->getAttribute('account') ?? $v->getKey(),
+            is_bool($v) => $v ? 'Yes' : 'No',
+            default => $v,
+        };
+    }
+
+    /** Model keys a report's records offer for export columns (their fields and their related records' fields). */
+    public function fields(array $f = []): array
+    {
+        $first = $this->query($f + $this->defaults())->first();
+        if (! $first instanceof Model) {
+            return [];
+        }
+        $keys = array_keys($first->getAttributes());
+        foreach ($first->getRelations() as $name => $rel) {
+            $one = $rel instanceof Collection ? $rel->first() : $rel;
+            if ($one instanceof Model) {
+                foreach (array_keys($one->getAttributes()) as $k) {
+                    $keys[] = $name.($rel instanceof Collection ? '.*.' : '.').$k;
+                }
+            }
+        }
+
+        return array_values(array_filter($keys, fn ($k) => ! preg_match('/(password|remember_token|ssn|secret|token)/i', $k)));
     }
 
     public static function make(string $key): static

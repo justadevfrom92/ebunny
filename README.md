@@ -3,14 +3,26 @@
 The public website (with sign-up and the My Account portal) plus the internal admin tools (Corral, Lando, Astro, Walker, Caboose, Bounty, Rodeo, Sheriff), served by **Laravel 13** on PHP 8.3.
 No Node, no React and no build step: the admin is server-rendered Blade with plain CSS and a small plain-JavaScript file.
 
-## Run it on Linux
+## Run it (Linux, macOS or Windows)
 
 Requirements: PHP 8.3+ with `pdo_sqlite` (or `pdo_mysql`), and Composer.
 
 ```sh
-composer setup          # install, create .env + app key, create the SQLite database, migrate and seed
-php artisan serve       # http://localhost:8000
+composer install
+php artisan start       # sets everything up, then serves http://127.0.0.1:8000
 ```
+
+`php artisan start` does, in order:
+
+1. creates `.env` from `.env.example` and an app key, if they're missing
+2. creates the SQLite database file, if that's the connection and it doesn't exist yet
+3. runs the migrations, and loads the sample data (`db:seed`) when the database is empty
+4. creates the storage folders and the `public/storage` link, and clears caches
+5. starts a queue worker (background reports, emails) and the scheduler (crons) in the background
+6. runs `php artisan serve` — Ctrl+C stops the server, the worker and the scheduler
+
+Options: `--fresh` wipes the database and reloads the sample data, `--port=8080` / `--host=0.0.0.0` change where it
+serves, `--no-serve` only sets things up, `--no-worker` skips the queue worker and scheduler.
 
 Click **Admin** (bottom right of the website footer, or go to `/admin`). It asks you to sign in, then opens the launcher in a new tab.
 
@@ -18,15 +30,16 @@ Demo users (all fictional; password is `ADMIN_DEMO_PASSWORD`, default `password`
 
 | Email | Role | Apps |
 | --- | --- | --- |
-| admin@example.com | Administrator | everything, including deletes and refunds |
+| admin@example.com | Administrator | everything, including refunds |
 | csr@example.com | Customer Service | Corral, Bounty |
 | pricing@example.com | Pricing | Lando, Astro |
 | marketing@example.com | Content Editor | Lando, Rodeo |
-| finance@example.com | Finance | Corral, Walker, Caboose, Sheriff, refunds |
+| finance@example.com | Finance | Corral, Walker, Caboose, refunds |
+| paige@example.com | Content Editor (+ Corral, Walker, Astro) | Corral, Lando, Astro, Walker, Rodeo |
 
 Website customer login (My Account, at `/myaccount`): username `demo.customer`, password `password` (fictional account 1219000000).
 
-Other commands: `php artisan test` (feature tests), `php artisan migrate:fresh --seed` (reset the sample data).
+Other commands: `php artisan test` (feature tests), `php artisan start --fresh` (reset the sample data and start).
 
 ### Production notes
 - Point the web server's document root at `public/` (Apache or Nginx + PHP-FPM, the usual Laravel setup).

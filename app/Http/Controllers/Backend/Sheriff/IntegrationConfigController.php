@@ -73,6 +73,25 @@ class IntegrationConfigController extends Controller
         IntegrationTest::create(['integration' => $integration, 'ok' => $result['ok'], 'message' => $result['message'], 'response_ms' => $result['ms'], 'user_id' => $request->user()->id, 'created_at' => now()]);
         ApiLog::create(['api' => $i['name'], 'action' => 'connection-test', 'status' => $result['ok'] ? '200' : 'failed', 'response_ms' => $result['ms'], 'created_at' => now()]);
 
+        // From the All APIs page: back to the list with the result for that card
+        if ($request->input('back') === 'list') {
+            return redirect()->route('sheriff.integrations.index')->with('status', $i['name'].': '.($result['ok'] ? 'connected' : 'failed').' — '.$result['message']);
+        }
+
         return redirect()->route('sheriff.integrations.configure', $integration)->with('test_result', $result);
+    }
+
+    /** All APIs → Test All: tests every integration and lists the results. */
+    public function testAll(Request $request): RedirectResponse
+    {
+        $ok = 0;
+        foreach (config('admin.integrations') as $key => $i) {
+            $result = IntegrationTester::test($key);
+            IntegrationTest::create(['integration' => $key, 'ok' => $result['ok'], 'message' => $result['message'], 'response_ms' => $result['ms'], 'user_id' => $request->user()->id, 'created_at' => now()]);
+            ApiLog::create(['api' => $i['name'], 'action' => 'connection-test', 'status' => $result['ok'] ? '200' : 'failed', 'response_ms' => $result['ms'], 'created_at' => now()]);
+            $ok += $result['ok'] ? 1 : 0;
+        }
+
+        return redirect()->route('sheriff.integrations.index')->with('status', 'Tested '.count(config('admin.integrations')).' APIs: '.$ok.' connected.');
     }
 }
