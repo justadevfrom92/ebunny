@@ -12,7 +12,7 @@
     @endphp
     @include('backend.partials.page-head', ['title' => $campaign->name,
         'sub' => 'Sent '.$campaign->sent_at->format('l, F j, Y g:i A').' · '.$campaign->goalLabel().' · '.($campaign->channel === 'SMS' ? 'Text message' : 'Email: '.e($campaign->template?->name ?? '—')),
-        'actions' => '<a class="btn ghost" href="'.route('rodeo.campaigns').'">All Campaigns</a><form method="post" action="'.route('rodeo.campaigns.duplicate', $campaign).'" class="inline">'.csrf_field().'<button class="btn cyan">Duplicate</button></form>'])
+        'actions' => '<a class="btn ghost" href="'.route('rodeo.campaigns').'">All Campaigns</a><a class="btn ghost" href="'.route('rodeo.campaigns.heatmap', $campaign).'">Click Heat Map</a><form method="post" action="'.route('rodeo.campaigns.duplicate', $campaign).'" class="inline">'.csrf_field().'<button class="btn cyan">Duplicate</button></form>'])
 
     <div class="grid-4 stat-row">
         <div class="stat"><span>Recipients</span><strong>{{ number_format($r['sent']) }}</strong><small>{{ number_format($campaign->skipped) }} skipped (suppressed or contacted recently)</small></div>

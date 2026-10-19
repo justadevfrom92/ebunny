@@ -68,7 +68,7 @@ class FinanceDetailPagesTest extends TestCase
         // The test sign-in list stays the sample @example.com admins
         $this->assertTrue(AuthController::testUsers()->every(fn ($u) => str_ends_with($u->email, '@example.com')));
 
-        $this->assertSame(6, ReferenceRow::where('table_key', 'monthly-drawing')->count());
+        $this->assertSame(12, ReferenceRow::where('table_key', 'monthly-drawing')->count());
         $this->get(route('bounty.drawing'))->assertOk()->assertDontSee('<td class="empty">None.</td>', false);
         $this->assertTrue(StarEntry::where('fulfillment', 'pending')->exists());
         foreach (config('admin.integrations') as $i) {

@@ -108,10 +108,8 @@ return [
                     ['ETF', 'astro.etfs.edit'],
                     ['Products', 'astro.modifiers.products'],
                 ],
-                'BYOP' => [
-                    ['Products', 'astro.products.index'],
-                ],
-                'Upload' => [
+                'Build Your Own' => [
+                    ['Build Your Own', 'astro.products.index'],
                     ['BYOP Discounts', 'astro.byop.upload'],
                 ],
                 'Data' => 'reference_tables',

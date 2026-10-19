@@ -400,6 +400,8 @@ Route::prefix('admin')->group(function () {
             Route::post('campaigns/{campaign}/schedule', 'scheduleCampaign')->name('campaigns.schedule');
             Route::post('campaigns/{campaign}/unschedule', 'unscheduleCampaign')->name('campaigns.unschedule');
             Route::post('campaigns/{campaign}/duplicate', 'duplicateCampaign')->name('campaigns.duplicate');
+            Route::get('campaigns/{campaign}/heatmap', [Backend\Rodeo\HeatmapController::class, 'campaign'])->name('campaigns.heatmap');
+            Route::get('templates/{template}/heatmap', [Backend\Rodeo\HeatmapController::class, 'template'])->name('templates.heatmap');
             Route::get('templates', 'templates')->name('templates');
             Route::get('templates/new', 'templateForm')->name('templates.create');
             Route::post('templates', 'saveTemplate')->name('templates.store');

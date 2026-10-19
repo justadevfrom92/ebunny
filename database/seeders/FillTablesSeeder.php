@@ -6,12 +6,15 @@ use App\Jobs\RunReport;
 use App\Models\AiConversation;
 use App\Models\ApiLog;
 use App\Models\Bill;
+use App\Models\Campaign;
 use App\Models\ContactLog;
 use App\Models\ContactMessage;
 use App\Models\Customer;
 use App\Models\CustomerFlag;
+use App\Models\EmailTemplate;
 use App\Models\HistoryItem;
 use App\Models\LedgerEntry;
+use App\Models\LinkClick;
 use App\Models\Payment;
 use App\Models\Phonecall;
 use App\Models\ReferenceRow;
@@ -21,6 +24,7 @@ use App\Models\RewardOffer;
 use App\Models\StarEntry;
 use App\Models\User;
 use App\Reports\Report;
+use App\Support\EmailHeatmap;
 use Illuminate\Database\Seeder;
 
 /**
@@ -44,6 +48,7 @@ class FillTablesSeeder extends Seeder
         $this->textsAndCalls();
         $this->actionsAndFlagHistory();
         $this->resolutions();
+        $this->linkClicks();
         // Paperless sign-up stars for accounts that have none yet (new enrollments)
         foreach (Customer::doesntHave('starEntries')->get() as $c) {
             $c->update(['paperless' => true]);
@@ -88,6 +93,42 @@ class FillTablesSeeder extends Seeder
                     continue;   // recent ones left open
                 }
                 $r->forceFill(['resolution' => $pick(), 'resolved_by' => $by[array_rand($by)] ?? null, 'resolved_at' => $r->$col?->copy()->addMinutes(mt_rand(2, 600))])->saveQuietly();
+            }
+        }
+    }
+
+    /** Clicks on the links in sent emails and campaigns, for Rodeo's heat maps (the button and the logo get the most). */
+    private function linkClicks(): void
+    {
+        $templates = EmailTemplate::all()->keyBy('name');
+        $campaigns = Campaign::all()->keyBy('id');
+        $devices = ['Phone', 'Phone', 'Phone', 'Desktop', 'Desktop', 'Tablet'];
+        foreach (ContactLog::whereIn('channel', ['Email', 'SMS'])->where(fn ($q) => $q->whereNotNull('opened_at')->orWhereNotNull('clicked_at')->orWhereNotNull('campaign_id'))->get() as $log) {
+            $t = $log->campaign_id ? ($campaigns[$log->campaign_id]?->email_template_id ? $templates->firstWhere('id', $campaigns[$log->campaign_id]->email_template_id) : null) : ($templates[$log->template] ?? null);
+            if ($log->channel === 'SMS') {
+                $weights = ['body-1' => 1];
+            } else {
+                $weights = [];
+                foreach (array_keys(EmailHeatmap::links($t)) as $k) {
+                    $weights[$k] = match (true) {
+                        $k === 'cta' => 10, str_starts_with($k, 'body-') => 7, $k === 'logo' => 3, $k === 'footer-pay' => 4, $k === 'footer-unsubscribe' => 1, default => 2
+                    };
+                }
+            }
+            $n = $log->clicked_at ? mt_rand(1, 3) : ($log->campaign_id ? mt_rand(0, 3) : (mt_rand(0, 2) === 0 ? 1 : 0));
+            for ($k = 0; $k < $n; $k++) {
+                $pick = mt_rand(1, array_sum($weights));
+                foreach ($weights as $link => $w) {
+                    if (($pick -= $w) <= 0) {
+                        break;
+                    }
+                }
+                LinkClick::create(['contact_log_id' => $log->id, 'campaign_id' => $log->campaign_id, 'email_template_id' => $t?->id, 'customer_id' => $log->customer_id,
+                    'link' => $link, 'url' => EmailHeatmap::links($t)[$link]['url'] ?? null, 'device' => $devices[array_rand($devices)],
+                    'clicked_at' => ($log->clicked_at ?? $log->opened_at ?? $log->created_at)->copy()->addMinutes(mt_rand(0, 90))]);
+            }
+            if ($n && ! $log->clicked_at) {
+                $log->forceFill(['clicked_at' => ($log->opened_at ?? $log->created_at)->copy()->addMinutes(mt_rand(1, 60))])->saveQuietly();
             }
         }
     }
@@ -202,7 +243,8 @@ class FillTablesSeeder extends Seeder
     {
         $offers = RewardOffer::where('stars', '>', 0)->where('effect', '!=', 'product')->get();
         $people = Customer::whereIn('status', ['Good - On Flow', 'Dropped - Churned'])->inRandomOrder()->limit(22)->get();
-        foreach ($people as $i => $c) {
+        // Most of them redeem more than once
+        foreach ($people->concat($people->take(18))->concat($people->take(10))->values() as $i => $c) {
             $o = $offers[($i * 3) % $offers->count()];
             $earned = now()->subDays(mt_rand(30, 120));
             $at = $earned->copy()->addDays(mt_rand(5, 25))->setTime(mt_rand(8, 21), mt_rand(0, 59));
@@ -225,13 +267,14 @@ class FillTablesSeeder extends Seeder
         }
     }
 
-    /** Bounty → Monthly Drawing: entries and a winner for each of the last six months. */
+    /** Bounty → Monthly Drawing: entries and a winner for each of the last twelve months. */
     private function drawing(): void
     {
-        $prizes = ['$100 Visa Gift Card', 'Free Month of Electricity', 'ecobee Smart Thermostat', '$100 Amazon Gift Card', '$150 Bill Credit', 'YETI Cooler'];
+        $prizes = ['$100 Visa Gift Card', 'Free Month of Electricity', 'ecobee Smart Thermostat', '$100 Amazon Gift Card', '$150 Bill Credit', 'YETI Cooler',
+            '$50 Visa Gift Card', 'Smart Plug 4-Pack', 'Free Month of Electricity', '$100 Bill Credit', 'Ring Video Doorbell', '$200 Visa Gift Card'];
         $ids = Customer::pluck('id');
         $pos = (int) ReferenceRow::where('table_key', 'monthly-drawing')->max('position');
-        foreach (range(6, 1) as $back) {
+        foreach (range(12, 1) as $back) {
             $m = now()->startOfMonth()->subMonths($back);
             $have = HistoryItem::where('model', 'ItemDrawingEntry_model')->whereBetween('created_at', [$m, $m->copy()->endOfMonth()])->pluck('customer_id');
             if ($have->isEmpty()) {

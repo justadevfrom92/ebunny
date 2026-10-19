@@ -703,3 +703,24 @@ tr.row-new td { background: var(--info-bg); }
 .pager .pager-of { margin-left: auto; border: 0; }
 .pager span.muted:not(.pager-of) { border: 0; padding: 4px 2px; }
 .tl-ticket td:first-child { white-space: nowrap; width: 12ch; } .tl-ticket td:nth-child(2) { width: 24ch; } .tl-ticket td:nth-child(3) { width: 60%; }
+.cookie-list { display: flex; flex-wrap: wrap; gap: 4px; }
+.cookie-list span { font-size: .72rem; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); background: var(--row); }
+.cookie-list .cookie-analytics { background: var(--info-bg); border-color: transparent; color: var(--info); }
+.cookie-list .cookie-marketing { background: var(--warn-bg); border-color: transparent; color: var(--warn); }
+
+/* Rodeo → click heat map */
+.hm-wrap { background: #f3f5f7; }
+.hm-email { max-width: 600px; margin: 0 auto; background: #fff; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-family: Arial, sans-serif; }
+.hm-head { background: var(--navy); padding: 14px 20px; }
+.hm-head a { color: #fff; font-weight: 700; text-decoration: none; }
+.hm-body { padding: 20px; line-height: 1.55; }
+.hm-cta { padding: 0 20px 20px; text-align: center; }
+.hm-cta a { display: inline-block; background: var(--cyan); color: #fff; padding: 12px 22px; border-radius: 6px; text-decoration: none; font-weight: 700; }
+.hm-foot { border-top: 1px solid var(--line); padding: 14px 20px; font-size: .8rem; color: var(--muted); text-align: center; }
+.hm-link { position: relative; outline: 3px solid rgba(220, 38, 38, calc(.15 + var(--h) * .85)); box-shadow: 0 0 calc(6px + var(--h) * 26px) rgba(239, 68, 68, calc(.25 + var(--h) * .6)); background-color: rgba(254, 202, 202, calc(var(--h) * .6)); border-radius: 4px; }
+.hm-cta a.hm-link { background-color: var(--cyan); }
+.hm-count { position: absolute; top: -10px; right: -12px; background: var(--red); color: #fff; font-size: .68rem; font-weight: 700; border-radius: 999px; padding: 0 6px; line-height: 1.6; font-family: system-ui, sans-serif; }
+.hm-legend { display: inline-flex; align-items: center; gap: 4px; font-size: .78rem; color: var(--muted); }
+.hm-legend i { width: 16px; height: 12px; border-radius: 3px; background: rgba(220, 38, 38, calc(.15 + var(--h) * .85)); display: inline-block; }
+.hm-bar { display: inline-block; width: 36px; height: 8px; background: var(--row); border-radius: 4px; vertical-align: middle; overflow: hidden; }
+.hm-bar span { display: block; height: 100%; background: var(--red); }

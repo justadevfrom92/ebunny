@@ -36,17 +36,20 @@ class ContactMessageSeeder extends Seeder
             ['signup', 'Your website says I need a deposit. Can I avoid it with AutoPay?', 'Yes: with AutoPay and paperless billing your deposit drops to $0 for your credit tier. I have updated your enrollment.'],
             ['business', 'Can I get a quote for 4 meters, about 18,000 kWh a month total?', null],
         ];
-        foreach ($messages as $i => [$topic, $text, $reply]) {
+        // Recent messages (some still open), then older ones from the last few months, all handled
+        foreach ([...$messages, ...$messages] as $i => [$topic, $text, $reply]) {
+            $old = $i >= count($messages);
             $fromCustomer = $i % 3 !== 2 && $customers->isNotEmpty();
             $c = $fromCustomer ? $customers[$i % $customers->count()] : null;
             [$first, $last] = $c ? [$c->first_name ?: explode(' ', $c->name)[0], $c->last_name ?: (explode(' ', $c->name)[1] ?? '')] : $prospects[$i % count($prospects)];
-            $at = now()->subHours(mt_rand(2, 24 * 12))->startOfMinute();
-            $done = $reply !== null || mt_rand(1, 5) === 1;
+            $at = $old ? now()->subDays(mt_rand(14, 90))->setTime(mt_rand(7, 21), mt_rand(0, 59)) : now()->subHours(mt_rand(2, 24 * 12))->startOfMinute();
+            $done = $old || $reply !== null || mt_rand(1, 5) === 1;
+            $reply ??= $old && $i % 2 ? 'Thanks for reaching out. I took care of this on your account; reply here if anything still looks wrong.' : null;
             $agent = $agents->isNotEmpty() ? $agents->random() : null;
             ContactMessage::create([
                 'first_name' => $first, 'last_name' => $last, 'email' => $c?->email ?? strtolower($first.'.'.$last).'@example.com',
                 'phone' => $c?->phone ?? '(555) 555-0'.str_pad((string) (130 + $i), 3, '0', STR_PAD_LEFT), 'topic' => $topic, 'message' => $text,
-                'ip' => '198.51.100.'.(20 + $i), 'customer_id' => $c?->id,
+                'ip' => '198.51.100.'.(20 + $i % 200), 'customer_id' => $c?->id,
                 'reply' => $reply ? 'Hi '.$first.",\n\n".$reply."\n\n".($agent?->name ?? 'Customer Care') : null,
                 'replied_at' => $reply ? $at->copy()->addHours(mt_rand(1, 20)) : null, 'replied_by' => $reply ? $agent?->id : null,
                 'handled_at' => $done ? $at->copy()->addHours(mt_rand(1, 26)) : null, 'handled_by' => $done ? $agent?->id : null,

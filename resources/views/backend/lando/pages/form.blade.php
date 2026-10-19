@@ -7,7 +7,8 @@
     @include('backend.partials.page-head', [
         'title' => $page->exists ? 'Edit Page: '.$page->title : 'Add a Page',
         'sub' => e($page->site?->name).($page->exists ? ' · <span class="mono">'.e($page->url()).'</span>' : ''),
-        'actions' => $page->exists && ! $page->redirect ? '<a class="btn ghost" href="'.e($page->liveUrl()).'" target="_blank" rel="noopener">View Page Live</a>' : null,
+        'actions' => ($page->exists && ($act = app_route('pages.activity', $page)) ? '<a class="btn ghost" href="'.$act.'">Activity</a>' : '')
+            .($page->exists && ! $page->redirect ? '<a class="btn ghost" href="'.e($page->liveUrl()).'" target="_blank" rel="noopener">View Page Live</a>' : '') ?: null,
     ])
 
     @if ($page->exists)

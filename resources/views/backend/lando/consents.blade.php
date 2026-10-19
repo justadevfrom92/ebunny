@@ -10,6 +10,16 @@
         <div class="stat"><span>Allow Analytics / Marketing</span><strong>{{ number_format((int) $optIn->analytics) }} / {{ number_format((int) $optIn->marketing) }}</strong><small>{{ number_format($totals['custom'] ?? 0) }} chose their own</small></div>
     </div>
 
+    {{-- Each cookie the website sets, and how many of the latest choices allow it --}}
+    <div class="panel" style="margin-bottom:20px"><div class="panel-head"><h2>Cookies</h2><span class="muted">allowed in the last 30 days</span></div><div class="table-wrap"><table class="table">
+        <thead><tr><th>Cookie</th><th>Category</th><th>What it's for</th><th>Lasts</th><th class="num">Said Yes</th></tr></thead>
+        <tbody>@foreach (\App\Models\CookieConsent::COOKIES as $name => [$cat, $purpose, $lasts])
+            @php $yes = $cat === 'necessary' ? $all : (int) $optIn->$cat; @endphp
+            <tr><td class="mono"><b>{{ $name }}</b></td><td>@include('backend.partials.pill', ['text' => ucfirst($cat), 'tone' => ['necessary' => '', 'analytics' => 'info', 'marketing' => 'warn'][$cat]])</td>
+                <td class="wrap">{{ $purpose }}</td><td>{{ $lasts }}</td><td class="num">{{ number_format($yes) }} <span class="help">{{ $all ? round(100 * $yes / $all) : 0 }}%</span></td></tr>
+        @endforeach</tbody>
+    </table></div></div>
+
     <div class="panel">
         <form method="get" class="panel-head" style="flex-wrap:wrap;gap:10px">
             <h2>Choices</h2>
@@ -27,14 +37,14 @@
             <input name="q" value="{{ $f['q'] ?? '' }}" placeholder="Account, name, IP or visitor id" aria-label="Search" style="margin-left:auto;min-width:240px"><button class="btn sm">Search</button>
         </form>
         <div class="table-wrap"><table class="table">
-            <thead><tr><th>When</th><th>Who</th><th>Choice</th><th>Analytics</th><th>Marketing</th><th>Page</th><th>IP</th><th>Visitor</th></tr></thead>
+            <thead><tr><th>When</th><th>Who</th><th>Choice</th><th>Cookies Allowed</th><th>Page</th><th>IP</th><th>Visitor</th></tr></thead>
             <tbody>@forelse ($consents as $k)
                 <tr><td class="nowrap">{{ $k->created_at->format('n/j/Y g:i A') }}</td>
                     <td>@if ($k->customer)@include('backend.partials.account-link', ['c' => $k->customer])<br><span class="help">{{ $k->customer->name }}</span>@elseif ($k->user){{ $k->user->name }}<br><span class="help">Employee</span>@else<span class="muted">Anonymous</span>@endif</td>
                     <td>@include('backend.partials.pill', ['text' => $k->label(), 'tone' => ['all' => 'ok', 'necessary' => 'warn', 'custom' => 'info'][$k->choice] ?? ''])</td>
-                    <td>{{ $k->analytics ? 'Yes' : 'No' }}</td><td>{{ $k->marketing ? 'Yes' : 'No' }}</td>
+                    <td class="wrap" style="min-width:220px"><span class="cookie-list">@foreach ($k->cookies() as $ck)<span class="mono cookie-{{ \App\Models\CookieConsent::COOKIES[$ck][0] }}">{{ $ck }}</span>@endforeach</span></td>
                     <td class="mono">{{ $k->page ?? '—' }}</td><td class="mono">{{ $k->ip }}</td><td class="mono help">{{ \Illuminate\Support\Str::limit($k->visitor, 10, '…') }}</td></tr>
-            @empty <tr><td colspan="8" class="empty">No choices yet.</td></tr> @endforelse</tbody>
+            @empty <tr><td colspan="7" class="empty">No choices yet.</td></tr> @endforelse</tbody>
         </table></div>
         @include('backend.partials.pager', ['p' => $consents])
     </div>

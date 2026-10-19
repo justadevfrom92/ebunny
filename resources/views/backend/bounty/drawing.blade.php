@@ -9,7 +9,7 @@
 
     <div class="grid-3 stat-row">
         <div class="stat"><span>Entries in {{ $month->format('F') }}</span><strong>{{ number_format($entries->count()) }}</strong><small>from {{ $people }} {{ Str::plural('customer', $people) }}</small></div>
-        <div class="stat"><span>Winner</span><strong style="font-size:1.1rem">{{ $winner ? 'Account '.$winner->cells[2] : ($current ? 'Not drawn yet' : 'None drawn') }}</strong>@if ($winner)<small>{{ $winner->cells[1] }} · drawn {{ $winner->cells[3] ?? '' }}</small>@endif</div>
+        <div class="stat"><span>Winner</span><strong style="font-size:1.1rem">@if ($winner)Account @include('backend.partials.account-link', ['c' => $winners[$winner->cells[2]] ?? null])@else{{ $current ? 'Not drawn yet' : 'None drawn' }}@endif</strong>@if ($winner)<small>{{ $winner->cells[1] }} · drawn {{ $winner->cells[3] ?? '' }}</small>@endif</div>
         <div class="stat"><span>Entries Close</span><strong style="font-size:1.1rem">{{ $month->copy()->endOfMonth()->format('F j, Y') }}</strong></div>
     </div>
 
@@ -21,7 +21,7 @@
         </table></div></div>
         <div class="panel"><div class="panel-head"><h2>Past Winners</h2></div><div class="table-wrap"><table>
             <thead><tr><th>Month</th><th>Prize</th><th>Winner Account</th><th>Drawn On</th></tr></thead>
-            <tbody>@forelse ($past as $r)<tr><td>{{ $r->cells[0] ?? '' }}</td><td>{{ $r->cells[1] ?? '' }}</td><td class="mono">{{ ($r->cells[2] ?? '') ?: '—' }}</td><td>{{ ($r->cells[3] ?? '') ?: '—' }}</td></tr>
+            <tbody>@forelse ($past as $r)<tr><td>{{ $r->cells[0] ?? '' }}</td><td>{{ $r->cells[1] ?? '' }}</td><td>@include('backend.partials.account-link', ['c' => $winners[$r->cells[2] ?? ''] ?? null])</td><td>{{ ($r->cells[3] ?? '') ?: '—' }}</td></tr>
             @empty <tr><td colspan="4" class="empty">None.</td></tr> @endforelse</tbody>
         </table></div></div>
     </div>

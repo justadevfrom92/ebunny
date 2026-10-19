@@ -123,6 +123,20 @@ class Customer extends Authenticatable
         return $this->hasMany(StarEntry::class)->latest()->latest('id');
     }
 
+    /**
+     * Star history, newest first: stars earned and spent, plus monthly drawing entries (no stars;
+     * the drawing is a free offer). Each row: at, reason, stars (null for an entry), drawing (bool).
+     */
+    public function starHistory(?int $limit = null): Collection
+    {
+        $stars = $this->starEntries()->when($limit, fn ($q) => $q->limit($limit))->get()
+            ->map(fn ($s) => (object) ['at' => $s->created_at, 'reason' => $s->reason, 'stars' => $s->stars, 'drawing' => false]);
+        $entries = HistoryItem::where('customer_id', $this->id)->where('model', 'ItemDrawingEntry_model')->latest()->when($limit, fn ($q) => $q->limit($limit))->get()
+            ->map(fn ($h) => (object) ['at' => $h->created_at, 'reason' => 'Monthly drawing entry — '.$h->created_at->format('F Y'), 'stars' => null, 'drawing' => true]);
+
+        return $stars->concat($entries)->sortByDesc(fn ($r) => $r->at->timestamp)->values()->when($limit, fn ($c) => $c->take($limit));
+    }
+
     public function apiLogs(): HasMany
     {
         return $this->hasMany(ApiLog::class)->latest('created_at');

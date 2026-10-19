@@ -132,7 +132,9 @@ class RewardsController extends Controller
 
         return view('backend.bounty.members', ['q' => $q, 'member' => $member,
             'results' => $q !== '' ? Customer::where('account', $q)->orWhere('name', 'like', '%'.addcslashes($q, '%_\\').'%')->orWhere('email', $q)->limit(25)->get() : collect(),
-            'history' => $member ? $member->starEntries()->latest()->limit(50)->get() : collect()]);
+            'history' => $member ? $member->starHistory(50) : collect(),
+            // Top members by stars, shown when nobody is picked yet
+            'top' => $q === '' && ! $member ? Customer::where('stars', '>', 0)->orderByDesc('stars')->limit(25)->get() : collect()]);
     }
 
     public function adjust(Request $request, Customer $customer): RedirectResponse
@@ -158,13 +160,15 @@ class RewardsController extends Controller
     {
         $month = preg_match('/^\d{4}-\d{2}$/', (string) $request->query('month')) ? Carbon::parse($request->query('month').'-01') : now()->startOfMonth();
         $entries = self::entries($month)->with('customer')->latest('created_at')->get();
+        $past = ReferenceRow::where('table_key', 'monthly-drawing')->orderByDesc('position')->get();
 
         return view('backend.bounty.drawing', ['month' => $month,
+            'winners' => Customer::whereIn('account', $past->pluck('cells.2')->filter())->get()->keyBy('account'),
             'entries' => $entries,
             'people' => $entries->pluck('customer_id')->unique()->count(),
             'months' => collect(range(0, 5))->map(fn ($i) => now()->startOfMonth()->subMonths($i)),
             'winner' => self::winnerRow($month),
-            'past' => ReferenceRow::where('table_key', 'monthly-drawing')->orderByDesc('position')->get()]);
+            'past' => $past]);
     }
 
     /** Draw a Winner: its own page for this month's drawing. */

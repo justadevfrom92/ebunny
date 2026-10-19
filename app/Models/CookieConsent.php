@@ -14,6 +14,25 @@ class CookieConsent extends Model
     /** Bump when the cookie policy changes: everyone is asked again. */
     public const POLICY_VERSION = '2026-10';
 
+    /** The website's cookies by category: name => [category, purpose, lasts]. Necessary ones are always on. */
+    public const COOKIES = [
+        'site_session' => ['necessary', 'Keeps you signed in and your cart between pages', 'Session'],
+        'XSRF-TOKEN' => ['necessary', 'Protects forms from cross-site requests', 'Session'],
+        'cookie_consent' => ['necessary', 'Remembers this cookie choice', '1 year'],
+        '_ga' => ['analytics', 'Google Analytics: tells visits apart', '2 years'],
+        '_ga_ID' => ['analytics', 'Google Analytics: keeps the visit going', '2 years'],
+        '_clck' => ['analytics', 'Clarity: heat maps of clicks on pages', '1 year'],
+        '_fbp' => ['marketing', 'Meta: measures ads that brought you here', '3 months'],
+        '_gcl_au' => ['marketing', 'Google Ads: measures ad conversions', '3 months'],
+        'li_fat_id' => ['marketing', 'LinkedIn: measures business ads', '1 month'],
+    ];
+
+    /** The cookies this choice allows. */
+    public function cookies(): array
+    {
+        return array_keys(array_filter(self::COOKIES, fn ($c) => $c[0] === 'necessary' || ($c[0] === 'analytics' && $this->analytics) || ($c[0] === 'marketing' && $this->marketing)));
+    }
+
     protected $guarded = ['id'];
 
     protected function casts(): array

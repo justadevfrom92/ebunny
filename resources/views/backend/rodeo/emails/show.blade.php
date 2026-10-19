@@ -6,7 +6,7 @@
     @php $c = $email->customer; @endphp
     @include('backend.partials.page-head', ['title' => $email->template,
         'sub' => 'Email <span class="mono">'.$email->id.'</span>'.($c ? ' to <span class="mono">'.e($c->account).'</span> · '.e($c->name).' · '.e($c->email) : ''),
-        'actions' => ($c ? '<a class="btn ghost" href="'.route('rodeo.emails.sent', ['account' => $c->account]).'">All Emails to This Account</a>' : '').($template ? '<a class="btn ghost" href="'.route('rodeo.templates.edit', $template).'">Template</a>' : '')])
+        'actions' => ($c ? '<a class="btn ghost" href="'.route('rodeo.emails.sent', ['account' => $c->account]).'">All Emails to This Account</a>' : '').($template ? '<a class="btn ghost" href="'.route('rodeo.templates.edit', $template).'">Template</a><a class="btn ghost" href="'.route('rodeo.templates.heatmap', $template).'">Click Heat Map</a>' : '')])
 
     @if ($suppression)<div class="flash bad" role="status" style="margin-bottom:16px">{{ $suppression->email }} is on the suppression list ({{ \App\Models\EmailSuppression::REASONS[$suppression->reason] ?? $suppression->reason }}, {{ $suppression->created_at->format('n/j/Y') }}). No more emails go to it.</div>@endif
 

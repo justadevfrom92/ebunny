@@ -4,7 +4,7 @@
 
 @section('content')
     @include('backend.partials.page-head', ['title' => $template->exists ? $template->name : 'New Template', 'sub' => 'Fill-ins: <span class="mono">&#123;&#123;first_name&#125;&#125;</span> <span class="mono">&#123;&#123;account&#125;&#125;</span> <span class="mono">&#123;&#123;balance&#125;&#125;</span> <span class="mono">&#123;&#123;plan&#125;&#125;</span> and <span class="mono">&#123;&#123;survey:slug&#125;&#125;</span> for a survey link.',
-        'actions' => $template->exists ? '<a class="btn cyan" href="'.route('rodeo.templates.test', $template).'">Send Test</a>' : null])
+        'actions' => $template->exists ? '<a class="btn ghost" href="'.route('rodeo.templates.heatmap', $template).'">Click Heat Map</a><a class="btn cyan" href="'.route('rodeo.templates.test', $template).'">Send Test</a>' : null])
     <div class="grid-2">
         <form method="post" action="{{ $template->exists ? route('rodeo.templates.update', $template) : route('rodeo.templates.store') }}" class="panel">@csrf @if ($template->exists) @method('put') @endif
             <div class="panel-body form-grid" style="grid-template-columns:1fr">
