@@ -19,7 +19,7 @@
             <div class="panel"><div class="panel-head"><h2>Payments</h2><span class="muted">${{ number_format($total, 2) }} successful</span></div><div class="table-wrap"><table>
                 <thead><tr><th>Date</th><th>Account</th><th class="num">Amount</th><th>Method</th><th>Source</th><th>Kind</th><th>Status</th><th></th></tr></thead>
                 <tbody>@forelse ($payments as $p)
-                    <tr><td>{{ $p->paid_on?->format('n/j/Y') }}</td><td>{{ $p->customer?->account }}<br><span class="help">{{ $p->customer?->name }}</span></td>
+                    <tr><td>{{ $p->paid_on?->format('n/j/Y') }}</td><td>@include('backend.partials.account-link', ['c' => $p->customer])<br><span class="help">{{ $p->customer?->name }}</span></td>
                         <td class="num">${{ number_format($p->amount, 2) }}</td><td>{{ $p->method }}</td><td>{{ $p->source }}</td><td>{{ $p->kind }}</td>
                         <td>@include('backend.partials.pill', ['text' => $p->status, 'tone' => ['Success' => 'ok', 'Pending' => 'info', 'Reversed' => 'warn'][$p->status] ?? 'bad'])</td>
                         <td>@if ($p->status === 'Success')@can('refunds')<form method="post" action="{{ route('caboose.payments.reverse', $p) }}" class="inline" data-confirm="Reverse this payment?|${{ number_format($p->amount, 2) }} goes back on account {{ $p->customer?->account }}.|Reverse">@csrf<button class="btn sm ghost">Reverse</button></form>@endcan @endif</td></tr>

@@ -32,7 +32,9 @@
                 <dt>Topic</dt><dd>{{ $m->topicLabel() }}</dd>
                 <dt>IP</dt><dd class="mono">{{ $m->ip ?: '—' }}</dd>
                 @if ($m->handled_at)<dt>Handled</dt><dd>{{ $m->handled_at->format('n/j/Y g:i A') }}<br><span class="help">{{ $m->handler?->name }}</span></dd>@endif
-            </dl></div></div>
+            </dl></div>
+                <div class="panel-body" style="border-top:1px solid var(--line)"><h3>Resolution</h3>@include('backend.corral._resolution', ['type' => 'message', 'id' => $m->id, 'value' => $m->resolution, 'by' => $m->resolvedBy?->name, 'at' => $m->resolved_at])</div>
+            </div>
             <div class="panel"><div class="panel-head"><h2>Account</h2></div><div class="panel-body">
                 @if ($c)
                     <dl class="kv"><dt>Account</dt><dd><a href="{{ route('corral.customers.show', $c) }}" class="mono">{{ $c->account }}</a></dd><dt>Name</dt><dd>{{ $c->name }}</dd>

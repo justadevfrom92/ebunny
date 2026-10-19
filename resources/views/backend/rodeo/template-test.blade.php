@@ -84,7 +84,7 @@
                     </div>
                     <div class="tt-pane" data-pane-for="bookmarks" hidden>
                         @if ($bookmarks->isEmpty())<p class="muted" style="margin:0">You have no bookmarked accounts with an email address. Bookmark accounts in Corral to test with them here.</p>
-                        @else<p style="margin:0 0 6px">Your Corral bookmarks with an email address:</p><ul class="tt-recips">@foreach ($bookmarks as $b)<li>{{ $b->name }} <span class="mono muted">{{ $b->account }}</span> · {{ $b->email }}</li>@endforeach</ul>@endif
+                        @else<p style="margin:0 0 6px">Your Corral bookmarks with an email address:</p><ul class="tt-recips">@foreach ($bookmarks as $b)<li>{{ $b->name }} @include('backend.partials.account-link', ['c' => $b]) · {{ $b->email }}</li>@endforeach</ul>@endif
                     </div>
                     <div class="tt-pane form-grid" data-pane-for="team" hidden>
                         <label for="t-role">Team</label><select id="t-role" name="role_id">@foreach ($roles as $role)<option value="{{ $role->id }}" @selected(old('role_id') == $role->id)>{{ $role->name }} ({{ $role->users_count }} {{ Str::plural('person', $role->users_count) }})</option>@endforeach</select>

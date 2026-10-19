@@ -19,7 +19,9 @@
             @if ($c->user)<dt>Tested by</dt><dd>{{ $c->user->name }}</dd>@endif
             <dt>Tokens</dt><dd>{{ number_format($c->input_tokens) }} in · {{ number_format($c->output_tokens) }} out</dd>
             <dt>Last message</dt><dd>{{ $c->last_message_at?->format('n/j/Y g:i A') ?? '—' }}</dd>
-        </dl></div></div>
+        </dl></div>
+            <div class="panel-body" style="border-top:1px solid var(--line)"><h3>Resolution</h3>@include('backend.corral._resolution', ['type' => 'chat', 'id' => $c->id, 'value' => $c->resolution, 'by' => $c->resolvedBy?->name, 'at' => $c->resolved_at])</div>
+        </div>
         <div class="panel">
             @include('backend.deputy._live')
             @if ($c->isLive())

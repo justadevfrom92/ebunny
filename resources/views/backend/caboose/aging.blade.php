@@ -9,7 +9,7 @@
     <div class="panel"><div class="table-wrap"><table>
         <thead><tr><th>Account</th><th>Customer</th><th>Status</th><th>Market</th><th class="num">Balance</th><th>Due</th><th class="num">Days Past Due</th><th>Aging</th></tr></thead>
         <tbody>@forelse ($accounts as $c)
-            <tr><td>{{ $c->account }}</td><td>{{ $c->name }}</td><td>{{ $c->status }}</td><td>{{ $c->market?->name }}</td><td class="num">${{ number_format($c->balance, 2) }}</td>
+            <tr><td>@include('backend.partials.account-link', ['c' => $c])</td><td>{{ $c->name }}</td><td>{{ $c->status }}</td><td>{{ $c->market?->name }}</td><td class="num">${{ number_format($c->balance, 2) }}</td>
                 <td>{{ $c->due_date?->format('n/j/Y') ?? '—' }}</td><td class="num">{{ $c->days_past_due }}</td><td>@include('backend.partials.pill', ['text' => $bucket($c->days_past_due), 'tone' => $c->days_past_due > 60 ? 'bad' : ($c->days_past_due > 0 ? 'warn' : 'ok')])</td></tr>
         @empty <tr><td colspan="8" class="empty">No open balances.</td></tr> @endforelse</tbody>
     </table></div></div>

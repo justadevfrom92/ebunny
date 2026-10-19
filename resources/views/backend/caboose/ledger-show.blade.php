@@ -26,7 +26,7 @@
 
         <div class="panel"><div class="panel-head"><h2>Account</h2></div><div class="panel-body"><dl class="kv">
             @if ($c)
-                <dt>Account</dt><dd class="mono">{{ $c->account }}</dd>
+                <dt>Account</dt><dd>@include('backend.partials.account-link', ['c' => $c])</dd>
                 <dt>Name</dt><dd>{{ $c->name }}</dd>
                 <dt>Status</dt><dd>{{ $c->status }}</dd>
                 <dt>Balance Now</dt><dd>{{ $c->balance < 0 ? '-' : '' }}${{ number_format(abs($c->balance), 2) }}{{ $c->balance < 0 ? ' (credit)' : '' }}</dd>

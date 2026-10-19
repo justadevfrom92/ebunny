@@ -49,7 +49,7 @@
             <thead><tr><th>Account</th><th>Status</th>@if ($campaign->channel === 'Email')<th>Opened</th><th>Clicked</th>@endif<th>Result</th></tr></thead>
             <tbody>@foreach ($recipients as $m)
                 <tr>
-                    <td>@if ($m->customer)<span class="mono">{{ $m->customer->account }}</span><br><span class="help">{{ $m->customer->name }}</span>@endif</td>
+                    <td>@if ($m->customer)@include('backend.partials.account-link', ['c' => $m->customer])<br><span class="help">{{ $m->customer->name }}</span>@endif</td>
                     <td>{{ ucfirst($m->dropped_at ? 'bounced' : $m->status) }}</td>
                     @if ($campaign->channel === 'Email')<td>{{ $m->opened_at?->format('n/j g:i A') ?? '—' }}</td><td>{{ $m->clicked_at?->format('n/j g:i A') ?? '—' }}</td>@endif
                     <td>@if ($convertedIds->has($m->customer_id))@include('backend.partials.pill', ['text' => 'Converted', 'tone' => 'ok'])@else<span class="muted">—</span>@endif</td></tr>

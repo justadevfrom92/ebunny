@@ -48,6 +48,11 @@ class Customer extends Authenticatable
         return $this->hasMany(Payment::class)->latest('paid_on');
     }
 
+    public function ledgerEntries(): HasMany
+    {
+        return $this->hasMany(LedgerEntry::class)->latest();
+    }
+
     public function bills(): HasMany
     {
         return $this->hasMany(Bill::class)->latest('billed_on');

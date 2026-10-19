@@ -15,7 +15,7 @@ class AiConversation extends Model
 
     protected function casts(): array
     {
-        return ['started_at' => 'datetime', 'last_message_at' => 'datetime'];
+        return ['resolved_at' => 'datetime', 'started_at' => 'datetime', 'last_message_at' => 'datetime'];
     }
 
     public function agent(): BelongsTo
@@ -69,5 +69,10 @@ class AiConversation extends Model
     {
         return collect(preg_split("/\r?\n/", $this->transcript, -1, PREG_SPLIT_NO_EMPTY))
             ->map(fn ($l) => str_contains($l, ':') ? array_map('trim', explode(':', $l, 2)) : ['', trim($l)])->all();
+    }
+
+    public function resolvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'resolved_by');
     }
 }

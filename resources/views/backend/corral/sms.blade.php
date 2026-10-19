@@ -2,7 +2,7 @@
 
 @section('content')
     @include('backend.partials.page-head', ['title' => 'SMS', 'sub' => 'Recent text messages to and from customers. '.($waiting->count() ? '<b>'.$waiting->count().'</b> '.Str::plural('customer', $waiting->count()).' waiting on a reply.' : 'Nobody is waiting on a reply.'),
-        'actions' => '<a class="btn cyan" href="'.route('corral.sms.create').'">Send a Text</a>'])
+        'actions' => '<a class="btn ghost" href="'.route('corral.contacts.create', array_filter(['account' => $f['account'] ?? null, 'channel' => 'sms'])).'">New Contact</a><a class="btn cyan" href="'.route('corral.sms.create').'">Send a Text</a>'])
 
     @unless ($ready)
         <div class="alert info" style="margin-bottom:16px"><b>Texts are logged, not sent.</b> Add the Twilio settings to .env (see Sheriff → APIs) to send texts.</div>
@@ -24,15 +24,16 @@
         <div class="search-main">
             <div class="panel"><div class="panel-head"><h2>Recent Messages</h2><span class="muted">{{ number_format($messages->total()) }}</span></div>
                 <div class="table-wrap"><table>
-                    <thead><tr><th>Sent</th><th>Account</th><th>Message</th><th>Status</th></tr></thead>
+                    <thead><tr><th>Sent</th><th>Account</th><th>Message</th><th>Status</th><th>Resolution</th></tr></thead>
                     <tbody>@forelse ($messages as $m)
                         <tr @class(['click', 'row-alert' => $m->direction === 'in' && $waiting->contains($m->customer_id)]) data-href="{{ route('corral.sms.show', $m) }}">
                             <td class="nowrap"><a href="{{ route('corral.sms.show', $m) }}">{{ $m->created_at->format('n/j/Y g:i A') }}</a><br><span class="help">{{ $m->direction === 'in' ? 'From customer' : 'To customer' }}</span></td>
                             <td>@if ($m->customer)<a href="{{ route('corral.customers.show', $m->customer) }}">{{ $m->customer->account }}</a><br><span class="help">{{ $m->customer->name }}</span><br>@endif<span class="help mono">{{ $m->phone ?? $m->customer?->phone }}</span></td>
                             <td class="wrap">{{ $m->body }}</td>
                             <td>{{ $m->status }}@if ($m->direction !== 'in')<br><span class="help">by {{ $m->user?->name ?? 'System' }}</span>@endif</td>
+                            <td>@include('backend.partials.resolution-pill', ['value' => $m->resolution])</td>
                             </tr>
-                    @empty <tr><td colspan="4" class="empty">No messages match.</td></tr> @endforelse</tbody>
+                    @empty <tr><td colspan="5" class="empty">No messages match.</td></tr> @endforelse</tbody>
                 </table></div>
                 @include('backend.partials.pager', ['p' => $messages])
             </div>

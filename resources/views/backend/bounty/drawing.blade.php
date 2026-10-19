@@ -16,7 +16,7 @@
     <div class="stack">
         <div class="panel"><div class="panel-head"><h2>Entries for {{ $month->format('F Y') }}</h2><span class="muted">{{ $entries->count() }}</span></div><div class="table-wrap"><table>
             <thead><tr><th>Entered</th><th>Account</th><th>Name</th></tr></thead>
-            <tbody>@forelse ($entries as $e)<tr><td class="nowrap">{{ $e->created_at->format('n/j/Y g:i A') }}</td><td class="mono">{{ $e->customer?->account }}</td><td>{{ $e->customer?->name }}</td></tr>
+            <tbody>@forelse ($entries as $e)<tr><td class="nowrap">{{ $e->created_at->format('n/j/Y g:i A') }}</td><td>@include('backend.partials.account-link', ['c' => $e->customer])</td><td>{{ $e->customer?->name }}</td></tr>
             @empty <tr><td colspan="3" class="empty">No entries in {{ $month->format('F Y') }}.</td></tr> @endforelse</tbody>
         </table></div></div>
         <div class="panel"><div class="panel-head"><h2>Past Winners</h2></div><div class="table-wrap"><table>

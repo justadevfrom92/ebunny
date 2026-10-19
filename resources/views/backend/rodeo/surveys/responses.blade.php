@@ -28,7 +28,7 @@
                 <tr class="click" data-href="{{ route('rodeo.surveys.responses.show', $r) }}">
                     <td class="nowrap">{{ $r->created_at->format('n/j/Y g:i A') }}</td>
                     <td>{{ $r->survey->title }}</td>
-                    <td>@if ($r->customer){{ $r->customer->name }}<div class="mono help">{{ $r->customer->account }}</div>@else<span class="muted">Anonymous</span>@endif</td>
+                    <td>@if ($r->customer){{ $r->customer->name }}<div class="help">@include('backend.partials.account-link', ['c' => $r->customer])</div>@else<span class="muted">Anonymous</span>@endif</td>
                     <td class="num">@if ($n !== null)<span class="sv-band {{ $n >= 9 ? 'pro' : ($n >= 7 ? 'pas' : 'det') }}">{{ $n }}</span>@else — @endif</td>
                     <td class="wrap">{{ $c ? Str::limit($c, 90) : '' }}</td>
                     <td>{{ \App\Models\SurveyResponse::SOURCES[$r->source] ?? '—' }}</td>

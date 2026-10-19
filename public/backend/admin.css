@@ -681,3 +681,9 @@ tr.row-new td { background: var(--info-bg); }
 .field .pick-list label { text-transform: none; letter-spacing: 0; font-size: .9rem; color: var(--ink); font-weight: 400; }
 .pick-list td { padding: 6px 10px; }
 .tl-day .bar .warn { background: var(--warn); display: block; }
+
+/* Phone number with call and text icons */
+.phone-actions { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.phone-ico { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); color: var(--cyan); background: #fff; }
+.phone-ico:hover { background: var(--info-bg); border-color: var(--cyan); text-decoration: none; }
+.resolution-form .chips { margin-top: 6px; }

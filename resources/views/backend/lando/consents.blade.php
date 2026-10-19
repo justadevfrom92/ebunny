@@ -30,7 +30,7 @@
             <thead><tr><th>When</th><th>Who</th><th>Choice</th><th>Analytics</th><th>Marketing</th><th>Page</th><th>IP</th><th>Visitor</th></tr></thead>
             <tbody>@forelse ($consents as $k)
                 <tr><td class="nowrap">{{ $k->created_at->format('n/j/Y g:i A') }}</td>
-                    <td>@if ($k->customer)<span class="mono">{{ $k->customer->account }}</span><br><span class="help">{{ $k->customer->name }}</span>@elseif ($k->user){{ $k->user->name }}<br><span class="help">Employee</span>@else<span class="muted">Anonymous</span>@endif</td>
+                    <td>@if ($k->customer)@include('backend.partials.account-link', ['c' => $k->customer])<br><span class="help">{{ $k->customer->name }}</span>@elseif ($k->user){{ $k->user->name }}<br><span class="help">Employee</span>@else<span class="muted">Anonymous</span>@endif</td>
                     <td>@include('backend.partials.pill', ['text' => $k->label(), 'tone' => ['all' => 'ok', 'necessary' => 'warn', 'custom' => 'info'][$k->choice] ?? ''])</td>
                     <td>{{ $k->analytics ? 'Yes' : 'No' }}</td><td>{{ $k->marketing ? 'Yes' : 'No' }}</td>
                     <td class="mono">{{ $k->page ?? '—' }}</td><td class="mono">{{ $k->ip }}</td><td class="mono help">{{ \Illuminate\Support\Str::limit($k->visitor, 10, '…') }}</td></tr>

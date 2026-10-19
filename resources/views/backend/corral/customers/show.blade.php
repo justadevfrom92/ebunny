@@ -30,7 +30,7 @@
 
     {{-- Flags · Balances · Actions --}}
     <div class="grid-3" id="actions">
-        <div class="panel" id="flags"><div class="panel-head"><h2>Flags</h2></div><div class="panel-body">
+        <div class="panel" id="flags"><div class="panel-head"><h2>Flags</h2><a class="btn sm ghost" href="{{ route('corral.customers.panel-log', [$c, 'flags']) }}">Log</a></div><div class="panel-body">
             @forelse ($c->flags as $f)
                 <div class="row-line"><span><b>{{ $f->flag }}</b><br><span class="help">{{ $f->created_at->format('Y-m-d H:i:s') }} · {{ $f->author ?? 'System' }}</span></span>
                     <form method="post" action="{{ route('corral.flags.remove', $f) }}" class="inline">@csrf @method('delete')<button class="link-btn">[ remove ]</button></form></div>
@@ -41,7 +41,7 @@
             </form>
         </div></div>
 
-        <div class="panel" id="balances"><div class="panel-head"><h2>Balances</h2></div><div class="panel-body">
+        <div class="panel" id="balances"><div class="panel-head"><h2>Balances</h2><a class="btn sm ghost" href="{{ route('corral.customers.panel-log', [$c, 'balances']) }}">Log</a></div><div class="panel-body">
             <dl class="kv"><dt>Current Balance</dt><dd><b>{{ $money($c->balance) }}</b></dd><dt>Due Date</dt><dd>{{ $c->due_date?->format('n/j/Y') ?? '—' }}</dd></dl>
             <div class="actions" style="margin:12px 0">
                 <a class="btn sm" href="{{ route('corral.customers.action', [$c, 'make-payment']) }}">Make Payment</a>
@@ -54,9 +54,14 @@
                         <form method="post" action="{{ route('corral.ledger.delete', $e) }}" class="inline" data-confirm="Delete this pending {{ $kind }}?|{{ $money($e->amount) }} — {{ $e->description }}|Delete">@csrf @method('delete')<button class="link-btn">[ delete ]</button></form></div>
                 @empty <p class="help">None</p> @endforelse
             @endforeach
+            @php $recentBalance = \App\Http\Controllers\Backend\Corral\PanelLogController::balanceRows($c)->take(10); @endphp
+            <h3 style="margin-top:12px">Last 10</h3>
+            @forelse ($recentBalance as $r)
+                <div class="row-line"><span>{{ $r['type'] }} {{ $money($r['amount']) }}<br><span class="help">{{ $r['at']?->format('n/j/Y') }} · {{ $r['status'] }}</span></span></div>
+            @empty <p class="help">No credits, debits or payments yet.</p> @endforelse
         </div></div>
 
-        <div class="panel"><div class="panel-head"><h2>Actions</h2></div><div class="panel-body" style="display:flex;flex-direction:column;gap:14px">
+        <div class="panel"><div class="panel-head"><h2>Actions</h2><a class="btn sm ghost" href="{{ route('corral.customers.panel-log', [$c, 'actions']) }}">Log</a></div><div class="panel-body" style="display:flex;flex-direction:column;gap:14px">
             @foreach (['status' => '-- Status --', 'service' => '-- Customer Service --'] as $group => $placeholder)
                 <form method="get" class="form-row" data-action-form="{{ route('corral.customers.action', [$c, '__action__']) }}">
                     <select required aria-label="{{ $group === 'status' ? 'Status action' : 'Customer service action' }}"><option value="">{{ $placeholder }}</option>
@@ -67,6 +72,10 @@
                     <button class="btn sm">Go</button>
                 </form>
             @endforeach
+            <div><h3>Last 10</h3>
+                @forelse (\App\Http\Controllers\Backend\Corral\PanelLogController::actionNotes($c)->limit(10)->get() as $n)
+                    <div class="row-line"><span><b>{{ $n->action }}</b><br><span class="help">{{ $n->created_at->format('n/j/Y g:i A') }} · {{ $n->author ?? 'System' }}</span></span></div>
+                @empty <p class="help">No actions run yet.</p> @endforelse</div>
         </div></div>
     </div>
 
@@ -79,7 +88,7 @@
                 <dt>First Name</dt><dd>{{ $c->first_name }}</dd>
                 <dt>Last Name</dt><dd>{{ $c->last_name }}</dd>
                 <dt>Email</dt><dd>{{ $c->email }}</dd>
-                <dt>Phone</dt><dd>{{ $c->phone }}</dd>
+                <dt>Phone</dt><dd>@include('backend.partials.phone-actions', ['phone' => $c->phone, 'c' => $c])</dd>
                 <dt>Phone type</dt><dd>{{ $c->phone_type ?? '—' }}</dd>
                 <dt>SSN</dt><dd class="mono">{{ $c->ssn_last4 ? '***-**-'.$c->ssn_last4 : '—' }}</dd>
                 <dt>TEC Score</dt><dd>{{ $c->tec_score ?? '—' }}</dd>
@@ -208,22 +217,22 @@
 
     {{-- Phone calls and text messages with this customer --}}
     <div class="grid-2" id="calls" style="align-items:start">
-        <div class="panel"><div class="panel-head"><h2>Phone Calls ({{ $calls->count() }})</h2><a class="btn sm ghost" href="{{ route('corral.calls', ['account' => $c->account]) }}">All Calls</a></div>
+        <div class="panel"><div class="panel-head"><h2>Phone Calls ({{ $calls->count() }})</h2><span class="actions"><a class="btn sm ghost" href="{{ route('corral.calls', ['account' => $c->account]) }}">All Calls</a><a class="btn sm cyan" href="{{ route('corral.contacts.create', ['account' => $c->account]) }}">New Contact</a></span></div>
             <div class="table-wrap"><table>
-                <thead><tr><th>Called</th><th>Issue</th><th class="num">Duration</th><th>Answered By</th><th>Transcript</th></tr></thead>
+                <thead><tr><th>Called</th><th>Issue</th><th class="num">Duration</th><th>Answered By</th><th>Resolution</th></tr></thead>
                 <tbody>@forelse ($calls->take(10) as $p)
                     <tr class="click" data-href="{{ route('corral.calls.transcript', $p) }}"><td class="nowrap"><a href="{{ route('corral.calls.transcript', $p) }}">{{ $p->started_at->format('n/j/Y g:i A') }}</a><br><span class="help">{{ ucfirst($p->direction) }}</span></td><td>{{ $p->disposition ?? '—' }}</td>
                         <td class="num">{{ intdiv($p->duration_sec, 60) }}:{{ str_pad((string) ($p->duration_sec % 60), 2, '0', STR_PAD_LEFT) }}</td>
                         <td>{{ $p->user?->name ?? '—' }}@if ($p->agent_id)<br><span class="help mono">{{ $p->agent_id }}</span>@endif</td>
-                        <td>@if ($p->transcript)<a href="{{ route('corral.calls.transcript', $p) }}">View</a>@else<span class="muted">None</span>@endif</td></tr>
+                        <td>@include('backend.partials.resolution-pill', ['value' => $p->resolution])</td></tr>
                 @empty <tr><td colspan="5" class="empty">No calls yet.</td></tr> @endforelse</tbody>
             </table></div>
         </div>
         <div class="panel"><div class="panel-head"><h2>Texts ({{ $texts->count() }})</h2><span class="actions"><a class="btn sm ghost" href="{{ route('corral.sms', ['account' => $c->account]) }}">All Texts</a>@if ($c->phone)<a class="btn sm cyan" href="{{ route('corral.sms.create', ['account' => $c->account]) }}">Send a Text</a>@endif</span></div>
             <div class="table-wrap"><table>
-                <thead><tr><th>Sent</th><th>Direction</th><th>Message</th><th>Status</th></tr></thead>
+                <thead><tr><th>Sent</th><th>Direction</th><th>Message</th><th>Resolution</th></tr></thead>
                 <tbody>@forelse ($texts->take(10) as $m)
-                    <tr class="click" data-href="{{ route('corral.sms.show', $m) }}"><td class="nowrap"><a href="{{ route('corral.sms.show', $m) }}">{{ $m->created_at->format('n/j/Y g:i A') }}</a></td><td>{{ $m->direction === 'in' ? 'From customer' : 'To customer' }}</td><td class="wrap">{{ $m->body }}</td><td>{{ $m->status }}</td></tr>
+                    <tr class="click" data-href="{{ route('corral.sms.show', $m) }}"><td class="nowrap"><a href="{{ route('corral.sms.show', $m) }}">{{ $m->created_at->format('n/j/Y g:i A') }}</a></td><td>{{ $m->direction === 'in' ? 'From customer' : 'To customer' }}</td><td class="wrap">{{ $m->body }}</td><td>@include('backend.partials.resolution-pill', ['value' => $m->resolution])</td></tr>
                 @empty <tr><td colspan="4" class="empty">No texts yet.</td></tr> @endforelse</tbody>
             </table></div>
         </div>

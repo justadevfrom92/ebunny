@@ -185,6 +185,7 @@ Route::prefix('admin')->group(function () {
             // Account page sections
             Route::get('customers/{customer}/actions/{action}', [Backend\Corral\AccountController::class, 'actionForm'])->name('customers.action');
             Route::post('customers/{customer}/actions/{action}', [Backend\Corral\AccountController::class, 'runAction'])->name('customers.action.run');
+            Route::get('customers/{customer}/panel-log/{panel}', [Backend\Corral\PanelLogController::class, 'show'])->name('customers.panel-log');
             Route::post('customers/{customer}/flags', [Backend\Corral\AccountController::class, 'addFlag'])->name('customers.flags.add');
             Route::delete('flags/{flag}', [Backend\Corral\AccountController::class, 'removeFlag'])->name('flags.remove');
             Route::post('customers/{customer}/products', [Backend\Corral\AccountController::class, 'addProduct'])->name('customers.products.add');
@@ -239,6 +240,9 @@ Route::prefix('admin')->group(function () {
             Route::get('sms/new', [Backend\Corral\SmsController::class, 'create'])->name('sms.create');
             Route::get('sms/{message}', [Backend\Corral\SmsController::class, 'show'])->whereNumber('message')->name('sms.show');
             Route::get('calls', [Backend\Corral\CallController::class, 'index'])->name('calls');
+            Route::get('contacts/new', [Backend\Corral\ContactController::class, 'create'])->name('contacts.create');
+            Route::post('contacts', [Backend\Corral\ContactController::class, 'store'])->name('contacts.store');
+            Route::post('contacts/{type}/{id}/resolution', [Backend\Corral\ContactController::class, 'resolution'])->whereIn('type', ['call', 'contact', 'message'])->whereNumber('id')->name('contacts.resolution');
             Route::get('calls/{call}/transcript', [Backend\Corral\CallController::class, 'transcript'])->name('calls.transcript');
             Route::post('sms', [Backend\Corral\SmsController::class, 'send'])->middleware('throttle:30,1')->name('sms.send');
             Route::get('ercot', [Backend\Corral\ErcotController::class, 'index'])->name('ercot');
@@ -469,6 +473,7 @@ Route::prefix('admin')->group(function () {
             Route::post('conversations/{conversation}/reply', 'reply')->middleware('throttle:60,1')->name('conversations.reply');
             Route::post('conversations/{conversation}/hand-back', 'handBack')->name('conversations.handback');
             Route::post('conversations/{conversation}/close', 'close')->name('conversations.close');
+            Route::post('conversations/{id}/resolution', 'resolution')->whereNumber('id')->name('conversations.resolution');
             Route::post('conversations/{conversation}/call', 'call')->middleware('throttle:20,1')->name('conversations.call');
             Route::get('agents', 'agents')->name('agents');
             Route::get('agents/new', 'agentForm')->name('agents.create');

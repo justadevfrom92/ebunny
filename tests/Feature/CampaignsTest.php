@@ -23,7 +23,8 @@ class CampaignsTest extends TestCase
 
         $sent = Campaign::where('name', 'Fall Renewal Reminder')->firstOrFail();
         $this->assertGreaterThan(0, $sent->results()['converted']);
-        $this->get(route('rodeo.campaigns.edit', $sent))->assertOk()->assertSee('Recipients')->assertSee('Converted')->assertDontSee('/admin/corral', false);
+        $html = $this->get(route('rodeo.campaigns.edit', $sent))->assertOk()->assertSee('Recipients')->assertSee('Converted')->getContent();
+        $this->assertDoesNotMatchRegularExpression('#/admin/corral/(?!customers/\d+")#', $html);   // only account links go to Corral
     }
 
     public function test_count_save_schedule_duplicate_and_job(): void

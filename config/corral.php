@@ -116,6 +116,12 @@ return [
 
     'priorities' => ['Low', 'Medium', 'High'],
 
+    // How a call, email, text or chat ended: label => pill tone
+    'resolutions' => ['Resolved' => 'ok', 'Incomplete' => 'warn', 'Follow-up Needed' => 'info', 'Escalated' => 'bad', 'No Answer' => ''],
+
+    // Kinds of contact for New Contact (logging a call, email, text or chat that happened)
+    'contact_channels' => ['call' => 'Phone Call', 'email' => 'Email', 'sms' => 'Text', 'chat' => 'Chat'],
+
     // Every queue an account can be moved into (TECH → Move Queues)
     'queues' => [
         'QueueBillComplete',

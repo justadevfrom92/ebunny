@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Backend\Deputy;
 
+use App\Http\Controllers\Backend\Corral\ContactController;
 use App\Http\Controllers\Controller;
 use App\Models\AiAgent;
 use App\Models\AiConversation;
@@ -265,5 +266,11 @@ class DeputyController extends Controller
         $found = $names->contains($model->model_id) || $names->contains($model->model_id.':latest');
 
         return $found ? ['available', 'downloaded and ready on the local server.'] : ['missing', 'not on the local server. Download it there (for Ollama: ollama pull '.$model->model_id.').'];
+    }
+
+    /** Resolved, Incomplete… for a chat or text conversation. */
+    public function resolution(Request $request, int $id): RedirectResponse
+    {
+        return app(ContactController::class)->resolution($request, 'chat', $id);
     }
 }

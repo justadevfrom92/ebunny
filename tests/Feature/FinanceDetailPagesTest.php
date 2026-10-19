@@ -29,7 +29,8 @@ class FinanceDetailPagesTest extends TestCase
         $this->actingAs($this->finance());
         $e = LedgerEntry::where('status', 'pending')->firstOrFail();
         $this->get(route('caboose.ledger'))->assertOk()->assertSee(route('caboose.ledger.show', $e), false)->assertSee('Recently Decided')->assertDontSee('None yet.');
-        $this->get(route('caboose.ledger.show', $e))->assertOk()->assertSee('After Applying')->assertSee('Apply to Balance')->assertSee('Recent Payments')->assertDontSee('/admin/corral', false);
+        $html = $this->get(route('caboose.ledger.show', $e))->assertOk()->assertSee('After Applying')->assertSee('Apply to Balance')->assertSee('Recent Payments')->getContent();
+        $this->assertDoesNotMatchRegularExpression('#/admin/corral/(?!customers/\d+")#', $html);   // only account links go to Corral
 
         $before = $e->customer->balance;
         $this->post(route('caboose.ledger.decide', $e), ['do' => 'apply', 'note' => 'Checked'])->assertRedirect();

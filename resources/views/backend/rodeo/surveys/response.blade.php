@@ -10,7 +10,7 @@
             .'<a class="btn ghost" href="'.route('rodeo.surveys.results', $r->survey).'">Survey Results</a>'])
 
     <div class="stat-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px">
-        <div class="stat"><span>Customer</span><strong style="font-size:1.1rem">{{ $r->customer?->name ?? 'Anonymous' }}</strong><small>@if ($r->customer)<span class="mono">{{ $r->customer->account }}</span> · {{ $r->customer->status }}@else answered without a customer link @endif</small></div>
+        <div class="stat"><span>Customer</span><strong style="font-size:1.1rem">{{ $r->customer?->name ?? 'Anonymous' }}</strong><small>@if ($r->customer)@include('backend.partials.account-link', ['c' => $r->customer]) · {{ $r->customer->status }}@else answered without a customer link @endif</small></div>
         <div class="stat"><span>Plan</span><strong style="font-size:1.1rem">{{ $r->customer?->plan?->name ?? '—' }}</strong><small>{{ $r->customer?->type }}</small></div>
         <div class="stat"><span>Recommend Score</span><strong>@if ($n !== null)<span class="sv-band {{ $n >= 9 ? 'pro' : ($n >= 7 ? 'pas' : 'det') }}">{{ $n }}</span>@else — @endif</strong><small>{{ $n === null ? 'not answered' : ($n >= 9 ? 'Promoter' : ($n >= 7 ? 'Passive' : 'Detractor')) }}</small></div>
         <div class="stat"><span>Answered</span><strong>{{ $r->survey->questions->filter(fn ($q) => $r->answer($q) !== null)->count() }} / {{ $r->survey->questions->count() }}</strong><small>questions</small></div>

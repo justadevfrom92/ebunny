@@ -16,7 +16,7 @@ class ContactMessage extends Model
 
     protected function casts(): array
     {
-        return ['handled_at' => 'datetime', 'replied_at' => 'datetime'];
+        return ['resolved_at' => 'datetime', 'handled_at' => 'datetime', 'replied_at' => 'datetime'];
     }
 
     public const TOPICS = ['general' => 'General question', 'signup' => 'Sign up for service', 'billing' => 'Billing & payments', 'business' => 'Business service', 'rewards' => 'Rewards'];
@@ -56,5 +56,10 @@ class ContactMessage extends Model
     public function scopeOpen(Builder $query): void
     {
         $query->whereNull('handled_at');
+    }
+
+    public function resolvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'resolved_by');
     }
 }

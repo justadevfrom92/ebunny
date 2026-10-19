@@ -3,10 +3,13 @@
 namespace Database\Seeders;
 
 use App\Jobs\RunReport;
+use App\Models\AiConversation;
 use App\Models\ApiLog;
 use App\Models\Bill;
 use App\Models\ContactLog;
+use App\Models\ContactMessage;
 use App\Models\Customer;
+use App\Models\CustomerFlag;
 use App\Models\HistoryItem;
 use App\Models\LedgerEntry;
 use App\Models\Payment;
@@ -39,11 +42,53 @@ class FillTablesSeeder extends Seeder
         $this->apiCalls();
         $this->reportRuns();
         $this->textsAndCalls();
+        $this->actionsAndFlagHistory();
+        $this->resolutions();
         // Paperless sign-up stars for accounts that have none yet (new enrollments)
         foreach (Customer::doesntHave('starEntries')->get() as $c) {
             $c->update(['paperless' => true]);
             StarEntry::create(['customer_id' => $c->id, 'reason' => 'Paperless Signup', 'stars' => 5, 'created_at' => $c->created_at, 'updated_at' => $c->created_at]);
             $c->syncStars();
+        }
+    }
+
+    /** Actions run from the account page (each leaves an Order note) and flags that were added and later removed. */
+    private function actionsAndFlagHistory(): void
+    {
+        $results = ['Credit - Run Credit' => 'Soft credit check passed (sample)', 'Billing - Make Payment' => 'Payment of $84.12 taken on card ending 4242 (sample)',
+            'Billing - Add Bill Credit' => 'Credit of $15.00 added for a billing error', 'Billing - Payment Arrangement' => 'Arrangement set: 3 payments of $62.50',
+            'Contact - Send Email' => 'Sent "Monthly Payment Reminder"', 'Contact - Send Text' => 'Text sent: payment reminder', 'Meter - ReRead' => 'Re-read requested from the TDSP',
+            'MyAccount - Reset Login' => 'Password reset link sent', 'Plan - Change Plan' => 'Plan changed to Simple Monthly', 'Misc - Clear Current Exceptions' => 'Exceptions cleared',
+            'Status - Send to Market' => 'Enrollment sent to ERCOT', 'Billing - Transfer Stars' => '200 stars moved to the new account'];
+        $agents = User::where('active', true)->whereNull('company')->get(['id', 'name'])->all();
+        foreach (Customer::all() as $c) {
+            foreach (range(1, mt_rand(3, 30)) as $k) {
+                $label = array_rand($results);
+                $at = now()->subDays(mt_rand(0, 240))->setTime(mt_rand(8, 18), mt_rand(0, 59));
+                $by = $agents[array_rand($agents)];
+                $c->notes()->create(['user_id' => $by->id, 'author' => $by->name, 'disposition' => $label, 'category' => 'Order', 'action' => $label, 'priority' => 'Low',
+                    'body' => $label.': '.$results[$label], 'created_at' => $at, 'updated_at' => $at]);
+            }
+            foreach (array_slice(config('corral.flags'), mt_rand(0, 4), mt_rand(0, 3)) as $flag) {
+                $at = now()->subDays(mt_rand(20, 200));
+                CustomerFlag::create(['customer_id' => $c->id, 'flag' => $flag, 'author' => $agents[array_rand($agents)]->name, 'removed_at' => $at->copy()->addDays(mt_rand(1, 19)), 'created_at' => $at, 'updated_at' => $at]);
+            }
+        }
+    }
+
+    /** How each call, email, text, chat and website message ended (the newest few are still open). */
+    private function resolutions(): void
+    {
+        $pick = fn () => ['Resolved', 'Resolved', 'Resolved', 'Resolved', 'Incomplete', 'Follow-up Needed', 'Escalated', 'No Answer'][mt_rand(0, 7)];
+        $by = User::where('active', true)->whereNull('company')->pluck('id')->all();
+        foreach ([[Phonecall::query(), 'started_at'], [ContactLog::query(), 'created_at'], [AiConversation::whereIn('status', ['closed', 'bot']), 'started_at'],
+            [ContactMessage::whereNotNull('handled_at'), 'created_at']] as [$q, $col]) {
+            foreach ($q->get() as $r) {
+                if ($r->$col && $r->$col->gt(now()->subDays(2)) && mt_rand(0, 1)) {
+                    continue;   // recent ones left open
+                }
+                $r->forceFill(['resolution' => $pick(), 'resolved_by' => $by[array_rand($by)] ?? null, 'resolved_at' => $r->$col?->copy()->addMinutes(mt_rand(2, 600))])->saveQuietly();
+            }
         }
     }
 

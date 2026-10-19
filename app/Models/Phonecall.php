@@ -17,7 +17,7 @@ class Phonecall extends Model
 
     protected function casts(): array
     {
-        return ['started_at' => 'datetime'];
+        return ['resolved_at' => 'datetime', 'started_at' => 'datetime'];
     }
 
     public function customer(): BelongsTo
@@ -39,5 +39,10 @@ class Phonecall extends Model
     public function historyLabel(): string
     {
         return ucfirst($this->direction).' call '.$this->phone;
+    }
+
+    public function resolvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'resolved_by');
     }
 }

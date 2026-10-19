@@ -15,7 +15,7 @@ class ContactLog extends Model
 
     protected function casts(): array
     {
-        return ['sent_at' => 'datetime', 'dropped_at' => 'datetime', 'opened_at' => 'datetime', 'clicked_at' => 'datetime'];
+        return ['resolved_at' => 'datetime', 'sent_at' => 'datetime', 'dropped_at' => 'datetime', 'opened_at' => 'datetime', 'clicked_at' => 'datetime'];
     }
 
     public function customer(): BelongsTo
@@ -70,5 +70,10 @@ class ContactLog extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function resolvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'resolved_by');
     }
 }
