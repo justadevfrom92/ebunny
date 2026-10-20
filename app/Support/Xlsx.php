@@ -2,10 +2,10 @@
 
 namespace App\Support;
 
-use RuntimeException;
-use ZipArchive;
-
-/** Writes a one-sheet Excel (.xlsx) file: a bold header row, then the data rows. No extra packages needed. */
+/**
+ * Writes a one-sheet Excel (.xlsx) file: a bold header row, then the data rows. No extra packages
+ * and no PHP zip extension needed: the .xlsx (a zip of XML files) is put together here.
+ */
 class Xlsx
 {
     public static function build(array $header, iterable $rows, string $sheet = 'Report'): string
@@ -36,19 +36,26 @@ class Xlsx
             'xl/worksheets/sheet1.xml' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetData>'.$xml.'</sheetData></worksheet>',
         ];
 
-        $tmp = tempnam(sys_get_temp_dir(), 'xlsx');
-        $zip = new ZipArchive;
-        if ($zip->open($tmp, ZipArchive::OVERWRITE) !== true) {
-            throw new RuntimeException('Could not create the spreadsheet.');
-        }
-        foreach ($files as $name => $content) {
-            $zip->addFromString($name, $content);
-        }
-        $zip->close();
-        $data = file_get_contents($tmp);
-        unlink($tmp);
+        return self::zip($files);
+    }
 
-        return $data;
+    /** A zip archive of name => contents (deflated when zlib is there, which it almost always is; stored otherwise). */
+    public static function zip(array $files): string
+    {
+        $out = '';
+        $central = '';
+        [$time, $date] = [0, (2026 - 1980) << 9 | 1 << 5 | 1];   // a fixed timestamp keeps files identical run to run
+        foreach ($files as $name => $content) {
+            $crc = crc32($content);
+            $deflated = function_exists('gzdeflate') ? gzdeflate($content, 6) : false;
+            [$method, $data] = $deflated !== false ? [8, $deflated] : [0, $content];
+            $head = pack('vvvvvVVVvv', 20, 0x0800, $method, $time, $date, $crc, strlen($data), strlen($content), strlen($name), 0);
+            $offset = strlen($out);
+            $out .= "PK\x03\x04".$head.$name.$data;
+            $central .= "PK\x01\x02".pack('vvvvvvVVVvvvvvVV', 20, 20, 0x0800, $method, $time, $date, $crc, strlen($data), strlen($content), strlen($name), 0, 0, 0, 0, 0, $offset).$name;
+        }
+
+        return $out.$central."PK\x05\x06".pack('vvvvVVv', 0, 0, count($files), count($files), strlen($central), strlen($out), 0);
     }
 
     private static function col(int $i): string

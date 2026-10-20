@@ -36,6 +36,22 @@ class Start extends Command
     {
         $this->components->info('Getting '.config('app.name').' ready');
 
+        // 0. PHP extensions: stop early with the fix, rather than failing halfway through seeding
+        $need = ['pdo_sqlite' => 'the SQLite database', 'mbstring' => 'text handling', 'openssl' => 'encryption', 'fileinfo' => 'checking uploaded file types'];
+        $nice = ['zlib' => 'smaller Excel and zip files', 'curl' => 'API connection tests'];
+        $missing = array_filter($need, fn ($why, $ext) => ! extension_loaded($ext), ARRAY_FILTER_USE_BOTH);
+        foreach (array_filter($nice, fn ($why, $ext) => ! extension_loaded($ext), ARRAY_FILTER_USE_BOTH) as $ext => $why) {
+            $this->components->warn("PHP extension \"$ext\" isn't on ($why). Optional: turn it on in ".(php_ini_loaded_file() ?: 'php.ini').' with extension='.$ext);
+        }
+        if ($missing) {
+            foreach ($missing as $ext => $why) {
+                $this->components->error("PHP extension \"$ext\" is needed for $why.");
+            }
+            $this->line('  Turn '.(count($missing) > 1 ? 'them' : 'it').' on in '.(php_ini_loaded_file() ?: 'your php.ini').' by removing the ; in front of: '.implode(', ', array_map(fn ($e) => 'extension='.$e, array_keys($missing))).', then run this again.');
+
+            return self::FAILURE;
+        }
+
         // 1. .env and app key
         if (! File::exists(base_path('.env'))) {
             File::copy(base_path('.env.example'), base_path('.env'));

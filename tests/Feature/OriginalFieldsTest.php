@@ -13,7 +13,6 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
-use ZipArchive;
 
 /** The last pieces from the original: page editor fields, XLS/Backend report outputs, Astro's two Products pages. */
 class OriginalFieldsTest extends TestCase
@@ -92,13 +91,7 @@ class OriginalFieldsTest extends TestCase
                 $this->get("/admin/corral/reports/$report?run=1&start=2020-01-01&format=xlsx&summary=$summary")->assertRedirect();
                 $run = ReportRun::where('report', $report)->latest('id')->firstOrFail();
                 $this->assertSame((bool) $summary, $run->summary);
-                $tmp = tempnam(sys_get_temp_dir(), 'x');
-                file_put_contents($tmp, Storage::disk('local')->get($run->file));
-                $zip = new ZipArchive;
-                $this->assertTrue($zip->open($tmp) === true);
-                $this->assertStringContainsString('<sheetData>', $zip->getFromName('xl/worksheets/sheet1.xml'));
-                $zip->close();
-                unlink($tmp);
+                $this->assertStringContainsString('<sheetData>', $this->unzip(Storage::disk('local')->get($run->file))['xl/worksheets/sheet1.xml'] ?? '');
             }
         }
 
@@ -124,5 +117,20 @@ class OriginalFieldsTest extends TestCase
         $this->put('/admin/astro/modifiers/products', ['p' => [$p->id => ['min_discount' => '0', 'max_discount' => '-0.75']]])->assertRedirect();
         $this->assertEquals(-0.75, (float) $p->fresh()->max_discount);
         $this->put('/admin/astro/modifiers/products', ['p' => [$p->id => ['min_discount' => '-1', 'max_discount' => '0']]])->assertSessionHasErrors('p');
+    }
+
+    /** name => contents of a zip (read by hand, so the test needs no PHP zip extension either). */
+    private function unzip(string $zip): array
+    {
+        $files = [];
+        for ($at = 0; substr($zip, $at, 4) === "PK\x03\x04";) {
+            $h = unpack('vver/vflags/vmethod/vtime/vdate/Vcrc/Vcsize/Vsize/vnlen/vxlen', substr($zip, $at + 4, 26));
+            $name = substr($zip, $at + 30, $h['nlen']);
+            $data = substr($zip, $at + 30 + $h['nlen'] + $h['xlen'], $h['csize']);
+            $files[$name] = $h['method'] === 8 ? gzinflate($data) : $data;
+            $at += 30 + $h['nlen'] + $h['xlen'] + $h['csize'];
+        }
+
+        return $files;
     }
 }
