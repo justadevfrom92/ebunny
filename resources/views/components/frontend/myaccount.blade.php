@@ -3,7 +3,7 @@
 @php
     $cartCount = app(\App\Services\Cart::class)->count();
     $menu = [
-        'Account' => [['Dashboard', route('myaccount.dashboard')], ['Profile & Preferences', route('myaccount.profile')], ['Products & Protections', route('myaccount.products')], ['Message Center', route('myaccount.messages')]],
+        'Account' => [['Dashboard', route('myaccount.dashboard')], ['Profile & Preferences', route('myaccount.profile')], ['Products & Protections', route('myaccount.products')], ['Message Center', route('myaccount.messages')], ['Support Tickets', route('myaccount.support')]],
         'Bills' => [['View Bills', route('myaccount.bills')], ['Pay Bill', route('myaccount.pay')], ['Payment Methods', route('myaccount.methods')]],
         'Plan & Services' => [['Current Plan & Renew', route('myaccount.plan')], ['Transfer Service', route('myaccount.transfer')], ['Energy Insights', route('myaccount.insights')]],
         'Rewards' => [['My Rewards', route('myaccount.rewards')], ['Refer a Friend', route('myaccount.refer')]],

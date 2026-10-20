@@ -889,3 +889,26 @@ fieldset.field { border: 0; padding: 0; }
 /* Fields side by side line up: the "space between stacked fields" rule doesn't apply inside a row */
 .form-2 > .field + .field, .form-3 > .field + .field, .grid-2 > .field + .field, .grid-3 > .field + .field { margin-top: 0; }
 .form-2, .form-3 { align-items: start; }
+
+/* My Account → Support Tickets */
+.sp-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.sp-head p { margin: 0; }
+.sp-topics { display: flex; flex-wrap: wrap; gap: 8px; }
+.sp-topics label { position: relative; margin: 0; text-transform: none; letter-spacing: 0; font-weight: 600; }
+.sp-topics input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.sp-topics span { display: inline-block; padding: 8px 14px; border: 2px solid var(--line); border-radius: 999px; cursor: pointer; color: var(--navy); background: var(--white); }
+.sp-topics input:checked + span { background: var(--navy); color: var(--white); border-color: var(--navy); }
+.sp-topics input:focus-visible + span { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.sp-error { color: #c62828; }
+.sp-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+.sp-meta { color: var(--gray, #5b6b7a); }
+.sp-status { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; background: var(--sky); color: var(--navy); }
+.sp-status.sp-waiting { background: #fff3cd; color: #7a5a00; }
+.sp-status.sp-solved, .sp-status.sp-closed { background: #e3f5e8; color: #1b6b35; }
+.sp-thread { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; }
+.sp-msg { border-radius: var(--radius); padding: 12px 16px; max-width: 90%; line-height: 1.5; overflow-wrap: anywhere; }
+.sp-you { align-self: flex-end; background: var(--sky); }
+.sp-us { align-self: flex-start; background: var(--white); border: 2px solid var(--line); }
+.sp-who { margin-bottom: 4px; }
+.sp-rate { border: 2px solid var(--cyan); border-radius: var(--radius); padding: 16px; margin: 16px 0; background: #f2fbff; }
+@media (max-width: 600px) { .sp-msg { max-width: 100%; } }

@@ -75,6 +75,12 @@ Route::prefix('myaccount')->name('myaccount.')->group(function () {
         Route::post('rewards', [MyAccount\PortalController::class, 'redeem'])->name('rewards.redeem');
         Route::get('refer-a-friend', [MyAccount\PortalController::class, 'refer'])->name('refer');
         Route::get('message-center', [MyAccount\PortalController::class, 'messages'])->name('messages');
+        Route::get('support', [MyAccount\SupportController::class, 'index'])->name('support');
+        Route::get('support/new', [MyAccount\SupportController::class, 'create'])->name('support.create');
+        Route::post('support', [MyAccount\SupportController::class, 'store'])->middleware('throttle:10,1')->name('support.store');
+        Route::get('support/{ticket}', [MyAccount\SupportController::class, 'show'])->whereNumber('ticket')->name('support.show');
+        Route::post('support/{ticket}/reply', [MyAccount\SupportController::class, 'reply'])->whereNumber('ticket')->middleware('throttle:20,1')->name('support.reply');
+        Route::post('support/{ticket}/rate', [MyAccount\SupportController::class, 'rate'])->whereNumber('ticket')->name('support.rate');
         // Shop: checkout (the cart itself is /shop/cart) and orders
         Route::get('checkout', [MyAccount\CheckoutController::class, 'form'])->name('checkout');
         Route::post('checkout', [MyAccount\CheckoutController::class, 'place'])->middleware('throttle:10,1')->name('checkout.place');
@@ -327,6 +333,23 @@ Route::prefix('admin')->group(function () {
             $websiteScreens(); // Website → Pages, Groups and Plans → Plans, New Plan, at /admin/astro/…
             Route::get('uploads/byop', [Backend\Astro\PricingController::class, 'byopUpload'])->name('byop.upload');
             Route::post('uploads/byop', [Backend\Astro\PricingController::class, 'byopImport'])->name('byop.import');
+        });
+
+        // Ranger — support tickets customers open from My Account; team; approval ratings
+        Route::prefix('ranger')->name('ranger.')->middleware('app:ranger')->group(function () {
+            Route::get('/', [Backend\Ranger\TicketController::class, 'dashboard'])->name('dashboard');
+            Route::get('tickets', [Backend\Ranger\TicketController::class, 'index'])->name('tickets');
+            Route::get('tickets/{ticket}', [Backend\Ranger\TicketController::class, 'show'])->name('tickets.show');
+            Route::post('tickets/{ticket}/reply', [Backend\Ranger\TicketController::class, 'reply'])->middleware('throttle:60,1')->name('tickets.reply');
+            Route::patch('tickets/{ticket}', [Backend\Ranger\TicketController::class, 'update'])->name('tickets.update');
+            Route::post('tickets/{ticket}/take-over', [Backend\Ranger\TicketController::class, 'takeOver'])->name('tickets.take-over');
+            Route::post('tickets/{ticket}/join', [Backend\Ranger\TicketController::class, 'join'])->name('tickets.join');
+            Route::post('tickets/{ticket}/leave', [Backend\Ranger\TicketController::class, 'leave'])->name('tickets.leave');
+            Route::get('team', [Backend\Ranger\TeamController::class, 'index'])->name('team');
+            Route::get('team/add', [Backend\Ranger\TeamController::class, 'create'])->name('team.create');
+            Route::post('team', [Backend\Ranger\TeamController::class, 'store'])->name('team.store');
+            Route::patch('team/{agent}', [Backend\Ranger\TeamController::class, 'update'])->name('team.update');
+            Route::get('satisfaction', [Backend\Ranger\TeamController::class, 'satisfaction'])->name('satisfaction');
         });
 
         // Walker — files & reporting: report runs by status, report library, file folders, ETL feeds

@@ -11,6 +11,7 @@ use App\Models\LedgerEntry;
 use App\Models\Refund;
 use App\Models\ReportRun;
 use App\Models\StarEntry;
+use App\Models\SupportTicket;
 use App\Models\WorkItem;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -116,6 +117,7 @@ class AdminMenu
             $key === 'sms' => self::unansweredTexts(),
             $key === 'messages' => ContactMessage::open()->count(),
             $key === 'failed_jobs' => self::failedJobs(),
+            $key === 'ranger_unassigned' => SupportTicket::active()->whereNull('assigned_to')->count(),
             $key === 'etl_failed' => collect(array_keys(config('walker.etl')))->filter(fn ($k) => JobRun::where('command', 'etl:'.$k)->latest('started_at')->value('status') === 'Failed')->count(),
             $key === 'report_problems' => ReportRun::inState('problem')->count(),
             $key === 'ai_waiting' => AiConversation::where('status', 'waiting')->count(),

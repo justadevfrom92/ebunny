@@ -57,6 +57,23 @@ return [
                 'Exceptions' => 'queues', // one menu item per queue below, plus the overview
             ],
         ],
+        'ranger' => [
+            'name' => 'Ranger',
+            'desc' => 'Support tickets customers open from My Account: the queue, replies and notes, take over and join in for managers, the ticket team (in-office and 3rd party) and approval ratings.',
+            'icon' => 'ticket',
+            'home' => 'ranger.dashboard',
+            'menu' => [
+                'Tickets' => [
+                    ['Dashboard', 'ranger.dashboard'],
+                    ['Tickets', 'ranger.tickets', 'ranger_unassigned'],
+                ],
+                'Team' => [
+                    ['Ticket Team', 'ranger.team'],
+                    ['Add a Team Member', 'ranger.team.create'],
+                    ['Approval Ratings', 'ranger.satisfaction'],
+                ],
+            ],
+        ],
         'lando' => [
             'name' => 'Lando',
             'desc' => 'Website CMS: site health and visitors, pages, page templates and content blocks.',

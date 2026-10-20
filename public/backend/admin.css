@@ -732,3 +732,18 @@ tr.row-new td { background: var(--info-bg); }
 .mini-scroll { max-height: 196px; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--line); border-radius: 6px; padding: 0 10px; background: var(--panel); }
 .mini-scroll .row-line:last-child { border-bottom: 0; }
 .mini-scroll > p { margin: 8px 0; }
+
+/* Ranger */
+.approval.ok { color: var(--ok); } .approval.warn { color: var(--warn); } .approval.bad { color: var(--bad); }
+.approval-big .approval { font-size: 2rem; display: block; line-height: 1.1; }
+.panel-link { color: inherit; display: block; } .panel-link:hover { text-decoration: none; border-color: var(--cyan); }
+.ap-bar span { background: var(--ok); }
+.rt-thread { display: flex; flex-direction: column; gap: 12px; }
+.rt-msg { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; max-width: 88%; }
+.rt-customer { align-self: flex-start; background: var(--row); }
+.rt-agent { align-self: flex-end; background: var(--info-bg); border-color: transparent; }
+.rt-note { align-self: flex-end; background: var(--warn-bg); border-style: dashed; border-color: var(--warn); }
+.rt-who { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; margin-bottom: 4px; }
+.rt-body { line-height: 1.5; overflow-wrap: anywhere; }
+.rt-system { text-align: center; color: var(--muted); font-size: .8rem; margin: 0; }
+.rt-system span { opacity: .7; margin-left: 6px; }

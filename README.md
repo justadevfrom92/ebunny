@@ -1,6 +1,6 @@
 # Energy Texas — Website & Admin Tools
 
-The public website (with sign-up and the My Account portal) plus the internal admin tools (Corral, Lando, Astro, Walker, Caboose, Bounty, Rodeo, Sheriff), served by **Laravel 13** on PHP 8.3.
+The public website (with sign-up and the My Account portal) plus the internal admin tools (Corral, Ranger, Lando, Astro, Walker, Caboose, Bounty, Rodeo, Deputy, Sheriff), served by **Laravel 13** on PHP 8.3.
 No Node, no React and no build step: the admin is server-rendered Blade with plain CSS and a small plain-JavaScript file.
 
 ## Run it (Linux, macOS or Windows)
@@ -88,6 +88,7 @@ database/migrations, seeders/data/*.json   schema and fictional sample data
 | **Corral** | Customer search (status/exception filters, bookmarks), account detail with billing, payments (reversal needs the *refunds* right), notes; ESIID lookup; phone orders (resi & biz) and renew/change plan; orders report (screen, summary, CSV); exception queues; website Contact Us messages |
 | **Lando** | **Style Guide** (every color and style variable from the shared, admin and website stylesheets, where each is used, sample components, hard-coded colors, live color pickers that export the changed CSS); page tree and editor (delete needs the *delete* right), sitemap rebuild, templates, content blocks with live preview, plans (incl. website bullets and filters), plan groups, rate search with EFL average price, bulk rate editor with effective dates, TDSP fees, markets |
 | **Astro** | Term discounts by region, ETF by term, Build Your Own Plan products (price and whether the website shows them) |
+| **Ranger** | Support tickets customers open from My Account → Support Tickets: the queue (urgent first, unassigned, mine, joined), each ticket's conversation with replies (the customer sees them) and internal notes (they don't), status and priority; managers can **Take Over** or **Join In** and assign tickets; the **Ticket Team** (in-office and 3rd-party people, add someone already in the admin or a new person); **Approval Ratings** (👍 out of rated tickets) for in-office vs 3rd party, week by week and per person |
 | **Walker** | Files & reporting: report runs that are running, completed, or errored / did not finish; each run has its own page (file details, settings, first rows, download) with **Rerun** top right; report library with export format (Excel, CSV, tab-separated, JSON) and **Export Columns** (model key → column title, in order, or a nested key array); file folders (ETL, Legal Documents, Customer Templates, Finance, Utility / ERCOT, Vendor); ETL feeds with every run |
 | **Caboose** | Finance: dashboard, payments (record check/money order/cash/wire, reverse), pending credits & debits to apply, refunds (request → approve → paid; deciding needs the *refunds* right), deposits held and due, receivables aging, journal export (CSV/XLSX) |
 | **Bounty** | Rewards: reward offers, star earning rules (used by the `et:rewards-stars` job), redemptions to fulfil, member star balances and adjustments, monthly drawing |

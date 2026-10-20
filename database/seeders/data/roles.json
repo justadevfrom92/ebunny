@@ -11,14 +11,16 @@
    "caboose",
    "bounty",
    "rodeo",
-   "deputy"
+   "deputy",
+   "ranger"
   ]
  },
  {
   "name": "Customer Service",
   "perms": [
    "corral",
-   "bounty"
+   "bounty",
+   "ranger"
   ]
  },
  {
@@ -50,7 +52,8 @@
    "corral",
    "bounty",
    "rodeo",
-   "deputy"
+   "deputy",
+   "ranger"
   ]
  },
  {
