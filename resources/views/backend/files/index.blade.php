@@ -1,6 +1,7 @@
-@extends('backend.layouts.plain')
+@extends('backend.layouts.app')
 
 @section('title', 'My Files')
+@section('crumb', 'My Files')
 
 {{-- Every report you ran, from any app: name, when, format, rows, size, status; open one for its preview and download --}}
 @section('content')

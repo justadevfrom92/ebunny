@@ -31,10 +31,12 @@
     {{-- Flags · Balances · Actions --}}
     <div class="grid-3" id="actions">
         <div class="panel" id="flags"><div class="panel-head"><h2>Flags</h2><a class="btn sm ghost" href="{{ route('corral.customers.panel-log', [$c, 'flags']) }}">Log</a></div><div class="panel-body">
+            <div class="mini-scroll">
             @forelse ($c->flags as $f)
                 <div class="row-line"><span><b>{{ $f->flag }}</b><br><span class="help">{{ $f->created_at->format('Y-m-d H:i:s') }} · {{ $f->author ?? 'System' }}</span></span>
                     <form method="post" action="{{ route('corral.flags.remove', $f) }}" class="inline">@csrf @method('delete')<button class="link-btn">[ remove ]</button></form></div>
             @empty <p class="muted">No flags.</p> @endforelse
+            </div>
             <form method="post" action="{{ route('corral.customers.flags.add', $c) }}" class="form-row" style="margin-top:12px">@csrf
                 <select name="flag" aria-label="Add flag" required><option value="">-- New Flag --</option>@foreach (config('corral.flags') as $flag)<option>{{ $flag }}</option>@endforeach</select>
                 <button class="btn sm">Add</button>
@@ -56,9 +58,11 @@
             @endforeach
             @php $recentBalance = \App\Http\Controllers\Backend\Corral\PanelLogController::balanceRows($c)->take(10); @endphp
             <h3 style="margin-top:12px">Last 10</h3>
+            <div class="mini-scroll">
             @forelse ($recentBalance as $r)
                 <div class="row-line"><span>{{ $r['type'] }} {{ $money($r['amount']) }}<br><span class="help">{{ $r['at']?->format('n/j/Y') }} · {{ $r['status'] }}</span></span></div>
             @empty <p class="help">No credits, debits or payments yet.</p> @endforelse
+            </div>
         </div></div>
 
         <div class="panel"><div class="panel-head"><h2>Actions</h2><a class="btn sm ghost" href="{{ route('corral.customers.panel-log', [$c, 'actions']) }}">Log</a></div><div class="panel-body" style="display:flex;flex-direction:column;gap:14px">
@@ -73,9 +77,11 @@
                 </form>
             @endforeach
             <div><h3>Last 10</h3>
+                <div class="mini-scroll">
                 @forelse (\App\Http\Controllers\Backend\Corral\PanelLogController::actionNotes($c)->limit(10)->get() as $n)
                     <div class="row-line"><span><b>{{ $n->action }}</b><br><span class="help">{{ $n->created_at->format('n/j/Y g:i A') }} · {{ $n->author ?? 'System' }}</span></span></div>
-                @empty <p class="help">No actions run yet.</p> @endforelse</div>
+                @empty <p class="help">No actions run yet.</p> @endforelse
+                </div></div>
         </div></div>
     </div>
 

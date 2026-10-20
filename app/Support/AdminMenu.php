@@ -25,8 +25,28 @@ class AdminMenu
             return request()->route('appKey');
         }
         $key = Str::before((string) Route::currentRouteName(), '.');
+        if (config()->has('admin.apps.'.$key)) {
+            return $key;
+        }
 
-        return config()->has('admin.apps.'.$key) ? $key : null;
+        // Pages that belong to no one app (My Files): show the sidebar of the app the page asks for
+        // (a file's own app), else the app you were last in, else the first one you can open
+        $user = auth()->user();
+        foreach ([request()->attributes->get('menu_app'), session('admin.last_app')] as $want) {
+            if ($want && config()->has('admin.apps.'.$want) && $user?->hasPerm($want)) {
+                return $want;
+            }
+        }
+
+        return $user ? collect(array_keys(config('admin.apps')))->first(fn ($k) => $user->hasPerm($k)) : null;
+    }
+
+    /** Remember the app you're in, for pages that belong to no app. */
+    public static function remember(?string $app): void
+    {
+        if ($app && config()->has('admin.apps.'.$app) && session('admin.last_app') !== $app) {
+            session(['admin.last_app' => $app]);
+        }
     }
 
     /** @return array<string, array<int, array{label: string, url: string, active: bool, badge: int|null}>> */

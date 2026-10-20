@@ -38,6 +38,7 @@ class FilesController extends Controller
     public function show(Request $request, ReportRun $run): View
     {
         $this->own($request, $run);
+        $request->attributes->set('menu_app', $run->app);   // the sidebar of the app the report came from
         if (in_array($run->status, ['done', 'failed'], true) && ! $run->seen_at) {
             $run->forceFill(['seen_at' => now()])->save();
         }

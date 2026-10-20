@@ -4,6 +4,7 @@
 --}}
 @php
     $appKey = \App\Support\AdminMenu::currentApp();
+    \App\Support\AdminMenu::remember($appKey);
     $app = \App\Support\AdminApps::get($appKey);
     $sections = \App\Support\AdminMenu::sections($appKey);
     $activeItem = collect($sections)->flatten(1)->firstWhere('active', true);

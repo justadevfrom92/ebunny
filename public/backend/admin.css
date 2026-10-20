@@ -728,3 +728,7 @@ tr.row-new td { background: var(--info-bg); }
 .avatar-wrap { position: relative; display: inline-flex; flex: none; margin-right: 6px; }
 .avatar-wrap .files-badge { position: absolute; top: -8px; right: -14px; min-width: 14px; height: 16px; padding: 0 4px; font-size: .65rem; border: 2px solid var(--panel); box-sizing: content-box; line-height: 1; }
 .launcher-top .avatar-wrap .files-badge { border-color: var(--navy); }
+/* Corral account → Flags, Balances, Actions: a short list that scrolls (about 4 entries tall) */
+.mini-scroll { max-height: 196px; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--line); border-radius: 6px; padding: 0 10px; background: var(--panel); }
+.mini-scroll .row-line:last-child { border-bottom: 0; }
+.mini-scroll > p { margin: 8px 0; }

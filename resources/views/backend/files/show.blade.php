@@ -1,6 +1,7 @@
-@extends('backend.layouts.plain')
+@extends('backend.layouts.app')
 
 @section('title', $run->label())
+@section('crumb', 'My Files › '.$run->label())
 
 {{-- One file: the report, its settings, the file (download / run again) and its first rows, kept with the run so nothing runs again --}}
 @section('content')
