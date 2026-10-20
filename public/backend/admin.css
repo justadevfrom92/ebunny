@@ -98,7 +98,7 @@ h3 { font-size: .95rem; color: var(--navy); margin-bottom: 8px; }
 .stat.alert strong { color: var(--red); }
 
 /* ---------- Tables ---------- */
-.table-wrap { overflow-x: auto; }
+.table-wrap { overflow-x: auto; position: relative; }   /* keeps absolutely placed bits (hidden chip inputs) inside the scroll box */
 table { width: 100%; border-collapse: collapse; }
 th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; white-space: nowrap; }
 th { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 400; background: var(--row); position: sticky; top: 0; }
@@ -219,7 +219,7 @@ dl.kv dd { color: var(--ink); overflow-wrap: anywhere; }
   .form-grid > label { margin-top: 8px; }
   .content { padding: 16px; }
   .topbar { padding: 10px 16px; }
-  .user-chip > span:not(.avatar) { display: none; }
+  .user-chip > span:not(.avatar):not(.avatar-wrap) { display: none; }
 }
 @media (max-width: 480px) {
   .grid-4 { grid-template-columns: 1fr 1fr; }
@@ -724,3 +724,7 @@ tr.row-new td { background: var(--info-bg); }
 .hm-legend i { width: 16px; height: 12px; border-radius: 3px; background: rgba(220, 38, 38, calc(.15 + var(--h) * .85)); display: inline-block; }
 .hm-bar { display: inline-block; width: 36px; height: 8px; background: var(--row); border-radius: 4px; vertical-align: middle; overflow: hidden; }
 .hm-bar span { display: block; height: 100%; background: var(--red); }
+/* New-files number on the avatar's top-right corner */
+.avatar-wrap { position: relative; display: inline-flex; flex: none; margin-right: 6px; }
+.avatar-wrap .files-badge { position: absolute; top: -8px; right: -14px; min-width: 14px; height: 16px; padding: 0 4px; font-size: .65rem; border: 2px solid var(--panel); box-sizing: content-box; line-height: 1; }
+.launcher-top .avatar-wrap .files-badge { border-color: var(--navy); }

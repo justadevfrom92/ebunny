@@ -28,6 +28,11 @@
         </div>
 
         <div class="it-side">
+            @if ($r instanceof \App\Models\ContactLog)
+                {{-- An email or text: how it ended (Resolved, Incomplete…) --}}
+                <div class="panel"><div class="panel-head"><h2>Resolution</h2>@include('backend.partials.resolution-pill', ['value' => $r->resolution])</div>
+                    <div class="panel-body">@include('backend.corral._resolution', ['type' => 'contact', 'id' => $r->id, 'value' => $r->resolution, 'by' => $r->resolvedBy?->name, 'at' => $r->resolved_at])</div></div>
+            @endif
             <div class="panel">
                 <div class="panel-head"><h2>Actions</h2></div>
                 <div class="panel-body it-actions">

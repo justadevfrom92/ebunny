@@ -18,13 +18,13 @@
     <div class="panel"><div class="panel-head"><h2>Emails &amp; Texts ({{ $logs->count() }})</h2>
         <span class="actions"><a class="btn sm ghost" href="{{ route('corral.customers.action', [$c, 'send-email']) }}">Send Email</a><a class="btn sm ghost" href="{{ route('corral.customers.action', [$c, 'send-text']) }}">Send Text</a></span></div>
         <div class="table-wrap"><table>
-            <thead><tr><th>Created</th><th>Type</th><th>Template</th><th>Status</th><th>Sent</th><th>Opened</th><th>Clicked</th><th>Dropped</th><th>Resolution</th></tr></thead>
+            <thead><tr><th>Created</th><th>Template</th><th>Status</th><th>Sent</th><th>Opened</th><th>Clicked</th><th>Dropped</th><th>Resolution</th></tr></thead>
             <tbody>@forelse ($logs as $l)
-                <tr><td><a href="{{ $l->corralUrl() }}">{{ $l->created_at->format('n/j/Y g:i A') }}</a></td><td>{{ $l->channel }}@if ($l->channel === 'SMS')<br><span class="help">{{ $l->direction === 'in' ? 'From customer' : 'To customer' }}</span>@endif</td><td>{{ $l->template }}@if ($l->body)<br><span class="help">{{ \Illuminate\Support\Str::limit($l->body, 120) }}</span>@endif</td>
+                <tr class="click" data-href="{{ $l->corralUrl() }}"><td><a href="{{ $l->corralUrl() }}">{{ $l->created_at->format('n/j/y g:i A') }}</a><br><span class="help">{{ $l->channel === 'SMS' ? 'Text '.($l->direction === 'in' ? 'from customer' : 'to customer') : 'Email' }}</span></td><td class="wrap">{{ $l->template }}@if ($l->body)<br><span class="help">{{ \Illuminate\Support\Str::limit($l->body, 120) }}</span>@endif</td>
                     <td>@include('backend.partials.pill', ['text' => $l->status, 'tone' => ['sent' => 'ok', 'queued' => 'info', 'received' => 'ok', 'logged' => 'info'][$l->status] ?? 'bad'])</td>
-                    @foreach (['sent_at', 'opened_at', 'clicked_at', 'dropped_at'] as $f)<td>{{ $l->$f?->format('n/j/Y g:i A') ?? '—' }}</td>@endforeach
-                    <td style="min-width:260px;white-space:normal">@include('backend.corral._resolution', ['type' => 'contact', 'id' => $l->id, 'value' => $l->resolution])</td></tr>
-            @empty <tr><td colspan="9" class="empty">No emails or texts sent.</td></tr> @endforelse</tbody>
+                    @foreach (['sent_at', 'opened_at', 'clicked_at', 'dropped_at'] as $f)<td class="nowrap">{{ $l->$f?->format('n/j g:i A') ?? '—' }}</td>@endforeach
+                    <td>@include('backend.partials.resolution-pill', ['value' => $l->resolution])</td></tr>
+            @empty <tr><td colspan="8" class="empty">No emails or texts sent.</td></tr> @endforelse</tbody>
         </table></div>
     </div>
 
