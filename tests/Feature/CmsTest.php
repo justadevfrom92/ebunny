@@ -56,7 +56,7 @@ class CmsTest extends TestCase
                 $this->assertStringStartsWith(url('/admin/'.$app), $url, "$app menu has $url");
                 $html = $this->get($url)->assertOk()->getContent();
                 // Account numbers link to the Corral account everywhere; that's the one allowed link out
-                $html = preg_replace('#href="[^"]*/admin/corral/customers/\d+"#', '', $html);
+                $html = preg_replace('#href="[^"]*/admin/corral/customers/\d+(/ticket|/logs/\w+)?"#', '', $html);
                 foreach (array_diff($apps, [$app]) as $other) {
                     $this->assertStringNotContainsString(url('/admin/'.$other.'/'), $html, "$url links into $other");
                 }

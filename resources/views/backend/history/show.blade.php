@@ -43,11 +43,9 @@
             <div class="panel"><div class="panel-head"><h2>Parent Tickets</h2></div><div class="panel-body">
                 @if ($item->customer)
                     <dl class="kv">
-                        @if ($logKey)<dt>Log ticket</dt><dd>@if (str_starts_with($route, 'corral.'))<a href="{{ route('corral.customers.log', [$item->customer, $logKey]) }}">{{ $logTitle }}</a>@else{{ $logTitle }}@endif</dd>@endif
-                        <dt>Account</dt><dd>
-                        @if (str_starts_with($route, 'corral.'))<a href="{{ route('corral.customers.ticket', $item->customer) }}">{{ $item->customer->account }}</a>@else@include('backend.partials.account-link', ['c' => $item->customer])@endif
-                        · {{ $item->customer->name }}</dd>
-                        <dt>Ticket</dt><dd class="mono">{{ $item->customer->ticket }}</dd></dl>
+                        {{-- Each parent links to its own ticket page --}}
+                        @if ($logKey)<dt>Log ticket</dt><dd><a class="mono" href="{{ route('corral.customers.log', [$item->customer, $logKey]) }}">{{ \App\Http\Controllers\Backend\HistoryController::logTicketId($item->customer, $logKey) }}</a> · {{ $logTitle }}</dd>@endif
+                        <dt>Account ticket</dt><dd><a class="mono" href="{{ route('corral.customers.ticket', $item->customer) }}">{{ $item->customer->ticket }}</a> · Account @include('backend.partials.account-link', ['c' => $item->customer]) · {{ $item->customer->name }}</dd></dl>
                 @else
                     <p class="muted">Not tied to a customer account.</p>
                 @endif

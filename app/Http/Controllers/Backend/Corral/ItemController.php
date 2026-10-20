@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Backend\Corral;
 
+use App\Http\Controllers\Backend\HistoryController;
 use App\Http\Controllers\Controller;
+use App\Models\Bill;
 use App\Models\ContactLog;
 use App\Models\Customer;
 use App\Models\CustomerFile;
@@ -209,10 +211,19 @@ class ItemController extends Controller
         $out = [];
         foreach (Items::def($model)['parents'] as $p) {
             [$col1, $col2] = config('items.tickets.'.$p, [$p, null]);
-            $out[] = match ($p) {
-                'TicketCart_model' => ['id' => $c->ticket, 'url' => route('corral.customers.ticket', $c), 'created' => $c->created_at, 'a' => $col1, 'b' => $c->account],
-                'TicketBillUsageTx_model' => ['id' => 'BILL-'.$r->getKey(), 'url' => null, 'created' => Items::created($r), 'a' => $col1, 'b' => $r->invoice ?? $r->reference ?? ''],
-                default => ['id' => $c->ticket.'-'.Str::before($p, '_model'), 'url' => route('corral.customers.log', [$c, Items::TICKET_PAGES[$p] ?? 'attributes']), 'created' => $c->created_at, 'a' => $col1, 'b' => $col2],
+            // Each parent links to that ticket's own page, under the same id that page shows
+            $log = Items::TICKET_PAGES[$p] ?? null;
+            // Items filed on a log ticket (payments, files & usage, logins, notes) have that log as their parent, not the account
+            if ($p === 'TicketCart_model' && ($own = collect(Items::LOG_ITEMS)->search(fn ($models) => in_array($model, $models, true))) !== false) {
+                [$col1, $col2] = ['Logs', Str::after(config('history.logs.'.$own)[0], 'Logs - ')];
+                $log = $own;
+            }
+            $out[] = match (true) {
+                $p === 'TicketCart_model' && $log === null => ['id' => $c->ticket, 'url' => route('corral.customers.ticket', $c), 'created' => $c->created_at, 'a' => $col1, 'b' => $c->account],
+                $p === 'TicketBillUsageTx_model' && $r instanceof Bill => ['id' => 'BILL-'.$r->getKey(), 'url' => route('corral.customers.bill-ticket', [$c, $r]),
+                    'created' => Items::created($r), 'a' => $col1, 'b' => $r->invoice ?: $r->reference],
+                $log !== null => ['id' => HistoryController::logTicketId($c, $log), 'url' => route('corral.customers.log', [$c, $log]), 'created' => $c->created_at, 'a' => $col1, 'b' => $col2],
+                default => ['id' => $c->ticket, 'url' => route('corral.customers.ticket', $c), 'created' => $c->created_at, 'a' => $col1, 'b' => $col2],
             };
         }
 

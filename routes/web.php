@@ -181,6 +181,7 @@ Route::prefix('admin')->group(function () {
             });
             Route::get('customers/{customer}/ticket', [Backend\HistoryController::class, 'ticket'])->name('customers.ticket');
             Route::get('customers/{customer}/logs/{log}', [Backend\HistoryController::class, 'log'])->name('customers.log');
+            Route::get('customers/{customer}/bills/{bill}/ticket', [Backend\HistoryController::class, 'billTicket'])->name('customers.bill-ticket');
 
             // Account page sections
             Route::get('customers/{customer}/actions/{action}', [Backend\Corral\AccountController::class, 'actionForm'])->name('customers.action');

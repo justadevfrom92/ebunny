@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
+use App\Models\Bill;
 use App\Models\Customer;
 use App\Models\HistoryItem;
 use App\Models\User;
@@ -54,6 +55,35 @@ class HistoryController extends Controller
         ]);
     }
 
+    /** A log ticket's id, the same everywhere it's shown: the account ticket + its log number ("…-04"). */
+    public static function logTicketId(Customer $customer, string $log): string
+    {
+        return $customer->ticket.'-'.str_pad((string) (array_search($log, array_keys(config('history.logs'))) + 1), 2, '0', STR_PAD_LEFT);
+    }
+
+    /** A bill's own ticket ("Bill Details"): the bill and everything recorded about it. */
+    public function billTicket(Customer $customer, Bill $bill): View
+    {
+        abort_unless($bill->customer_id === $customer->id, 404);
+        $items = HistoryItem::where('customer_id', $customer->id)->whereIn('model', ['ItemFileBill_model', 'Bill_model'])->where('record_id', $bill->id)
+            ->with('user')->oldest('created_at')->oldest('id')->get();
+
+        return view('backend.history.ticket', [
+            'c' => $customer,
+            'title' => 'Bill Details - '.($bill->invoice ?: $bill->reference),
+            'created' => $bill->billed_on ?? $bill->created_at,
+            'ticketId' => 'BILL-'.$bill->id,
+            'groups' => $items->groupBy('model')->sortKeys(),
+            'childTickets' => collect(),
+            'parents' => collect([['title' => config('history.logs.files')[0], 'created' => $customer->created_at, 'url' => route('corral.customers.log', [$customer, 'files']), 'id' => self::logTicketId($customer, 'files')]]),
+            'processLogs' => collect(),
+            'currentQueues' => collect(),
+            'items' => $items,
+            'dataItems' => Items::forCustomer($customer)->filter(fn ($i) => $i['model'] === 'ItemFileBill_model' && (int) $i['id'] === $bill->id)->values(),
+            'log' => 'bill',
+        ]);
+    }
+
     /** One log ticket, e.g. "Logs - Products": that log's items grouped by model. */
     public function log(Customer $customer, string $log): View
     {
@@ -65,7 +95,7 @@ class HistoryController extends Controller
             'c' => $customer,
             'title' => $title,
             'created' => $items->first()?->created_at ?? $customer->created_at,
-            'ticketId' => $customer->ticket.'-'.str_pad((string) (array_search($log, array_keys(config('history.logs'))) + 1), 2, '0', STR_PAD_LEFT),
+            'ticketId' => self::logTicketId($customer, $log),
             'groups' => $items->groupBy('model')->sortKeys(),
             'childTickets' => collect(),
             'parents' => collect([['title' => 'Account '.$customer->account, 'created' => $customer->created_at, 'url' => route('corral.customers.ticket', $customer), 'id' => $customer->ticket]]),

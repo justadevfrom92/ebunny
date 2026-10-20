@@ -3,14 +3,18 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\Backend\Corral\PanelLogController;
+use App\Http\Controllers\Backend\HistoryController;
 use App\Models\ContactLog;
 use App\Models\Customer;
 use App\Models\CustomerFile;
+use App\Models\HistoryItem;
 use App\Models\Phonecall;
 use App\Models\User;
 use App\Models\WorkItem;
+use App\Support\Items;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /** Corral: panel logs, New Contact and resolutions, account links, exception history, file pages, ticket timeline, search pages. */
@@ -109,5 +113,27 @@ class CorralBatchTest extends TestCase
         $html = $this->get(route('corral.customers.index', ['limit' => 10]))->assertOk()->getContent();
         $this->assertStringContainsString('aria-current="page">1', $html);
         $this->get(route('corral.customers.index', ['limit' => 10, 'page' => 2]))->assertOk()->assertSee('Showing 11–20', false);
+    }
+
+    public function test_parent_tickets_link_to_their_own_ticket(): void
+    {
+        $this->actingAs($this->admin());
+        $c = Customer::firstOrFail();
+        $items = Items::forCustomer($c)->keyBy('model');
+        // Filed on a log ticket: the parent is that log, not the account ticket
+        foreach (['ItemPayment_model' => 'payments', 'ItemFileBill_model' => 'files', 'ItemMyaccountLogin_model' => 'logins'] as $model => $log) {
+            if ($i = $items[$model] ?? null) {
+                $html = $this->get($i['url'])->assertOk()->getContent();
+                $parents = Str::between($html, 'Parent Tickets', '</table>');
+                $this->assertStringContainsString(route('corral.customers.log', [$c, $log]), $parents, $model);
+                $this->assertStringContainsString(HistoryController::logTicketId($c, $log), $parents);
+            }
+        }
+        // A bill ticket's parent is Logs - Files & Usage
+        $bill = $c->bills()->firstOrFail();
+        $this->get(route('corral.customers.bill-ticket', [$c, $bill]))->assertOk()->assertSee(route('corral.customers.log', [$c, 'files']), false);
+        // A history item links its log ticket and the account ticket
+        $h = HistoryItem::where('customer_id', $c->id)->where('group', 'Products')->firstOrFail();
+        $this->get(route('corral.history.show', $h))->assertOk()->assertSee(route('corral.customers.log', [$c, 'products']), false)->assertSee(route('corral.customers.ticket', $c), false);
     }
 }
