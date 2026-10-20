@@ -44,7 +44,7 @@ class RewardsMarketingBatchTest extends TestCase
     {
         $t = EmailTemplate::findOrFail(LinkClick::whereNotNull('email_template_id')->value('email_template_id'));
         $this->get(route('rodeo.templates.edit', $t))->assertSee(route('rodeo.templates.heatmap', $t), false);
-        $this->get(route('rodeo.templates.heatmap', $t))->assertOk()->assertSee('Where People Click')->assertSee('data-link="cta"', false);
+        $this->get(route('rodeo.templates.heatmap', $t))->assertOk()->assertSee('Where People Click')->assertSee('data-link="footer-1"', false)->assertSee('data-link="header-1"', false);
         $sent = Campaign::where('status', 'sent')->firstOrFail();
         $this->get(route('rodeo.campaigns.heatmap', $sent))->assertOk()->assertSee('Clicks by Link');
         $sms = Campaign::where('channel', 'SMS')->firstOrFail();

@@ -368,7 +368,10 @@ Route::prefix('admin')->group(function () {
             Route::post('reports/{key}/columns', [Backend\Walker\ReportController::class, 'saveColumns'])->name('reports.columns');
             Route::get('uploads/new', [Backend\Walker\UploadController::class, 'create'])->name('uploads.create');
             Route::post('uploads', [Backend\Walker\UploadController::class, 'store'])->name('uploads.store');
-            Route::get('uploads/{upload}', [Backend\Walker\UploadController::class, 'download'])->name('uploads.download');
+            Route::get('uploads/{upload}', [Backend\Walker\UploadController::class, 'show'])->name('uploads.show');
+            Route::get('uploads/{upload}/download', [Backend\Walker\UploadController::class, 'download'])->name('uploads.download');
+            Route::get('uploads/{upload}/view', [Backend\Walker\UploadController::class, 'view'])->name('uploads.view');
+            Route::patch('uploads/{upload}', [Backend\Walker\UploadController::class, 'update'])->name('uploads.update');
             Route::delete('uploads/{upload}', [Backend\Walker\UploadController::class, 'destroy'])->name('uploads.destroy');
         });
 
@@ -426,6 +429,12 @@ Route::prefix('admin')->group(function () {
             Route::post('campaigns/{campaign}/duplicate', 'duplicateCampaign')->name('campaigns.duplicate');
             Route::get('campaigns/{campaign}/heatmap', [Backend\Rodeo\HeatmapController::class, 'campaign'])->name('campaigns.heatmap');
             Route::get('templates/{template}/heatmap', [Backend\Rodeo\HeatmapController::class, 'template'])->name('templates.heatmap');
+            Route::get('headers-footers', [Backend\Rodeo\EmailPartController::class, 'index'])->name('parts');
+            Route::get('headers-footers/new', [Backend\Rodeo\EmailPartController::class, 'form'])->name('parts.create');
+            Route::post('headers-footers', [Backend\Rodeo\EmailPartController::class, 'save'])->name('parts.store');
+            Route::get('headers-footers/{part}', [Backend\Rodeo\EmailPartController::class, 'form'])->name('parts.edit');
+            Route::put('headers-footers/{part}', [Backend\Rodeo\EmailPartController::class, 'save'])->name('parts.update');
+            Route::delete('headers-footers/{part}', [Backend\Rodeo\EmailPartController::class, 'destroy'])->name('parts.destroy');
             Route::get('templates', 'templates')->name('templates');
             Route::get('templates/new', 'templateForm')->name('templates.create');
             Route::post('templates', 'saveTemplate')->name('templates.store');

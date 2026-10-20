@@ -126,7 +126,7 @@ class RodeoSurveysTest extends TestCase
     {
         $survey = Survey::where('slug', 'how-are-we-doing')->firstOrFail()->load('questions');
         $c = Customer::firstOrFail();
-        $link = EmailTemplate::make(['body' => '{{survey:how-are-we-doing}}'])->render($c);
+        $link = EmailTemplate::make(['body' => '{{survey:how-are-we-doing}}'])->renderBody($c);
         $answers = $survey->questions->mapWithKeys(fn (SurveyQuestion $q) => [$q->id => match ($q->type) {
             'rating' => 9, 'multi' => array_slice($q->choices(), 0, 2), 'text' => 'Great', default => $q->choices()[0],
         }])->all();

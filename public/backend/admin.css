@@ -725,9 +725,9 @@ tr.row-new td { background: var(--info-bg); }
 .hm-bar { display: inline-block; width: 36px; height: 8px; background: var(--row); border-radius: 4px; vertical-align: middle; overflow: hidden; }
 .hm-bar span { display: block; height: 100%; background: var(--red); }
 /* New-files number on the avatar's top-right corner */
-.avatar-wrap { position: relative; display: inline-flex; flex: none; margin-right: 6px; }
-.avatar-wrap .files-badge { position: absolute; top: -8px; right: -14px; min-width: 14px; height: 16px; padding: 0 4px; font-size: .65rem; border: 2px solid var(--panel); box-sizing: content-box; line-height: 1; }
-.launcher-top .avatar-wrap .files-badge { border-color: var(--navy); }
+.avatar-wrap { position: relative; display: inline-flex; flex: none; margin: 4px 8px 0 0; }
+.avatar-wrap .files-badge { position: absolute; top: -9px; right: -13px; box-sizing: border-box; min-width: 19px; height: 19px; padding: 0 5px; font-size: .68rem; line-height: 1; display: inline-flex; align-items: center; justify-content: center; border: 0; box-shadow: 0 0 0 2px var(--panel); z-index: 1; }
+.launcher-top .avatar-wrap .files-badge { box-shadow: 0 0 0 2px var(--navy); }
 /* Corral account → Flags, Balances, Actions: a short list that scrolls (about 4 entries tall) */
 .mini-scroll { max-height: 196px; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--line); border-radius: 6px; padding: 0 10px; background: var(--panel); }
 .mini-scroll .row-line:last-child { border-bottom: 0; }
@@ -747,3 +747,5 @@ tr.row-new td { background: var(--info-bg); }
 .rt-body { line-height: 1.5; overflow-wrap: anywhere; }
 .rt-system { text-align: center; color: var(--muted); font-size: .8rem; margin: 0; }
 .rt-system span { opacity: .7; margin-left: 6px; }
+.file-text { white-space: pre-wrap; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .82rem; max-height: 520px; overflow: auto; margin: 0; background: var(--row); padding: 12px; border-radius: 6px; }
+.file-frame { width: 100%; height: 640px; border: 0; display: block; }

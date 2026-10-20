@@ -25,7 +25,35 @@ class EmailTemplate extends Model
         return $this->hasMany(Campaign::class);
     }
 
+    public function header(): BelongsTo
+    {
+        return $this->belongsTo(EmailPart::class, 'email_header_id');
+    }
+
+    public function footer(): BelongsTo
+    {
+        return $this->belongsTo(EmailPart::class, 'email_footer_id');
+    }
+
+    /** The header and footer this template uses: its own picks, or the defaults. */
+    public function headerPart(): ?EmailPart
+    {
+        return $this->header ?? EmailPart::where('kind', 'header')->where('is_default', true)->first();
+    }
+
+    public function footerPart(): ?EmailPart
+    {
+        return $this->footer ?? EmailPart::where('kind', 'footer')->where('is_default', true)->first();
+    }
+
+    /** The whole email as the customer gets it: header, body, footer, with the fill-ins. */
     public function render(Customer $c): string
+    {
+        return $this->fillIns(($this->headerPart()?->html ?? '').$this->body.($this->footerPart()?->html ?? ''), $c);
+    }
+
+    /** Just the body, with the fill-ins. */
+    public function renderBody(Customer $c): string
     {
         return $this->fillIns($this->body, $c);
     }

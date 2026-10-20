@@ -13,7 +13,7 @@
         <div class="panel"><div class="table-wrap"><table>
             <thead><tr><th>File</th><th>Folder</th><th>Name</th><th>Added</th><th></th></tr></thead>
             <tbody>@forelse ($uploads as $u)
-                <tr><td><b>{{ $u->title }}</b>@if ($u->description)<br><span class="help">{{ $u->description }}</span>@endif</td><td>{{ $u->category }}</td>
+                <tr class="click" data-href="{{ route('walker.uploads.show', $u) }}"><td><a href="{{ route('walker.uploads.show', $u) }}"><b>{{ $u->title }}</b></a>@if ($u->description)<br><span class="help">{{ $u->description }}</span>@endif</td><td>{{ $u->category }}</td>
                     <td class="mono help">{{ $u->original_name }}<br>{{ number_format($u->size / 1024, 1) }} KB</td>
                     <td>{{ $u->created_at->format('n/j/Y') }}<br><span class="help">{{ $u->user?->name }}</span></td>
                     <td class="actions">@include('backend.partials.report-actions', ['size' => 'row', 'download' => route('walker.uploads.download', $u), 'downloadLabel' => 'Download '.$u->original_name, 'rerun' => null])

@@ -7,6 +7,7 @@ use App\Models\Campaign;
 use App\Models\ContactLog;
 use App\Models\Customer;
 use App\Models\EmailCategory;
+use App\Models\EmailPart;
 use App\Models\EmailTemplate;
 use App\Models\Market;
 use App\Models\MarketingChannel;
@@ -198,7 +199,8 @@ class MarketingController extends Controller
     {
         $template ??= new EmailTemplate(['body' => '<p>Hi {{first_name}},</p>', 'email_category_id' => request()->query('category')]);
 
-        return view('backend.rodeo.template', ['template' => $template, 'sample' => Customer::with('plan')->first(), 'categories' => EmailCategory::orderBy('position')->orderBy('name')->get()]);
+        return view('backend.rodeo.template', ['template' => $template, 'sample' => Customer::with('plan')->first(), 'categories' => EmailCategory::orderBy('position')->orderBy('name')->get(),
+            'parts' => collect(['header' => collect(), 'footer' => collect()])->merge(EmailPart::orderByDesc('is_default')->orderBy('name')->get()->groupBy('kind'))]);
     }
 
     public function saveTemplate(Request $request, ?EmailTemplate $template = null): RedirectResponse
@@ -208,6 +210,8 @@ class MarketingController extends Controller
             'subject' => ['required', 'string', 'max:150'],
             'body' => ['required', 'string', 'max:100000'],
             'email_category_id' => ['nullable', 'exists:email_categories,id'],
+            'email_header_id' => ['nullable', Rule::exists('email_parts', 'id')->where('kind', 'header')],
+            'email_footer_id' => ['nullable', Rule::exists('email_parts', 'id')->where('kind', 'footer')],
         ]);
         $template = $template ? tap($template)->update($data) : EmailTemplate::create($data);
 

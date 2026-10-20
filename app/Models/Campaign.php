@@ -93,7 +93,7 @@ class Campaign extends Model
                     }
                     ContactLog::create(['customer_id' => $c->id, 'campaign_id' => $this->id, 'channel' => $this->channel,
                         'template' => $this->channel === 'Email' ? $this->template?->name : 'Campaign: '.$this->name,
-                        'body' => $this->channel === 'Email' ? strip_tags($this->template?->render($c) ?? '') : $this->textFor($c),
+                        'body' => $this->channel === 'Email' ? strip_tags($this->template?->renderBody($c) ?? '') : $this->textFor($c),
                         'phone' => $this->channel === 'SMS' ? $c->phone : null, 'status' => $ready ? 'queued' : 'not sent']);
                     $count++;
                 }

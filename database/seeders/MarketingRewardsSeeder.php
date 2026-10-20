@@ -6,6 +6,7 @@ use App\Models\Campaign;
 use App\Models\ContactLog;
 use App\Models\Customer;
 use App\Models\EmailCategory;
+use App\Models\EmailPart;
 use App\Models\EmailSuppression;
 use App\Models\EmailTemplate;
 use App\Models\EmailTestSend;
@@ -48,6 +49,7 @@ class MarketingRewardsSeeder extends Seeder
             $cat = EmailCategory::create(['name' => $name, 'description' => $desc, 'color' => $color, 'position' => $i + 1]);
             EmailTemplate::whereIn('name', $names)->update(['email_category_id' => $cat->id]);
         }
+        $this->headersAndFooters();
         foreach ([['1001', 'Organic Website', 'Organic'], ['2001', 'Call Center', 'Agent'], ['3001', 'Google Ads Pay Per Click', 'Paid'],
             ['32001', 'Partner Referral Network', 'Partner'], ['41001', 'Broker - Sample Brokerage', 'Broker'], ['52001', 'Community Event', 'Partner']] as [$msid, $name, $type]) {
             MarketingChannel::create(['msid' => $msid, 'name' => $name, 'type' => $type]);
@@ -105,5 +107,34 @@ class MarketingRewardsSeeder extends Seeder
             EmailTestSend::create(['email_template_id' => $welcome->id, 'user_id' => $marketing->id, 'mode' => 'team', 'target' => $marketing->role?->name.' team',
                 'recipients' => [['email' => $marketing->email, 'name' => $marketing->name, 'status' => 'logged']], 'status' => 'logged', 'created_at' => now()->subDay()]);
         }
+    }
+
+    /** Rodeo → Headers & Footers: a few of each (sample wording), with Billing and Marketing templates picking their own. */
+    private function headersAndFooters(): void
+    {
+        $brand = e(config('brand.name'));
+        $wrap = 'font-family:Arial,sans-serif;max-width:600px;margin:0 auto';
+        $parts = [
+            ['header', 'Standard Header', true, '<div style="'.$wrap.';background:#102247;padding:16px 24px"><a href="/" style="color:#fff;font-weight:700;font-size:20px;text-decoration:none">'.$brand.'</a></div>'],
+            ['header', 'Rewards Header', false, '<div style="'.$wrap.';background:#00AEEF;padding:16px 24px;color:#fff"><a href="/myaccount/rewards" style="color:#fff;font-weight:700;font-size:20px;text-decoration:none">Rangler Rewards</a><div style="font-size:13px">from '.$brand.'</div></div>'],
+            ['header', 'Billing Header', false, '<div style="'.$wrap.';border-bottom:3px solid #102247;padding:14px 24px"><a href="/" style="color:#102247;font-weight:700;font-size:18px;text-decoration:none">'.$brand.'</a> <span style="float:right;color:#555;font-size:13px">Account {{account}}</span></div>'],
+            ['header', 'None', false, ''],
+            ['footer', 'Standard Footer', true, '<div style="'.$wrap.';padding:20px 24px;text-align:center"><a href="/myaccount" style="display:inline-block;background:#00AEEF;color:#fff;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:700">Go to My Account</a></div>'
+                .'<div style="'.$wrap.';border-top:1px solid #ddd;padding:14px 24px;font-size:12px;color:#666;text-align:center"><a href="/myaccount/pay">Pay My Bill</a> · <a href="/plans">See Plans</a> · <a href="/unsubscribe">Unsubscribe</a> · <a href="/privacy-policy">Privacy</a><br>'.$brand.' · 1000 Sample Ave, Houston, TX 77002 · PUCT Cert. No. XXXXX</div>'],
+            ['footer', 'Billing Footer', false, '<div style="'.$wrap.';padding:20px 24px;text-align:center"><a href="/myaccount/pay" style="display:inline-block;background:#c8102e;color:#fff;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:700">Pay Now</a><div style="font-size:13px;color:#555;margin-top:10px">Never miss a due date: <a href="/myaccount/methods">turn on AutoPay</a>.</div></div>'
+                .'<div style="'.$wrap.';border-top:1px solid #ddd;padding:14px 24px;font-size:12px;color:#666;text-align:center">Questions about your bill? Call 1-800-555-0100. · <a href="/privacy-policy">Privacy</a></div>'],
+            ['footer', 'Marketing Footer', false, '<div style="'.$wrap.';padding:20px 24px;text-align:center"><a href="/myaccount/rewards" style="display:inline-block;background:#00AEEF;color:#fff;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:700">See My Rewards</a></div>'
+                .'<div style="'.$wrap.';border-top:1px solid #ddd;padding:14px 24px;font-size:12px;color:#666;text-align:center"><a href="https://facebook.com">Facebook</a> · <a href="https://instagram.com">Instagram</a> · <a href="/unsubscribe">Unsubscribe from offers</a><br>You get this because you opted in to offers from '.$brand.'.</div>'],
+            ['footer', 'Legal Only', false, '<div style="'.$wrap.';border-top:1px solid #ddd;padding:14px 24px;font-size:12px;color:#666;text-align:center">'.$brand.' · PUCT Cert. No. XXXXX · <a href="/privacy-policy">Privacy</a></div>'],
+        ];
+        $ids = [];
+        foreach ($parts as [$kind, $name, $default, $html]) {
+            $ids[$name] = EmailPart::create(['kind' => $kind, 'name' => $name, 'is_default' => $default, 'html' => $html])->id;
+        }
+        $billing = EmailCategory::where('name', 'Billing')->value('id');
+        $marketing = EmailCategory::where('name', 'Marketing')->value('id');
+        EmailTemplate::where('email_category_id', $billing)->update(['email_header_id' => $ids['Billing Header'], 'email_footer_id' => $ids['Billing Footer']]);
+        EmailTemplate::where('email_category_id', $marketing)->update(['email_footer_id' => $ids['Marketing Footer']]);
+        EmailTemplate::where('name', 'like', '%Star%')->orWhere('name', 'like', '%Reward%')->update(['email_header_id' => $ids['Rewards Header'], 'email_footer_id' => $ids['Marketing Footer']]);
     }
 }

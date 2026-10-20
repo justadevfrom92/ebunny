@@ -180,7 +180,9 @@
       var varList = $('#b-vars');
       var preview = function () {
         var seen = {}, rows = [];
-        var filled = html.value.replace(/\{\{\s*([a-z][a-z0-9_]*)\s*(?:\|([^}]*))?\}\}/gi, function (m, name, def) {
+        // An email template's page wraps the body in the header and footer it picked (window.emailWrap)
+        var source = window.emailWrap ? window.emailWrap(html.value) : html.value;
+        var filled = source.replace(/\{\{\s*([a-z][a-z0-9_]*)\s*(?:\|([^}]*))?\}\}/gi, function (m, name, def) {
           def = (def || '').trim();
           if (!seen[name]) { seen[name] = 1; rows.push('<tr><td class="mono">' + esc(name) + '</td><td>' + (def ? esc(def) : '<span class="muted">none</span>') + '</td></tr>'); }
           return def ? esc(def) : '[' + esc(name) + ']';
@@ -190,6 +192,7 @@
         if (varList) { varList.innerHTML = rows.join(''); varList.closest('.panel').hidden = !rows.length; }
       };
       html.addEventListener('input', preview);
+      document.addEventListener('email-parts-changed', preview);
       preview();
       html.addEventListener('keydown', function (e) {
         if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); html.form.requestSubmit ? html.form.requestSubmit() : html.form.submit(); }

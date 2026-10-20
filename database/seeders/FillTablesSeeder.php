@@ -109,11 +109,17 @@ class FillTablesSeeder extends Seeder
                 $weights = ['body-1' => 1];
             } else {
                 $weights = [];
-                foreach (array_keys(EmailHeatmap::links($t)) as $k) {
+                // The big button gets the most clicks, then the body's own links, then the logo; unsubscribe the fewest
+                foreach (EmailHeatmap::links($t) as $k => $l) {
+                    $label = strtolower($l['label']);
                     $weights[$k] = match (true) {
-                        $k === 'cta' => 10, str_starts_with($k, 'body-') => 7, $k === 'logo' => 3, $k === 'footer-pay' => 4, $k === 'footer-unsubscribe' => 1, default => 2
+                        str_contains($label, 'my account') || str_contains($label, 'pay now') || str_contains($label, 'see my rewards') => 10,
+                        str_starts_with($k, 'body-') => 7, str_starts_with($k, 'header-') => 3, str_contains($label, 'pay') => 4, str_contains($label, 'unsubscribe') => 1, default => 2,
                     };
                 }
+            }
+            if (! $weights) {
+                continue;
             }
             $n = $log->clicked_at ? mt_rand(1, 3) : ($log->campaign_id ? mt_rand(0, 3) : (mt_rand(0, 2) === 0 ? 1 : 0));
             for ($k = 0; $k < $n; $k++) {
