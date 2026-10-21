@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Customer;
+use App\Models\Note;
 use App\Models\RangerAgent;
 use App\Models\SupportTicket;
 use App\Models\User;
@@ -74,9 +75,15 @@ class RangerSeeder extends Seeder
                 'status' => $state, 'priority' => $topic === 'outage' ? 'high' : ($n % 17 === 0 ? 'urgent' : ($n % 6 === 0 ? 'low' : 'normal')),
                 'assigned_to' => $owner?->id, 'created_at' => $opened, 'updated_at' => $opened, 'last_activity_at' => $opened]);
             $at = $opened->copy();
-            $msg = function (string $author, string $body, ?User $u = null, int $minutes = 0) use ($t, &$at) {
+            $msg = function (string $author, string $body, ?User $u = null, int $minutes = 0, string $priority = 'Low') use ($t, &$at) {
                 $at = $at->copy()->addMinutes($minutes);
-                $t->messages()->create(['author' => $author, 'body' => $body, 'user_id' => $u?->id, 'created_at' => $at]);
+                if ($author === 'note') {
+                    // Internal notes are account notes (category Ticket) linked to the ticket
+                    Note::create(['customer_id' => $t->customer_id, 'user_id' => $u->id, 'author' => $u->name, 'category' => 'Ticket', 'action' => 'Internal Note',
+                        'disposition' => $t->number(), 'priority' => $priority, 'body' => $body, 'support_ticket_id' => $t->id, 'created_at' => $at, 'updated_at' => $at]);
+                } else {
+                    $t->messages()->create(['author' => $author, 'body' => $body, 'user_id' => $u?->id, 'created_at' => $at]);
+                }
             };
             $msg('customer', $ask);
             if ($owner) {
@@ -92,13 +99,19 @@ class RangerSeeder extends Seeder
                     $m = $managers->firstWhere('team', $pool[0]->team) ?? $managers->first();
                     $t->watchers()->attach($m->user_id, ['joined_at' => $at->copy()->addMinutes(10)]);
                     $msg('system', $m->user->name.' joined in.', $m->user, 10);
-                    $msg('note', 'Looks right to me. If they push back, offer the deferred payment plan.', $m->user, 5);
+                    $msg('note', 'Looks right to me. If they push back, offer the deferred payment plan.', $m->user, 5, 'Medium');
                 } elseif ($n % 23 === 4 && $managers->isNotEmpty()) {
                     $m = $managers->first();
                     $t->watchers()->attach($owner->id, ['joined_at' => $at->copy()->addMinutes(15)]);
                     $msg('system', $m->user->name.' took over this ticket from '.$owner->name.'.', $m->user, 15);
                     $t->forceFill(['assigned_to' => $m->user_id])->save();
                     $owner = $m->user;
+                }
+                // A few open tickets where the agent asked for a manager
+                if (in_array($n, [9, 13, 19, 22], true) && RangerAgent::where('user_id', $owner->id)->value('level') !== 'manager') {
+                    $why = ['Customer is upset and wants to talk to a manager.', 'Not sure I can approve this; need a manager to OK it.', null, 'Second time they wrote in about this.'][$n % 4];
+                    $msg('system', $owner->name.' asked for a manager'.($why ? ': '.$why : '.'), $owner, 4);
+                    $t->forceFill(['manager_requested_at' => $at, 'manager_requested_by' => $owner->id, 'manager_request_note' => $why])->save();
                 }
                 if ($followUp && $state !== 'waiting') {
                     $msg('customer', $followUp, null, mt_rand(30, 600));

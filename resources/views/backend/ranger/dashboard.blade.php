@@ -12,11 +12,19 @@
     </div>
 
     <div class="grid-3">
-        <div class="panel"><div class="panel-head"><h2>Approval — Everyone</h2></div><div class="panel-body approval-big">@include('backend.ranger._approval', ['a' => $overall])</div></div>
-        @foreach ($teams as $team => $a)
-            <a class="panel panel-link" href="{{ route('ranger.team', ['team' => $team]) }}"><div class="panel-head"><h2>Approval — {{ $a['label'] }}</h2></div><div class="panel-body approval-big">@include('backend.ranger._approval', ['a' => $a])</div></a>
-        @endforeach
+        @include('backend.ranger._approval-card', ['title' => 'Approval — Everyone', 'a' => $overall, 'note' => 'last 30 days'])
+        @foreach ($teams as $team => $a)@include('backend.ranger._approval-card', ['title' => 'Approval — '.$a['label'], 'a' => $a, 'note' => 'last 30 days'])@endforeach
     </div>
+
+    @if ($manager)
+        <div class="panel"><div class="panel-head"><h2>Manager Requests</h2><span class="muted">agents asking for a manager's help</span></div><div class="table-wrap"><table data-page="10">
+            <thead><tr><th>Ticket</th><th>Subject</th><th>Asked By</th><th>Why</th><th>Asked</th></tr></thead>
+            <tbody>@forelse ($managerRequests as $t)
+                <tr class="click" data-href="{{ route('ranger.tickets.show', $t) }}"><td><a class="mono" href="{{ route('ranger.tickets.show', $t) }}">{{ $t->number() }}</a></td><td class="wrap">{{ $t->subject }}</td>
+                    <td>{{ $t->managerRequester?->name ?? '—' }}</td><td class="wrap">{{ $t->manager_request_note ?? '—' }}</td><td class="nowrap">{{ $t->manager_requested_at->diffForHumans() }}</td></tr>
+            @empty <tr><td colspan="5" class="empty">Nobody needs a manager right now.</td></tr> @endforelse</tbody>
+        </table></div></div>
+    @endif
 
     <div class="grid-2" style="align-items:start">
         <div class="panel"><div class="panel-head"><h2>My Tickets</h2><a class="btn sm ghost" href="{{ route('ranger.tickets', ['view' => 'mine']) }}">All Mine</a></div><div class="table-wrap"><table>
@@ -33,7 +41,7 @@
         <thead><tr><th>Rated</th><th>Ticket</th><th>Rating</th><th>What They Said</th><th>Handled By</th></tr></thead>
         <tbody>@forelse ($recentRatings as $t)
             <tr class="click" data-href="{{ route('ranger.tickets.show', $t) }}"><td class="nowrap">{{ $t->rated_at->format('n/j g:i A') }}</td><td><a class="mono" href="{{ route('ranger.tickets.show', $t) }}">{{ $t->number() }}</a></td>
-                <td>{{ $t->rating === 'good' ? '👍 Good' : '👎 Bad' }}</td><td class="wrap">{{ $t->rating_comment ?? '—' }}</td><td>{{ $t->assignee?->name ?? '—' }}</td></tr>
+                <td>{{ $t->rating === 'good' ? '👍 Helped' : '👎 Didn\'t help' }}</td><td class="wrap">{{ $t->rating_comment ?? '—' }}</td><td>{{ $t->assignee?->name ?? '—' }}</td></tr>
         @empty <tr><td colspan="5" class="empty">No ratings yet.</td></tr> @endforelse</tbody>
     </table></div></div>
 @endsection

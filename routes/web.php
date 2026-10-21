@@ -345,8 +345,11 @@ Route::prefix('admin')->group(function () {
             Route::post('tickets/{ticket}/take-over', [Backend\Ranger\TicketController::class, 'takeOver'])->name('tickets.take-over');
             Route::post('tickets/{ticket}/join', [Backend\Ranger\TicketController::class, 'join'])->name('tickets.join');
             Route::post('tickets/{ticket}/leave', [Backend\Ranger\TicketController::class, 'leave'])->name('tickets.leave');
+            Route::post('tickets/{ticket}/ask-manager', [Backend\Ranger\TicketController::class, 'askManager'])->name('tickets.ask-manager');
+            Route::post('tickets/{ticket}/cancel-manager', [Backend\Ranger\TicketController::class, 'cancelManager'])->name('tickets.cancel-manager');
             Route::get('team', [Backend\Ranger\TeamController::class, 'index'])->name('team');
             Route::get('team/add', [Backend\Ranger\TeamController::class, 'create'])->name('team.create');
+            Route::get('team/{agent}', [Backend\Ranger\TeamController::class, 'show'])->whereNumber('agent')->name('team.show');
             Route::post('team', [Backend\Ranger\TeamController::class, 'store'])->name('team.store');
             Route::patch('team/{agent}', [Backend\Ranger\TeamController::class, 'update'])->name('team.update');
             Route::get('satisfaction', [Backend\Ranger\TeamController::class, 'satisfaction'])->name('satisfaction');

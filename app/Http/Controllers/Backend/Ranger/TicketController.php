@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Backend\Ranger;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\RangerAgent;
 use App\Models\SupportTicket;
 use App\Models\User;
@@ -35,6 +36,7 @@ class TicketController extends Controller
             'mine' => SupportTicket::active()->where('assigned_to', $request->user()->id)->with('customer')->orderByRaw($this->urgency())->limit(10)->get(),
             'waitingLongest' => SupportTicket::active()->whereNull('assigned_to')->with('customer')->oldest()->limit(10)->get(),
             'recentRatings' => SupportTicket::whereNotNull('rated_at')->with('assignee')->latest('rated_at')->limit(8)->get(),
+            'managerRequests' => SupportTicket::active()->whereNotNull('manager_requested_at')->with(['customer', 'managerRequester'])->oldest('manager_requested_at')->get(),
             'manager' => RangerAgent::isManager($request->user()),
         ]);
     }
@@ -42,7 +44,8 @@ class TicketController extends Controller
     public function index(Request $request): View
     {
         $f = $request->validate([
-            'view' => ['nullable', 'in:active,mine,unassigned,watching,done,all'],
+            'view' => ['nullable', 'in:active,mine,unassigned,manager,watching,done,all'],
+            'customer' => ['nullable', 'integer'],
             'status' => ['nullable', Rule::in(array_keys(SupportTicket::STATUSES))],
             'team' => ['nullable', Rule::in(array_keys(RangerAgent::TEAMS))],
             'owner' => ['nullable', 'integer'],
@@ -56,6 +59,8 @@ class TicketController extends Controller
             ->when($view === 'active', fn ($x) => $x->active())
             ->when($view === 'mine', fn ($x) => $x->active()->where('assigned_to', $me->id))
             ->when($view === 'unassigned', fn ($x) => $x->active()->whereNull('assigned_to'))
+            ->when($view === 'manager', fn ($x) => $x->active()->whereNotNull('manager_requested_at'))
+            ->when($f['customer'] ?? null, fn ($x, $c) => $x->where('customer_id', $c))
             ->when($view === 'watching', fn ($x) => $x->whereHas('watchers', fn ($w) => $w->where('users.id', $me->id)))
             ->when($view === 'done', fn ($x) => $x->whereIn('status', ['solved', 'closed']))
             ->when($f['status'] ?? null, fn ($x, $s) => $x->where('status', $s))
@@ -66,31 +71,37 @@ class TicketController extends Controller
             ->orderByRaw(in_array($view, ['done', 'all'], true) ? 'coalesce(last_activity_at, created_at) desc' : $this->urgency())
             ->paginate(25)->withQueryString();
 
-        return view('backend.ranger.tickets', ['tickets' => $tickets, 'f' => $f, 'view' => $view, 'owner' => isset($f['owner']) ? User::find($f['owner']) : null, 'counts' => [
-            'active' => SupportTicket::active()->count(), 'mine' => SupportTicket::active()->where('assigned_to', $me->id)->count(),
-            'unassigned' => SupportTicket::active()->whereNull('assigned_to')->count(),
-            'watching' => SupportTicket::whereHas('watchers', fn ($w) => $w->where('users.id', $me->id))->count(),
-            'done' => SupportTicket::whereIn('status', ['solved', 'closed'])->count(), 'all' => SupportTicket::count(),
-        ]]);
+        return view('backend.ranger.tickets', ['tickets' => $tickets, 'f' => $f, 'view' => $view, 'owner' => isset($f['owner']) ? User::find($f['owner']) : null,
+            'customer' => isset($f['customer']) ? Customer::find($f['customer']) : null, 'manager' => RangerAgent::isManager($me), 'counts' => [
+                'active' => SupportTicket::active()->count(), 'mine' => SupportTicket::active()->where('assigned_to', $me->id)->count(),
+                'unassigned' => SupportTicket::active()->whereNull('assigned_to')->count(),
+                'manager' => SupportTicket::active()->whereNotNull('manager_requested_at')->count(),
+                'watching' => SupportTicket::whereHas('watchers', fn ($w) => $w->where('users.id', $me->id))->count(),
+                'done' => SupportTicket::whereIn('status', ['solved', 'closed'])->count(), 'all' => SupportTicket::count(),
+            ]]);
     }
 
     public function show(Request $request, SupportTicket $ticket): View
     {
-        $ticket->load(['customer.plan', 'assignee', 'watchers', 'messages.user']);
+        $ticket->load(['customer.plan', 'assignee', 'watchers', 'messages.user', 'notes.user', 'managerRequester']);
 
         return view('backend.ranger.ticket', ['t' => $ticket, 'manager' => RangerAgent::isManager($request->user()),
             'agents' => RangerAgent::with('user')->where('active', true)->get()->sortBy('user.name')->values(),
             'agentOf' => RangerAgent::whereIn('user_id', array_filter([$ticket->assigned_to, ...$ticket->watchers->pluck('id')]))->get()->keyBy('user_id'),
-            'others' => $ticket->customer_id ? SupportTicket::where('customer_id', $ticket->customer_id)->where('id', '!=', $ticket->id)->latest()->limit(8)->get() : collect()]);
+            'history' => $ticket->customer_id ? SupportTicket::where('customer_id', $ticket->customer_id)->count() : 0]);
     }
 
     /** A reply (the customer sees it) or an internal note (staff only), and optionally a new status. */
     public function reply(Request $request, SupportTicket $ticket): RedirectResponse
     {
         $data = $request->validate(['body' => ['required', 'string', 'max:5000'], 'kind' => ['required', 'in:agent,note'],
-            'status' => ['nullable', Rule::in(['open', 'waiting', 'solved'])]]);
+            'priority' => ['nullable', Rule::in(config('corral.priorities'))], 'status' => ['nullable', Rule::in(['open', 'waiting', 'solved'])]]);
         $this->mayWork($request, $ticket);
-        $ticket->post($data['kind'], $data['body'], $request->user());
+        if ($data['kind'] === 'note') {
+            $ticket->addNote($data['body'], $request->user(), $data['priority'] ?? null);
+        } else {
+            $ticket->post('agent', $data['body'], $request->user());
+        }
         if (! $ticket->assigned_to) {
             $ticket->update(['assigned_to' => $request->user()->id]);   // whoever answers first owns it
         }
@@ -98,7 +109,7 @@ class TicketController extends Controller
             $ticket->update(['status' => $status, 'solved_at' => $status === 'solved' ? now() : null]);
         }
 
-        return back()->with('status', $data['kind'] === 'note' ? 'Internal note added' : 'Reply sent'.(isset($status) ? ' · '.SupportTicket::STATUSES[$status][0] : ''));
+        return back()->with('status', $data['kind'] === 'note' ? 'Internal note added (it\'s on the customer\'s account notes too)' : 'Reply sent'.(isset($status) ? ' · '.SupportTicket::STATUSES[$status][0] : ''));
     }
 
     /** Status, priority or assignee. */
@@ -143,7 +154,7 @@ class TicketController extends Controller
         }
         $ticket->watchers()->detach($me->id);
         $from = $ticket->assignee?->name;
-        $ticket->update(['assigned_to' => $me->id, 'status' => $ticket->status === 'new' ? 'open' : $ticket->status]);
+        $ticket->update(['assigned_to' => $me->id, 'status' => $ticket->status === 'new' ? 'open' : $ticket->status, 'manager_requested_at' => null]);
         $ticket->post('system', $me->name.' took over this ticket'.($from && $from !== $me->name ? ' from '.$from : '').'.', $me);
 
         return back()->with('status', 'You took over '.$ticket->number().'.');
@@ -158,8 +169,29 @@ class TicketController extends Controller
             $ticket->watchers()->syncWithoutDetaching([$me->id => ['joined_at' => now()]]);
             $ticket->post('system', $me->name.' joined in.', $me);
         }
+        $ticket->update(['manager_requested_at' => null]);   // a manager is on it
 
         return back()->with('status', 'You joined '.$ticket->number().'. You can reply and add notes alongside '.($ticket->assignee?->name ?? 'the team').'.');
+    }
+
+    /** Agents: ask a manager to help (they see it on the dashboard and under Manager Requests). */
+    public function askManager(Request $request, SupportTicket $ticket): RedirectResponse
+    {
+        $this->mayWork($request, $ticket);
+        $data = $request->validate(['reason' => ['nullable', 'string', 'max:500']]);
+        $ticket->update(['manager_requested_at' => now(), 'manager_requested_by' => $request->user()->id, 'manager_request_note' => $data['reason'] ?? null]);
+        $ticket->post('system', $request->user()->name.' asked for a manager'.(! empty($data['reason']) ? ': '.$data['reason'] : '.'), $request->user());
+
+        return back()->with('status', 'A manager has been asked to help on '.$ticket->number().'.');
+    }
+
+    public function cancelManager(Request $request, SupportTicket $ticket): RedirectResponse
+    {
+        $this->mayWork($request, $ticket);
+        $ticket->update(['manager_requested_at' => null]);
+        $ticket->post('system', $request->user()->name.' no longer needs a manager.', $request->user());
+
+        return back()->with('status', 'Manager request cancelled.');
     }
 
     public function leave(Request $request, SupportTicket $ticket): RedirectResponse

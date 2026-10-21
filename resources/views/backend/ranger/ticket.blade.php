@@ -31,16 +31,23 @@
 
     <div class="grid-2" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr);align-items:start">
         <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
-            <div class="panel"><div class="panel-head"><h2>Conversation</h2><span class="muted">{{ $t->messages->where('author', '!=', 'system')->count() }} messages</span></div>
+            @if ($t->manager_requested_at)
+                <div class="alert warn"><b>{{ $t->managerRequester?->name ?? 'Someone' }} asked for a manager</b> {{ $t->manager_requested_at->diffForHumans() }}@if ($t->manager_request_note): “{{ $t->manager_request_note }}”@endif
+                    @if (! $manager && $canWork)<form method="post" action="{{ route('ranger.tickets.cancel-manager', $t) }}" class="inline">@csrf<button class="btn sm ghost">No Longer Needed</button></form>@endif</div>
+            @endif
+
+            @php $thread = $t->thread(); @endphp
+            <div class="panel"><div class="panel-head"><h2>Conversation</h2><span class="muted">{{ $thread->where('kind', '!=', 'system')->count() }} messages</span></div>
                 <div class="panel-body rt-thread">
-                    @foreach ($t->messages as $m)
-                        @if ($m->author === 'system')
-                            <p class="rt-system">{{ $m->body }} <span>{{ $m->created_at->format('n/j g:i A') }}</span></p>
+                    @foreach ($thread as $m)
+                        @if ($m->kind === 'system')
+                            <p class="rt-system">{{ $m->body }} <span>{{ $m->at->format('n/j g:i A') }}</span></p>
                         @else
-                            <div class="rt-msg rt-{{ $m->author }}">
-                                <div class="rt-who"><b>{{ $m->author === 'customer' ? $t->name : ($m->user?->name ?? 'Support') }}</b>
-                                    @if ($m->author === 'note')<span class="pill warn">Internal note</span>@elseif ($m->author === 'agent' && $team($m->user_id))<span class="help">{{ $team($m->user_id) }}</span>@endif
-                                    <span class="help">{{ $m->created_at->format('n/j/Y g:i A') }}</span></div>
+                            <div class="rt-msg rt-{{ $m->kind }}">
+                                <div class="rt-who"><b>{{ $m->kind === 'customer' ? $t->name : ($m->user?->name ?? 'Support') }}</b>
+                                    @if ($m->kind === 'note')<span class="pill warn">Internal note</span>@if ($m->priority)@include('backend.partials.pill', ['text' => $m->priority.' priority', 'tone' => ['High' => 'bad', 'Medium' => 'warn'][$m->priority] ?? ''])@endif<span class="help">on the account's notes</span>
+                                    @elseif ($m->kind === 'agent' && $team($m->user?->id))<span class="help">{{ $team($m->user->id) }}</span>@endif
+                                    <span class="help">{{ $m->at->format('n/j/Y g:i A') }}</span></div>
                                 <div class="rt-body">{!! nl2br(e($m->body)) !!}</div>
                             </div>
                         @endif
@@ -54,6 +61,8 @@
                         <div class="chips small"><label><input type="radio" name="kind" value="agent" checked><span>Reply to customer</span></label><label><input type="radio" name="kind" value="note"><span>Internal note</span></label></div></div>
                     <div class="panel-body" style="display:flex;flex-direction:column;gap:12px">
                         <textarea name="body" required maxlength="5000" style="min-height:120px" aria-label="Message" placeholder="Hi {{ \Illuminate\Support\Str::before($t->name, ' ') }}, …"></textarea>
+                        <div class="field rt-note-only"><label>Note priority</label><div class="chips small">@foreach (config('corral.priorities') as $pr)<label><input type="radio" name="priority" value="{{ $pr }}" @checked($loop->first)><span>{{ $pr }}</span></label>@endforeach</div>
+                            <span class="help">Internal notes are saved as account notes (category Ticket) on {{ $t->customer ? 'account '.$t->customer->account : 'the ticket' }}.</span></div>
                         <div class="field"><label>Then set the ticket to</label><div class="chips small"><label><input type="radio" name="status" value="" checked><span>Leave as is</span></label>
                             <label><input type="radio" name="status" value="waiting"><span>Waiting on Customer</span></label><label><input type="radio" name="status" value="solved"><span>Solved</span></label></div></div>
                         <div><button class="btn cyan">Send</button> <span class="help">Replies show in the customer's My Account; internal notes never do.</span></div>
@@ -71,7 +80,7 @@
                     <dt>Joined</dt><dd>@forelse ($t->watchers as $w){{ $w->name }}@if (! $loop->last), @endif @empty — @endforelse</dd>
                     <dt>First reply</dt><dd>{{ $t->first_response_at ? $t->created_at->diffForHumans($t->first_response_at, true).' later' : 'Not yet' }}</dd>
                     @if ($t->solved_at)<dt>Solved</dt><dd>{{ $t->solved_at->format('n/j/Y g:i A') }}</dd>@endif
-                    <dt>Rating</dt><dd>@if ($t->rating){{ $t->rating === 'good' ? '👍 Good' : '👎 Bad' }}@if ($t->rating_comment)<div class="help">“{{ $t->rating_comment }}”</div>@endif @else<span class="muted">{{ $t->isDone() ? 'Not rated yet' : 'Asked when solved' }}</span>@endif</dd>
+                    <dt>Rating</dt><dd>@if ($t->rating){{ $t->rating === 'good' ? '👍 Helped' : '👎 Didn\'t help' }}@if ($t->rating_comment)<div class="help">“{{ $t->rating_comment }}”</div>@endif @else<span class="muted">{{ $t->isDone() ? 'Not rated yet' : 'Asked when solved' }}</span>@endif</dd>
                 </dl>
             </div>
                 <form method="post" action="{{ route('ranger.tickets.update', $t) }}" class="panel-body" style="border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px">@csrf @method('patch')
@@ -86,9 +95,16 @@
                     @endif
                     <div><button class="btn">Save</button></div>
                 </form>
+                @if (! $manager && $canWork && ! $t->manager_requested_at && ! $t->isDone())
+                    <form method="post" action="{{ route('ranger.tickets.ask-manager', $t) }}" class="panel-body" style="border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px">@csrf
+                        <label for="rt-why"><b>Need help?</b> <span class="help">Managers assign tickets to other people, take over, or join in.</span></label>
+                        <input id="rt-why" name="reason" maxlength="500" placeholder="Why (optional), e.g. customer wants a refund over $100">
+                        <div><button class="btn cyan">Ask for a Manager</button></div>
+                    </form>
+                @endif
             </div>
 
-            <div class="panel"><div class="panel-head"><h2>Customer</h2></div><div class="panel-body"><dl class="kv">
+            <div class="panel"><div class="panel-head"><h2>Customer</h2>@if ($t->customer_id)<a class="btn sm ghost" href="{{ route('ranger.tickets', ['view' => 'all', 'customer' => $t->customer_id]) }}">Ticket History · {{ $history }}</a>@endif</div><div class="panel-body"><dl class="kv">
                 <dt>Name</dt><dd>{{ $t->name }}</dd>
                 <dt>Email</dt><dd>{{ $t->email }}</dd>
                 @if ($t->customer)
@@ -100,11 +116,6 @@
                 @endif
             </dl></div></div>
 
-            @if ($others->isNotEmpty())
-                <div class="panel"><div class="panel-head"><h2>Their Other Tickets</h2></div><div class="table-wrap"><table><tbody>
-                    @foreach ($others as $o)<tr class="click" data-href="{{ route('ranger.tickets.show', $o) }}"><td class="wrap"><a class="mono" href="{{ route('ranger.tickets.show', $o) }}">{{ $o->number() }}</a> {{ $o->subject }}<div class="help">{{ \App\Models\SupportTicket::STATUSES[$o->status][0] }} · {{ $o->created_at->format('n/j/Y') }}</div></td></tr>@endforeach
-                </tbody></table></div></div>
-            @endif
         </div>
     </div>
 @endsection

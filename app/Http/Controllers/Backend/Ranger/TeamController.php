@@ -81,6 +81,27 @@ class TeamController extends Controller
         return redirect()->route('ranger.team')->with('status', $user->name.' can now work tickets'.($data['who'] === 'new' ? '. Share the temporary password with them securely.' : '.'));
     }
 
+    /** One team member: who they are, their numbers, open tickets, approval by week and what customers said. */
+    public function show(Request $request, RangerAgent $agent): View
+    {
+        $agent->load(['user.role', 'adder']);
+        $mine = fn () => SupportTicket::where('assigned_to', $agent->user_id);
+        $approval = collect([30, 90, 365])->mapWithKeys(fn ($d) => [$d => SupportTicket::approval($mine()->where('rated_at', '>=', now()->subDays($d)))]);
+        $firstReply = $mine()->whereNotNull('first_response_at')->where('created_at', '>=', now()->subDays(90))->get(['created_at', 'first_response_at'])
+            ->avg(fn ($t) => $t->created_at->diffInMinutes($t->first_response_at));
+        $weeks = collect(range(11, 0))->map(function ($w) use ($mine) {
+            $from = now()->startOfWeek()->subWeeks($w);
+
+            return ['week' => $from] + SupportTicket::approval($mine()->whereBetween('rated_at', [$from, $from->copy()->endOfWeek()]));
+        });
+
+        return view('backend.ranger.team-show', ['agent' => $agent, 'approval' => $approval, 'firstReply' => $firstReply, 'weeks' => $weeks,
+            'open' => $mine()->active()->with('customer')->orderBy('created_at')->get(),
+            'solved' => $mine()->where('solved_at', '>=', now()->subDays(90))->count(),
+            'ratings' => $mine()->whereNotNull('rated_at')->latest('rated_at')->limit(30)->get(),
+            'manager' => RangerAgent::isManager($request->user())]);
+    }
+
     /** Managers: change someone's team or level, or take them off tickets. */
     public function update(Request $request, RangerAgent $agent): RedirectResponse
     {
@@ -116,6 +137,6 @@ class TeamController extends Controller
         });
 
         return view('backend.ranger.satisfaction', ['f' => $f, 'overall' => SupportTicket::approval($rated()), 'teams' => $teams, 'people' => $people, 'weeks' => $weeks,
-            'comments' => $rated()->whereNotNull('rating_comment')->with('assignee')->latest('rated_at')->paginate(15)->withQueryString()]);
+            'comments' => $rated()->whereNotNull('rating_comment')->with('assignee')->latest('rated_at')->paginate(10)->withQueryString()]);
     }
 }

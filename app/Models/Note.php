@@ -21,4 +21,10 @@ class Note extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /** The Ranger ticket this note was written on, if any (internal notes on tickets are account notes too). */
+    public function ticket(): BelongsTo
+    {
+        return $this->belongsTo(SupportTicket::class, 'support_ticket_id');
+    }
 }

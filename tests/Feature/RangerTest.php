@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Customer;
+use App\Models\Note;
 use App\Models\RangerAgent;
 use App\Models\SupportTicket;
 use App\Models\User;
@@ -30,7 +31,13 @@ class RangerTest extends TestCase
         }
         $this->get(route('ranger.tickets', ['q' => 'RT-10001']))->assertOk()->assertSee('RT-10001');
         $this->get(route('ranger.team'))->assertOk()->assertSee('Devon Supervisor')->assertSee('3rd Party');
-        $this->get(route('ranger.satisfaction'))->assertOk()->assertSee('By Team Member')->assertSee('Week by Week');
+        $this->get(route('ranger.satisfaction'))->assertOk()->assertSee('By Team Member')->assertSee('Week by Week')->assertSee('How Approval Works')->assertSee('👎');
+        // Unassigned is just the list: no search box
+        $this->get(route('ranger.tickets', ['view' => 'unassigned']))->assertSee('Unassigned Tickets')->assertDontSee('name="q"', false);
+        // Each team member has their own page
+        $agent = RangerAgent::where('level', 'agent')->firstOrFail();
+        $this->get(route('ranger.team'))->assertSee(route('ranger.team.show', $agent));
+        $this->get(route('ranger.team.show', $agent))->assertOk()->assertSee($agent->user->name)->assertSee('Approval by Week')->assertSee('Open Tickets');
         // Ranger is for support staff: pricing can't open it
         $this->actingAs($this->user('pricing@example.com'))->get(route('ranger.dashboard'))->assertRedirect();
     }
@@ -47,7 +54,12 @@ class RangerTest extends TestCase
         // An agent answers: the reply shows in My Account, the internal note doesn't; answering first makes it theirs
         $csr = $this->user('csr@example.com');
         $this->actingAs($csr, 'web')->get(route('ranger.tickets', ['view' => 'unassigned']))->assertSee('Test question about my bill');
-        $this->post(route('ranger.tickets.reply', $t), ['kind' => 'note', 'body' => 'SECRET internal note'])->assertRedirect();
+        $this->post(route('ranger.tickets.reply', $t), ['kind' => 'note', 'body' => 'SECRET internal note', 'priority' => 'High'])->assertRedirect();
+        // An internal note is an account note on the customer, linked to the ticket
+        $note = Note::where('support_ticket_id', $t->id)->firstOrFail();
+        $this->assertSame([$c->id, 'Ticket', 'High', $t->number()], [$note->customer_id, $note->category, $note->priority, $note->disposition]);
+        $this->get(route('ranger.tickets.show', $t))->assertSee('SECRET internal note')->assertSee('Ticket History');
+        $this->get(route('corral.customers.show', $c))->assertSee('SECRET internal note');
         $this->post(route('ranger.tickets.reply', $t), ['kind' => 'agent', 'body' => 'Your usage went up in the heat wave.', 'status' => 'solved'])->assertRedirect();
         $t->refresh();
         $this->assertSame([$csr->id, 'solved'], [$t->assigned_to, $t->status]);
@@ -77,12 +89,23 @@ class RangerTest extends TestCase
         $this->post(route('ranger.tickets.reply', $t), ['kind' => 'agent', 'body' => 'x'])->assertForbidden();
         $this->post(route('ranger.tickets.take-over', $t))->assertForbidden();
         $this->post(route('ranger.tickets.join', $t))->assertForbidden();
+        $this->post(route('ranger.tickets.ask-manager', $t))->assertForbidden();
+
+        // The owner can't assign it to someone else but can ask for a manager
+        $this->actingAs($owner);
+        $this->get(route('ranger.tickets.show', $t))->assertSee('Ask for a Manager')->assertDontSee('Assign to');
+        $this->post(route('ranger.tickets.ask-manager', $t), ['reason' => 'Wants a big refund'])->assertRedirect();
+        $this->assertNotNull($t->fresh()->manager_requested_at);
+        $this->actingAs($this->user('lead@example.com'));
+        $this->get(route('ranger.dashboard'))->assertSee('Wants a big refund');
+        $this->get(route('ranger.tickets', ['view' => 'manager']))->assertSee($t->number());
 
         // A manager joins in (and can reply), then takes over; the agent stays on as a watcher
         $lead = $this->user('lead@example.com');
         $this->actingAs($lead);
         $this->get(route('ranger.tickets.show', $t))->assertSee('Take Over')->assertSee('Join In');
         $this->post(route('ranger.tickets.join', $t))->assertRedirect();
+        $this->assertNull($t->fresh()->manager_requested_at);
         $this->assertTrue($t->watchers()->where('users.id', $lead->id)->exists());
         $this->post(route('ranger.tickets.reply', $t), ['kind' => 'agent', 'body' => 'Manager here, helping out.'])->assertRedirect();
         $this->assertSame($owner->id, $t->fresh()->assigned_to);

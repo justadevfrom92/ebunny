@@ -300,7 +300,9 @@ table.hist td { white-space: normal; }
 .alert { border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; border: 1px solid transparent; }
 .alert.bad { background: var(--bad-bg); color: var(--bad); border-color: #f5c2c5; }
 .alert.info { background: var(--info-bg); color: var(--navy); border-color: #b7e6f8; }
+.alert.warn { background: var(--warn-bg); color: var(--ink); border-color: var(--warn); }
 .alert b { margin-right: 6px; }
+.stat.alert { padding: 16px 18px; margin-bottom: 0; border-color: var(--line); }
 .row-line { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .row-line:last-of-type { border-bottom: 0; }
 .count-pill { display: inline-block; min-width: 22px; padding: 0 7px; margin-left: 6px; border-radius: 10px; background: var(--cyan); color: #fff; font-size: .72rem; text-align: center; }
@@ -760,3 +762,16 @@ tr.edit-row > td { background: var(--row); white-space: normal; }
 .date-edit .field { min-width: 200px; }
 .pager button.btn[disabled] { opacity: .45; cursor: default; }
 .date-edit input, .date-edit input[type=text] { width: 100%; text-align: left; }
+form:not(:has(input[name="kind"][value="note"]:checked)) .rt-note-only { display: none; }
+/* Approval: % with a green (👍) / red (👎) split bar and the two counts */
+.ap { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ap-split { display: inline-flex; width: 90px; height: 8px; border-radius: 4px; overflow: hidden; background: var(--bad); }
+.ap-split span { background: var(--ok); }
+.ap-n { font-size: .8rem; color: var(--muted); white-space: nowrap; }
+.ap-card { display: flex; flex-direction: column; gap: 8px; }
+.ap-card .approval { font-size: 2.2rem; line-height: 1; }
+.ap-card .ap-split { width: 100%; height: 12px; border-radius: 6px; }
+.ap-card .ap-legend { display: flex; justify-content: space-between; font-size: .85rem; }
+.ap-explain { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.ap-explain div { background: var(--row); border-radius: 8px; padding: 10px 12px; font-size: .88rem; }
+.ap-explain b { display: block; margin-bottom: 2px; }
