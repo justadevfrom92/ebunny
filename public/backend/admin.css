@@ -749,3 +749,14 @@ tr.row-new td { background: var(--info-bg); }
 .rt-system span { opacity: .7; margin-left: 6px; }
 .file-text { white-space: pre-wrap; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .82rem; max-height: 520px; overflow: auto; margin: 0; background: var(--row); padding: 12px; border-radius: 6px; }
 .file-frame { width: 100%; height: 640px; border: 0; display: block; }
+
+/* Corral account → Balances: pending credits and debits side by side */
+.pending-split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.pending-split > div { min-width: 0; }
+@media (max-width: 480px) { .pending-split { grid-template-columns: 1fr; } }
+/* Edit rows under a table row (e.g. Address Change Log → Change Dates) */
+tr.edit-row > td { background: var(--row); white-space: normal; }
+.date-edit { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-end; }
+.date-edit .field { min-width: 200px; }
+.pager button.btn[disabled] { opacity: .45; cursor: default; }
+.date-edit input, .date-edit input[type=text] { width: 100%; text-align: left; }

@@ -327,6 +327,65 @@
       if (saved === 'timeline') showView('timeline');
     }
 
+    // Long tables: <table data-page="10"> shows 10 rows at a time with a ‹ 1 2 3 › pager under it.
+    // Rows marked data-attached (an edit row under its row) stay with the row above them.
+    // Any other table with more than 10 rows pages the same way, unless it already has a server pager,
+    // is an edit grid (inputs in its rows), a pick list, a live-filtered list, or says data-page="0".
+    $$('.table-wrap > table:not([data-page])').forEach(function (table) {
+      var wrap = table.parentElement;
+      if (wrap.classList.contains('pick-list') || wrap.closest('.pick-list')) return;
+      if (wrap.nextElementSibling && wrap.nextElementSibling.matches('nav.pager')) return;
+      if (wrap.parentElement && wrap.parentElement.querySelector(':scope > nav.pager, :scope > .pager')) return;
+      if (table.querySelector('tbody input:not([type=hidden]), tbody select, tbody textarea, [data-filter-row]')) return;
+      table.dataset.page = '10';
+    });
+    $$('table[data-page]').forEach(function (table) {
+      var size = +table.dataset.page, body = table.tBodies[0];
+      if (!size || !body) return;
+      var groups = [];
+      Array.prototype.forEach.call(body.rows, function (tr) {
+        if (tr.hasAttribute('data-attached') && groups.length) groups[groups.length - 1].push(tr); else groups.push([tr]);
+      });
+      if (groups.length <= size) return;
+      var pages = Math.ceil(groups.length / size), nav = document.createElement('nav');
+      nav.className = 'pager'; nav.setAttribute('aria-label', 'Pages');
+      (table.closest('.table-wrap') || table).insertAdjacentElement('afterend', nav);
+      function show(page) {
+        groups.forEach(function (g, i) {
+          var on = Math.floor(i / size) === page - 1;
+          // The row itself shows on its page; an attached edit row only if it was opened
+          g.forEach(function (tr, j) { tr.hidden = !on || (j > 0 && !tr.classList.contains('open')); });
+        });
+        var nums = [1, pages], h = '';
+        for (var n = page - 2; n <= page + 2; n++) if (n > 1 && n < pages) nums.push(n);
+        nums = nums.filter(function (v, i, a) { return a.indexOf(v) === i; }).sort(function (a, b) { return a - b; });
+        h += '<button type="button" class="btn sm ghost" data-p="' + (page - 1) + '"' + (page === 1 ? ' disabled aria-disabled="true"' : '') + ' aria-label="Previous page">‹</button>';
+        nums.forEach(function (n, i) {
+          if (i && n - nums[i - 1] > 1) h += '<span class="muted">…</span>';
+          h += n === page ? '<span class="btn sm on" aria-current="page">' + n + '</span>' : '<button type="button" class="btn sm ghost" data-p="' + n + '">' + n + '</button>';
+        });
+        h += '<button type="button" class="btn sm ghost" data-p="' + (page + 1) + '"' + (page === pages ? ' disabled aria-disabled="true"' : '') + ' aria-label="Next page">›</button>';
+        var from = (page - 1) * size + 1, to = Math.min(page * size, groups.length);
+        h += '<span class="muted pager-of">' + from + '–' + to + ' of ' + groups.length + '</span>';
+        nav.innerHTML = h;
+      }
+      nav.addEventListener('click', function (e) { var b = e.target.closest('[data-p]'); if (b && !b.disabled) show(+b.dataset.p); });
+      show(1);
+    });
+
+    // A button that opens (or closes) the edit row right under its row
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-toggle-row]');
+      if (!b) return;
+      var tr = b.closest('tr'), edit = tr.hasAttribute('data-attached') ? tr : tr.nextElementSibling, opener = edit && edit.previousElementSibling;
+      if (!edit || !edit.hasAttribute('data-attached')) return;
+      var open = edit.hidden;
+      edit.hidden = !open; edit.classList.toggle('open', open);
+      var toggle = opener && opener.querySelector('[data-toggle-row]');
+      if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) { var f = edit.querySelector('input:not([type=hidden])'); if (f) f.focus(); } else if (toggle) toggle.focus();
+    });
+
     // A select that shows its form's extra input only for one choice
     $$('select[data-reveal-when]').forEach(function (s) {
       var input = $('input:not([type=hidden])', s.form);

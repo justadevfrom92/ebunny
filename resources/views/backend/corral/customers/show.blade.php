@@ -49,19 +49,15 @@
                 <a class="btn sm" href="{{ route('corral.customers.action', [$c, 'make-payment']) }}">Make Payment</a>
                 <a class="btn sm ghost" href="{{ route('corral.customers.action', [$c, 'add-bill-credit']) }}">Add Credit</a>
             </div>
+            <div class="pending-split">
             @foreach (['credit' => 'Pending Credits', 'debit' => 'Pending Debits'] as $kind => $heading)
-                <h3>{{ $heading }}</h3>
+                <div><h3>{{ $heading }}</h3>
                 @forelse ($pending->where('kind', $kind) as $e)
                     <div class="row-line"><span>{{ $money($e->amount) }} — {{ $e->description }}</span>
                         <form method="post" action="{{ route('corral.ledger.delete', $e) }}" class="inline" data-confirm="Delete this pending {{ $kind }}?|{{ $money($e->amount) }} — {{ $e->description }}|Delete">@csrf @method('delete')<button class="link-btn">[ delete ]</button></form></div>
                 @empty <p class="help">None</p> @endforelse
+                </div>
             @endforeach
-            @php $recentBalance = \App\Http\Controllers\Backend\Corral\PanelLogController::balanceRows($c)->take(10); @endphp
-            <h3 style="margin-top:12px">Last 10</h3>
-            <div class="mini-scroll">
-            @forelse ($recentBalance as $r)
-                <div class="row-line"><span>{{ $r['type'] }} {{ $money($r['amount']) }}<br><span class="help">{{ $r['at']?->format('n/j/Y') }} · {{ $r['status'] }}</span></span></div>
-            @empty <p class="help">No credits, debits or payments yet.</p> @endforelse
             </div>
         </div></div>
 
@@ -196,7 +192,7 @@
         <form method="post" action="{{ route('corral.customers.files.upload', $c) }}" enctype="multipart/form-data" class="form-row" style="margin-bottom:12px">@csrf
             <input type="file" name="file" required aria-label="File to upload"><button class="btn sm">Upload</button><span class="help">PDF, image, text or Word, up to 10 MB.</span>
         </form>
-        <div class="table-wrap" style="max-height:320px;overflow-y:auto"><table><tbody>@foreach ($c->files->sortByDesc('created_at') as $f)
+        <div class="table-wrap"><table data-page="10"><tbody>@foreach ($c->files->sortByDesc('created_at') as $f)
             <tr class="click" data-href="{{ route('corral.files.show', $f) }}"><td style="width:18ch">{{ $f->created_at->format('n/j/Y g:i A') }}</td>
                 <td><a href="{{ route('corral.files.show', $f) }}">{{ $f->name }}</a></td>
                 <td class="muted">{{ strtoupper($f->kind) }}</td></tr>
@@ -216,17 +212,24 @@
             <textarea name="body" required placeholder="New note" aria-label="New note" style="min-height:70px"></textarea>
             <div><button class="btn">Add Note</button></div>
         </form>
-        @forelse ($c->notes as $n)
-            <div class="note"><small>{{ $n->author }} · {{ $n->created_at->format('n/j/Y g:i A') }}@if ($n->category) · {{ $n->category }}@endif @if ($n->action) · {{ $n->action }}@endif @if ($n->priority) · @include('backend.partials.pill', ['text' => $n->priority, 'tone' => ['High' => 'bad', 'Medium' => 'warn'][$n->priority] ?? ''])@endif</small>{{ $n->body }}</div>
-        @empty <p class="muted">No notes yet.</p> @endforelse
-    </div></div>
+    </div>
+        <div class="table-wrap"><table data-page="10">
+            <thead><tr><th>Date</th><th>By</th><th>Category / Action</th><th>Priority</th><th>Note</th></tr></thead>
+            <tbody>@forelse ($c->notes as $n)
+                <tr><td class="nowrap">{{ $n->created_at->format('n/j/Y g:i A') }}</td><td>{{ $n->author ?? 'System' }}</td>
+                    <td>{{ $n->category ?? '—' }}@if ($n->action)<div class="help">{{ $n->action }}</div>@endif</td>
+                    <td>@if ($n->priority)@include('backend.partials.pill', ['text' => $n->priority, 'tone' => ['High' => 'bad', 'Medium' => 'warn'][$n->priority] ?? ''])@else — @endif</td>
+                    <td class="wrap" style="min-width:280px">{{ $n->body }}</td></tr>
+            @empty <tr><td colspan="5" class="empty">No notes yet.</td></tr> @endforelse</tbody>
+        </table></div>
+    </div>
 
     {{-- Phone calls and text messages with this customer --}}
     <div class="grid-2" id="calls" style="align-items:start">
         <div class="panel"><div class="panel-head"><h2>Phone Calls ({{ $calls->count() }})</h2><span class="actions"><a class="btn sm ghost" href="{{ route('corral.calls', ['account' => $c->account]) }}">All Calls</a><a class="btn sm cyan" href="{{ route('corral.contacts.create', ['account' => $c->account]) }}">New Contact</a></span></div>
-            <div class="table-wrap"><table>
+            <div class="table-wrap"><table data-page="10">
                 <thead><tr><th>Called</th><th>Issue</th><th class="num">Duration</th><th>Answered By</th><th>Resolution</th></tr></thead>
-                <tbody>@forelse ($calls->take(10) as $p)
+                <tbody>@forelse ($calls as $p)
                     <tr class="click" data-href="{{ route('corral.calls.transcript', $p) }}"><td class="nowrap"><a href="{{ route('corral.calls.transcript', $p) }}">{{ $p->started_at->format('n/j/Y g:i A') }}</a><br><span class="help">{{ ucfirst($p->direction) }}</span></td><td>{{ $p->disposition ?? '—' }}</td>
                         <td class="num">{{ intdiv($p->duration_sec, 60) }}:{{ str_pad((string) ($p->duration_sec % 60), 2, '0', STR_PAD_LEFT) }}</td>
                         <td>{{ $p->user?->name ?? '—' }}@if ($p->agent_id)<br><span class="help mono">{{ $p->agent_id }}</span>@endif</td>
@@ -235,9 +238,9 @@
             </table></div>
         </div>
         <div class="panel"><div class="panel-head"><h2>Texts ({{ $texts->count() }})</h2><span class="actions"><a class="btn sm ghost" href="{{ route('corral.sms', ['account' => $c->account]) }}">All Texts</a>@if ($c->phone)<a class="btn sm cyan" href="{{ route('corral.sms.create', ['account' => $c->account]) }}">Send a Text</a>@endif</span></div>
-            <div class="table-wrap"><table>
+            <div class="table-wrap"><table data-page="10">
                 <thead><tr><th>Sent</th><th>Direction</th><th>Message</th><th>Resolution</th></tr></thead>
-                <tbody>@forelse ($texts->take(10) as $m)
+                <tbody>@forelse ($texts as $m)
                     <tr class="click" data-href="{{ route('corral.sms.show', $m) }}"><td class="nowrap"><a href="{{ route('corral.sms.show', $m) }}">{{ $m->created_at->format('n/j/Y g:i A') }}</a></td><td>{{ $m->direction === 'in' ? 'From customer' : 'To customer' }}</td><td class="wrap">{{ $m->body }}</td><td>@include('backend.partials.resolution-pill', ['value' => $m->resolution])</td></tr>
                 @empty <tr><td colspan="4" class="empty">No texts yet.</td></tr> @endforelse</tbody>
             </table></div>
@@ -247,7 +250,7 @@
     {{-- Bills & Payments --}}
     <div id="bills" style="display:flex;flex-direction:column;gap:20px">
         <div class="grid-2">
-            <div class="panel"><div class="panel-head"><h2>Billing Summary</h2></div><div class="table-wrap" style="max-height:360px;overflow-y:auto"><table>
+            <div class="panel"><div class="panel-head"><h2>Billing Summary</h2></div><div class="table-wrap"><table data-page="10">
                 <thead><tr><th>Date</th><th class="num">Billed</th><th class="num">Paid</th><th>Notes</th></tr></thead>
                 <tbody>@forelse ($summary as $s)<tr><td>{{ $s['date']->format('n/j/Y') }}</td><td class="num">{{ $s['billed'] !== null ? $money($s['billed']) : '-' }}</td><td class="num">{{ $s['paid'] !== null ? $money($s['paid']) : '-' }}</td><td class="mono">{{ $s['note'] }}</td></tr>
                 @empty <tr><td colspan="4" class="empty">No billing yet{{ $c->bills->isEmpty() ? ': service hasn\'t started, the first bill comes about 30 days after the switch' : '' }}.</td></tr> @endforelse</tbody>
@@ -259,7 +262,7 @@
             </table></div></div>
         </div>
 
-        <div class="panel"><div class="panel-head"><h2>Bill Details</h2></div><div class="table-wrap"><table>
+        <div class="panel"><div class="panel-head"><h2>Bill Details</h2></div><div class="table-wrap"><table data-page="10">
             <thead><tr><th>Item</th><th>Type</th><th>Period</th><th class="num">Usage</th><th>Invoice Date</th><th>Due Date</th><th>Paid Date</th><th class="num">Amount Billed</th><th class="num">Amount Paid</th><th class="num">Balance</th><th>Invoice</th><th>Ontime</th></tr></thead>
             <tbody>@forelse ($c->bills as $b)
                 <tr><td class="mono">{{ $b->reference }}</td><td>{{ $b->bill_type }}</td><td>{{ $b->period_start?->format('n/j/Y') }} - {{ $b->period_end?->format('n/j/Y') }}</td><td class="num">{{ number_format($b->kwh) }}</td>
@@ -271,7 +274,7 @@
         <div class="panel" id="payments"><div class="panel-head"><h2>Payment Details</h2>
             <span class="actions"><a class="btn sm ghost" href="{{ request()->fullUrlWithQuery(['all_payments' => $showAllPayments ? null : 1]) }}#payments">{{ $showAllPayments ? 'Hide invalid transactions' : 'Show all transactions' }}</a>
                 <a class="btn sm ghost" href="{{ route('corral.customers.action', [$c, 'transfer-payments']) }}">Transfer Payments</a></span></div>
-            <div class="table-wrap"><table>
+            <div class="table-wrap"><table data-page="10">
                 <thead><tr><th>Item</th><th>Date</th><th>Time</th><th>Source</th><th>Account</th><th>Type</th><th>Status</th><th class="num">Amount</th><th>Confirmation #</th></tr></thead>
                 <tbody>@forelse ($payments as $p)
                     <tr><td class="mono">{{ $p->reference }}</td><td>{{ $p->paid_on->toDateString() }}</td><td>{{ $p->paid_time ? \Illuminate\Support\Carbon::parse($p->paid_time)->format('h:i:s A') : '' }}</td><td>{{ $p->source }}</td>
@@ -288,7 +291,7 @@
 
         <div class="panel" id="payment-methods"><div class="panel-head"><h2>Payment Methods</h2>
             <a class="btn sm ghost" href="{{ request()->fullUrlWithQuery(['all_methods' => $showAllMethods ? null : 1]) }}#payment-methods">{{ $showAllMethods ? 'Hide deleted methods' : 'Show all methods' }}</a></div>
-            <div class="table-wrap"><table>
+            <div class="table-wrap"><table data-page="10">
                 <thead><tr><th>Item</th><th>Date</th><th>Type</th><th>Expires</th><th>Nickname</th><th>Vendor</th><th class="num">Total Paid</th><th>Autopay</th><th></th></tr></thead>
                 <tbody>@forelse ($methods as $m)
                     <tr @class(['muted' => $m->removed_at])><td class="mono">{{ $m->id }}</td><td>{{ $m->created_at->toDateString() }}</td><td>{{ $m->type }} - {{ $m->last4 }}</td><td>{{ $m->expires ?? '—' }}</td><td>{{ $m->nickname }}</td><td>{{ $m->vendor }}</td>
@@ -303,7 +306,7 @@
     </div>
 
     {{-- Plans & Addresses --}}
-    <div class="panel" id="plans"><div class="panel-head"><h2>Plan Change Log</h2></div><div class="table-wrap"><table>
+    <div class="panel" id="plans"><div class="panel-head"><h2>Plan Change Log</h2></div><div class="table-wrap"><table data-page="10">
         <thead><tr><th>Date Ordered</th><th>Contract Start</th><th>Contract End</th><th>Actual Term</th><th>Rate</th><th>Energy Charge</th><th>Plan</th><th></th></tr></thead>
         <tbody>@forelse ($c->planTerms as $t)
             <tr><td>{{ $t->ordered_at->format('Y-m-d H:i:s') }}</td><td>{{ $t->contract_start?->format('n/j/Y') ?? '—' }}</td><td>{{ $t->contract_end?->format('n/j/Y') ?? '—' }}</td>
@@ -317,21 +320,24 @@
         @empty <tr><td colspan="8" class="empty">No plans.</td></tr> @endforelse</tbody>
     </table></div></div>
 
-    <div class="panel"><div class="panel-head"><h2>Address Change Log</h2></div><div class="table-wrap"><table>
-        <thead><tr><th>Date Ordered</th><th>Service Start</th><th>Service End</th><th>Service Length</th><th>ESIID</th><th>Address</th><th>Change dates</th></tr></thead>
+    <div class="panel"><div class="panel-head"><h2>Address Change Log</h2></div><div class="table-wrap"><table data-page="10">
+        <thead><tr><th>Date Ordered</th><th>Service Start</th><th>Service End</th><th>Service Length</th><th>ESIID</th><th>Address</th><th><span class="sr-only">Change dates</span></th></tr></thead>
         <tbody>@foreach ($c->addresses as $a)
-            <tr><td>{{ $a->ordered_at->format('Y-m-d H:i:s') }}</td><td>{{ $a->service_start?->format('n/j/Y') ?? '—' }}</td><td>{{ $a->service_end?->format('n/j/Y') ?? '—' }}</td>
+            <tr><td class="nowrap">{{ $a->ordered_at->format('n/j/Y g:i A') }}</td><td>{{ $a->service_start?->format('n/j/Y') ?? '—' }}</td><td>{{ $a->service_end?->format('n/j/Y') ?? '—' }}</td>
                 <td>{{ $a->service_start ? ($a->service_end ? (int) $a->service_start->diffInMonths($a->service_end).' months' : 'current - '.(int) $a->service_start->diffInMonths(today()).' months in') : 'not started' }}</td>
                 <td class="mono">{{ $a->esiid }}</td><td>{{ strtoupper($a->street) }}<br>{{ $a->city }}, TX {{ $a->zip }}</td>
-                <td><form method="post" action="{{ route('corral.addresses.update', $a) }}" class="form-row">@csrf @method('patch')
-                    <input type="date" name="service_start" value="{{ $a->service_start?->toDateString() }}" aria-label="Move-in date">
-                    <input type="date" name="service_end" value="{{ $a->service_end?->toDateString() }}" aria-label="Move-out date">
-                    <button class="btn sm">Save</button></form></td></tr>
+                <td class="actions"><button type="button" class="btn sm ghost" data-toggle-row aria-expanded="false">Change Dates</button></td></tr>
+            <tr class="edit-row" data-attached hidden><td colspan="7">
+                <form method="post" action="{{ route('corral.addresses.update', $a) }}" class="date-edit">@csrf @method('patch')
+                    <div class="field"><label for="ms{{ $a->id }}">Service start (move-in)</label><input id="ms{{ $a->id }}" type="date" name="service_start" value="{{ $a->service_start?->toDateString() }}"></div>
+                    <div class="field"><label for="me{{ $a->id }}">Service end (move-out)</label><input id="me{{ $a->id }}" type="date" name="service_end" value="{{ $a->service_end?->toDateString() }}"></div>
+                    <div class="actions"><button class="btn sm cyan">Save Dates</button><button type="button" class="btn sm ghost" data-toggle-row>Cancel</button></div>
+                </form></td></tr>
         @endforeach</tbody>
     </table></div></div>
 
     {{-- ERCOT --}}
-    <div class="panel" id="ercot"><div class="panel-head"><h2>ERCOT Transactions</h2><span class="mono muted">{{ strtoupper($c->address) }}, {{ strtoupper($c->city) }} {{ $c->zip }} · {{ $c->esiid }}</span></div><div class="table-wrap"><table>
+    <div class="panel" id="ercot"><div class="panel-head"><h2>ERCOT Transactions</h2><span class="mono muted">{{ strtoupper($c->address) }}, {{ strtoupper($c->city) }} {{ $c->zip }} · {{ $c->esiid }}</span></div><div class="table-wrap"><table data-page="10">
         <thead><tr><th>Date Saved</th><th>Trans Date</th><th>Purpose</th><th>Scheduled</th><th>Trans Type</th><th>Tracking</th><th>Status</th><th></th></tr></thead>
         <tbody>@forelse ($c->ercotTransactions as $t)
             <tr><td>{{ $t->created_at->format('Y-m-d H:i:s') }}</td><td>{{ $t->trans_date->format('n/j/Y') }}</td><td>{{ $t->purpose }}</td><td>{{ $t->scheduled_on?->format('n/j/Y') ?? '—' }}</td>
