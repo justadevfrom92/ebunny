@@ -47,11 +47,9 @@ class TicketController extends Controller
             'status' => ['nullable', Rule::in(array_keys(SupportTicket::STATUSES))],
             'team' => ['nullable', Rule::in(array_keys(RangerAgent::TEAMS))],
             'owner' => ['nullable', 'integer'],
-            'q' => ['nullable', 'string', 'max:100'],
         ]);
         $view = $f['view'] ?? 'active';
         $me = $request->user();
-        $q = trim((string) ($f['q'] ?? ''));
 
         $tickets = SupportTicket::with(['customer', 'assignee'])
             ->when($view === 'active', fn ($x) => $x->active())
@@ -64,8 +62,6 @@ class TicketController extends Controller
             ->when($f['status'] ?? null, fn ($x, $s) => $x->where('status', $s))
             ->when($f['owner'] ?? null, fn ($x, $o) => $x->where('assigned_to', $o))
             ->when($f['team'] ?? null, fn ($x, $t) => $x->whereIn('assigned_to', RangerAgent::where('team', $t)->select('user_id')))
-            ->when($q !== '', fn ($x) => $x->where(fn ($w) => $w->where('subject', 'like', "%$q%")->orWhere('name', 'like', "%$q%")->orWhere('email', 'like', "%$q%")
-                ->orWhere('id', (int) preg_replace('/\D/', '', $q) - 10000)->orWhereHas('customer', fn ($c) => $c->where('account', 'like', $q.'%'))))
             ->orderByRaw(in_array($view, ['done', 'all'], true) ? 'coalesce(last_activity_at, created_at) desc' : $this->urgency())
             ->paginate(25)->withQueryString();
 

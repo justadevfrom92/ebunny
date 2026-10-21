@@ -32,11 +32,10 @@ class RangerTest extends TestCase
         foreach (['active', 'mine', 'unassigned', 'watching', 'done', 'all'] as $view) {
             $this->get(route('ranger.tickets', ['view' => $view]))->assertOk();
         }
-        $this->get(route('ranger.tickets', ['q' => 'RT-10001']))->assertOk()->assertSee('RT-10001');
         $this->get(route('ranger.team'))->assertOk()->assertSee('Devon Supervisor')->assertSee('3rd Party');
         $this->get(route('ranger.satisfaction'))->assertOk()->assertSee('By Team Member')->assertSee('Week by Week')->assertSee('How Approval Works')->assertSee('👎');
-        // Unassigned shows the tickets straight away, with the search still there
-        $this->get(route('ranger.tickets', ['view' => 'unassigned']))->assertSee('Unassigned Tickets')->assertSee('name="q"', false)->assertSee('RT-10001');
+        // No search section: the tickets show straight away
+        $this->get(route('ranger.tickets', ['view' => 'unassigned']))->assertSee('Unassigned Tickets')->assertDontSee('name="q"', false)->assertSee('RT-10001');
         // Each team member has their own page
         $agent = RangerAgent::where('level', 'agent')->firstOrFail();
         $this->get(route('ranger.team'))->assertSee(route('ranger.team.show', $agent));
