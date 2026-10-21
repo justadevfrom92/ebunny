@@ -1,7 +1,7 @@
 @extends('backend.layouts.app')
 
 @section('content')
-    @include('backend.partials.page-head', ['title' => 'Ranger', 'sub' => 'Support tickets customers open from My Account. Approval is the share of rated tickets customers gave a thumbs up (last 30 days).',
+    @include('backend.partials.page-head', ['title' => 'Ranger', 'sub' => 'Support tickets customers open from My Account.',
         'actions' => '<a class="btn cyan" href="'.route('ranger.tickets', ['view' => 'unassigned']).'">Pick Up a Ticket</a>'])
 
     <div class="grid-4 stat-row">
@@ -11,12 +11,12 @@
         <a class="stat" href="{{ route('ranger.tickets', ['view' => 'done']) }}"><span>Solved Today</span><strong>{{ $counts['solvedToday'] }}</strong></a>
     </div>
 
-    <div class="grid-3">
-        @include('backend.ranger._approval-card', ['title' => 'Approval — Everyone', 'a' => $overall, 'note' => 'last 30 days'])
-        @foreach ($teams as $team => $a)@include('backend.ranger._approval-card', ['title' => 'Approval — '.$a['label'], 'a' => $a, 'note' => 'last 30 days'])@endforeach
-    </div>
-
     @if ($manager)
+        <div class="grid-3">
+            @include('backend.ranger._approval-card', ['title' => 'Approval — Everyone', 'a' => $overall, 'note' => 'last 30 days'])
+            @foreach ($teams as $team => $a)@include('backend.ranger._approval-card', ['title' => 'Approval — '.$a['label'], 'a' => $a, 'note' => 'last 30 days'])@endforeach
+        </div>
+
         <div class="panel"><div class="panel-head"><h2>Manager Requests</h2><span class="muted">agents asking for a manager's help</span></div><div class="table-wrap"><table data-page="10">
             <thead><tr><th>Ticket</th><th>Subject</th><th>Asked By</th><th>Why</th><th>Asked</th></tr></thead>
             <tbody>@forelse ($managerRequests as $t)
@@ -25,17 +25,6 @@
             @empty <tr><td colspan="5" class="empty">Nobody needs a manager right now.</td></tr> @endforelse</tbody>
         </table></div></div>
     @endif
-
-    <div class="grid-2" style="align-items:start">
-        <div class="panel"><div class="panel-head"><h2>My Tickets</h2><a class="btn sm ghost" href="{{ route('ranger.tickets', ['view' => 'mine']) }}">All Mine</a></div><div class="table-wrap"><table>
-            <thead><tr><th>Ticket</th><th>Subject</th><th>Customer</th><th>Status</th></tr></thead>
-            <tbody>@forelse ($mine as $t)@include('backend.ranger._row', ['compact' => true])@empty<tr><td colspan="4" class="empty">Nothing assigned to you. Pick one up from Unassigned.</td></tr>@endforelse</tbody>
-        </table></div></div>
-        <div class="panel"><div class="panel-head"><h2>Waiting Longest — Unassigned</h2></div><div class="table-wrap"><table>
-            <thead><tr><th>Ticket</th><th>Subject</th><th>Customer</th><th>Status</th></tr></thead>
-            <tbody>@forelse ($waitingLongest as $t)@include('backend.ranger._row', ['compact' => true])@empty<tr><td colspan="4" class="empty">Every ticket has someone. Nice.</td></tr>@endforelse</tbody>
-        </table></div></div>
-    </div>
 
     <div class="panel"><div class="panel-head"><h2>Latest Ratings</h2><a class="btn sm ghost" href="{{ route('ranger.satisfaction') }}">Approval Ratings</a></div><div class="table-wrap"><table>
         <thead><tr><th>Rated</th><th>Ticket</th><th>Rating</th><th>What They Said</th><th>Handled By</th></tr></thead>

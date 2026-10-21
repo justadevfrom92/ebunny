@@ -11,8 +11,7 @@
 
     <div class="chips small" style="margin-bottom:12px">@foreach ($views as $k => $l)<a class="chip-link {{ $view === $k ? 'on' : '' }}" href="{{ route('ranger.tickets', ['view' => $k]) }}">{{ $l }} · {{ $counts[$k] }}</a>@endforeach</div>
 
-    @unless ($view === 'unassigned' || $customer)
-    <form method="get" class="panel"><input type="hidden" name="view" value="{{ $view }}">@if ($owner)<input type="hidden" name="owner" value="{{ $owner->id }}">@endif
+    <form method="get" class="panel"><input type="hidden" name="view" value="{{ $view }}">@if ($customer)<input type="hidden" name="customer" value="{{ $customer->id }}">@endif @if ($owner)<input type="hidden" name="owner" value="{{ $owner->id }}">@endif
         <div class="panel-body tl-filters" style="grid-template-columns:2fr 1fr">
             <div class="field"><label for="rq">Search</label><input id="rq" name="q" type="search" value="{{ $f['q'] ?? '' }}" placeholder="Ticket #, subject, name, email or account"></div>
             <div class="field"><label>Team</label><div class="chips small"><label><input type="radio" name="team" value="" @checked(empty($f['team']))><span>Both</span></label>@foreach (\App\Models\RangerAgent::TEAMS as $k => $l)<label><input type="radio" name="team" value="{{ $k }}" @checked(($f['team'] ?? '') === $k)><span>{{ $l }}</span></label>@endforeach</div></div>
@@ -20,7 +19,6 @@
             <div class="actions"><button class="btn cyan">Search</button>@if (array_filter(\Illuminate\Support\Arr::except($f, 'view')))<a class="btn ghost" href="{{ route('ranger.tickets', ['view' => $view]) }}">Clear</a>@endif</div>
         </div>
     </form>
-    @endunless
 
     <div class="panel"><div class="panel-head"><h2>{{ number_format($tickets->total()) }} {{ Str::plural('ticket', $tickets->total()) }}</h2></div>
         <div class="table-wrap"><table>
