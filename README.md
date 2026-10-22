@@ -36,6 +36,9 @@ Demo users (all fictional; password is `ADMIN_DEMO_PASSWORD`, default `password`
 | marketing@example.com | Content Editor | Lando, Rodeo |
 | finance@example.com | Finance | Corral, Walker, Caboose, refunds |
 | paige@example.com | Content Editor (+ Corral, Walker, Astro) | Corral, Lando, Astro, Walker, Rodeo |
+| 3p.csr@example.com | 3rd-party rep (Brightline) | Corral, Ranger: works their own tickets, can ask for a manager |
+| 3p.manager@example.com | 3rd-party manager (Brightline) | Corral, Ranger: assigns, takes over and joins in on tickets |
+| 3p.admin@example.com | 3rd-party company admin (Brightline) | Corral, Ranger: manager powers plus runs Brightline's own team (adds and changes their people; sees only them) |
 
 Website customer login (My Account, at `/myaccount`): username `demo.customer`, password `password` (fictional account 1219000000).
 

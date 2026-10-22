@@ -72,7 +72,7 @@
             </div>
 
             @if ($canWork)
-                <form method="post" action="{{ route('ranger.tickets.reply', $t) }}" class="panel rt-reply" enctype="multipart/form-data">@csrf
+                <form method="post" action="{{ route('ranger.tickets.reply', $t) }}" class="panel rt-reply">@csrf
                     <div class="panel-head"><h2>Reply</h2>
                         <div class="chips small"><label><input type="radio" name="kind" value="agent" checked><span>To the customer</span></label><label><input type="radio" name="kind" value="note"><span>Internal note</span></label></div></div>
                     <div class="panel-body" style="display:flex;flex-direction:column;gap:12px">
@@ -85,7 +85,6 @@
                             <div class="field"><label for="rt-min">Minutes</label><input id="rt-min" name="minutes" type="number" min="0" max="600" value="5" style="width:90px"></div>
                         </div>
                         <textarea name="body" required maxlength="5000" style="min-height:120px" aria-label="Message" placeholder="Hi {{ \Illuminate\Support\Str::before($t->name, ' ') }}, …"></textarea>
-                        <div class="field rt-files-only"><label for="rt-att">Attachments</label><input id="rt-att" type="file" name="attachments[]" multiple><span class="help">Up to 5 files, 10 MB each.</span></div>
                         <div class="field rt-note-only"><label>Note priority</label><div class="chips small">@foreach (config('corral.priorities') as $pr)<label><input type="radio" name="priority" value="{{ $pr }}" @checked($loop->first)><span>{{ $pr }}</span></label>@endforeach</div>
                             <span class="help">Internal notes are saved as account notes (category Ticket) and listed under Notes below.</span></div>
                         <div class="field"><label>Then set the ticket to</label><div class="chips small"><label><input type="radio" name="status" value="" checked><span>Leave as is</span></label>

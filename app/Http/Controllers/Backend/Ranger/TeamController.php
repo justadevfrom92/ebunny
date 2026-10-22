@@ -24,21 +24,25 @@ class TeamController extends Controller
     {
         $f = $request->validate(['team' => ['nullable', Rule::in(array_keys(RangerAgent::TEAMS))], 'days' => ['nullable', 'in:30,90,365']]);
         $since = now()->subDays((int) ($f['days'] ?? 90));
-        $agents = RangerAgent::with(['user', 'adder'])->when($f['team'] ?? null, fn ($q, $t) => $q->where('team', $t))->get()->sortBy([['active', 'desc'], ['level', 'desc'], ['user.name', 'asc']])->values();
+        $company = RangerAgent::companyOf($request->user());   // a company admin sees only their own company's people
+        $agents = RangerAgent::with(['user', 'adder'])->when($f['team'] ?? null, fn ($q, $t) => $q->where('team', $t))
+            ->when($company, fn ($q, $c) => $q->whereHas('user', fn ($u) => $u->where('company', $c)))->get()->sortBy([['active', 'desc'], ['level', 'desc'], ['user.name', 'asc']])->values();
         $stats = SupportTicket::whereIn('assigned_to', $agents->pluck('user_id'))->selectRaw("assigned_to,
             sum(case when status in ('new','open','waiting') then 1 else 0 end) as open,
             sum(case when solved_at >= ? then 1 else 0 end) as solved,
             sum(case when rated_at >= ? then 1 else 0 end) as rated,
             sum(case when rated_at >= ? and rating = 'good' then 1 else 0 end) as good", [$since, $since, $since])->groupBy('assigned_to')->get()->keyBy('assigned_to');
 
-        return view('backend.ranger.team', ['agents' => $agents, 'stats' => $stats, 'f' => $f, 'manager' => RangerAgent::isManager($request->user())]);
+        return view('backend.ranger.team', ['agents' => $agents, 'stats' => $stats, 'f' => $f, 'manager' => RangerAgent::isManager($request->user()), 'company' => $company]);
     }
 
     public function create(Request $request): View
     {
+        $company = RangerAgent::companyOf($request->user());
+
         return view('backend.ranger.team-form', [
-            'people' => User::where('active', true)->whereNotIn('id', RangerAgent::select('user_id'))->with('role')->orderBy('name')->get(),
-            'manager' => RangerAgent::isManager($request->user()),
+            'people' => User::where('active', true)->whereNotIn('id', RangerAgent::select('user_id'))->when($company, fn ($q, $c) => $q->where('company', $c))->with('role')->orderBy('name')->get(),
+            'manager' => RangerAgent::isManager($request->user()), 'company' => $company,
         ]);
     }
 
@@ -46,6 +50,11 @@ class TeamController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $manager = RangerAgent::isManager($request->user());
+        $company = RangerAgent::companyOf($request->user());
+        if ($company) {
+            // A company admin adds people to their own company only
+            $request->merge(['team' => 'third_party', 'company' => $company]);
+        }
         $data = $request->validate([
             'who' => ['required', 'in:existing,new'],
             'user_id' => ['required_if:who,existing', 'nullable', 'exists:users,id', Rule::unique('ranger_agents', 'user_id')],
@@ -59,6 +68,10 @@ class TeamController extends Controller
         ], ['company.required' => 'Give the 3rd-party company they work for.']);
         // Only managers can add a manager
         abort_if($data['level'] === 'manager' && ! $manager, 403, 'Only a manager can add another manager.');
+        abort_if($data['level'] === 'company_admin' && ($company || ! $manager || $data['team'] !== 'third_party'), 403, 'Company admins are for 3rd-party companies and are added by an in-office manager or administrator.');
+        if ($company && $data['who'] === 'existing') {
+            abort_unless(User::whereKey($data['user_id'])->value('company') === $company, 403, 'You can only add people from '.$company.'.');
+        }
 
         $user = DB::transaction(function () use ($data, $request) {
             if ($data['who'] === 'new') {
@@ -85,6 +98,8 @@ class TeamController extends Controller
     public function show(Request $request, RangerAgent $agent): View
     {
         $agent->load(['user.role', 'adder']);
+        $company = RangerAgent::companyOf($request->user());
+        abort_if($company && $agent->user->company !== $company, 403, 'You can only see people from '.$company.'.');
         $mine = fn () => SupportTicket::where('assigned_to', $agent->user_id);
         $approval = collect([30, 90, 365])->mapWithKeys(fn ($d) => [$d => SupportTicket::approval($mine()->where('rated_at', '>=', now()->subDays($d)))]);
         $firstReply = $mine()->whereNotNull('first_response_at')->where('created_at', '>=', now()->subDays(90))->get(['created_at', 'first_response_at'])
@@ -99,14 +114,19 @@ class TeamController extends Controller
             'open' => $mine()->active()->with('customer')->orderBy('created_at')->get(),
             'solved' => $mine()->where('solved_at', '>=', now()->subDays(90))->count(),
             'ratings' => $mine()->whereNotNull('rated_at')->latest('rated_at')->limit(30)->get(),
-            'manager' => RangerAgent::isManager($request->user())]);
+            'manager' => RangerAgent::canManage($request->user(), $agent->user) && $agent->user_id !== $request->user()->id, 'company' => $company]);
     }
 
     /** Managers: change someone's team or level, or take them off tickets. */
     public function update(Request $request, RangerAgent $agent): RedirectResponse
     {
-        abort_unless(RangerAgent::isManager($request->user()), 403);
+        abort_unless(RangerAgent::canManage($request->user(), $agent->user), 403);
         $data = $request->validate(['team' => ['nullable', Rule::in(array_keys(RangerAgent::TEAMS))], 'level' => ['nullable', Rule::in(array_keys(RangerAgent::LEVELS))], 'active' => ['nullable', 'boolean']]);
+        if (RangerAgent::companyOf($request->user())) {
+            // A company admin can't move people out of their company or make another company admin
+            unset($data['team']);
+            abort_if(($data['level'] ?? null) === 'company_admin' || $agent->user_id === $request->user()->id, 403);
+        }
         $agent->update(array_filter($data, fn ($v) => $v !== null));
         if (array_key_exists('active', $data) && ! $agent->active) {
             // Their open tickets go back to the queue

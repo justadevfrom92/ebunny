@@ -80,6 +80,17 @@ class MoreUsersSeeder extends Seeder
                 ], $password);
             }
         }
+        // Test sign-ins for the 3rd-party ticket team (Brightline): a rep, their manager, and the company's admin
+        foreach ([
+            ['Sam Contractrep', '3p.csr@example.com', 'Contract Agent — Tickets', 'Customer Service', ['bounty'], '3rd-party rep: works their own Ranger tickets'],
+            ['Reese Shiftlead', '3p.manager@example.com', 'Contract Team Manager', 'Customer Service Lead', ['deputy'], '3rd-party manager: assigns, takes over and joins in on tickets'],
+            ['Jamie Accountlead', '3p.admin@example.com', 'Brightline Account Admin', 'Customer Service Lead', ['deputy'], '3rd-party company admin: runs Brightline\'s people in Ranger'],
+        ] as [$name, $email, $title, $r, $denied, $note]) {
+            $this->make(['name' => $name, 'email' => $email, 'company' => 'Brightline Contact Solutions', 'title' => $title, 'role_id' => $role($r), 'manager_id' => $mgr('lead@example.com'),
+                'location' => 'Off-site (Brightline Contact Solutions)', 'access_ends_on' => now()->addMonths(8)->endOfMonth()->toDateString(), 'denied_perms' => $denied,
+                'extra_perms' => [], 'access_note' => $note, 'hired_on' => now()->subMonths(6)->toDateString()], $password);
+        }
+
         // One contractor whose access already ended
         $this->make(['name' => 'Kai Formerton', 'email' => 'kai.f@brightline.example.net', 'company' => 'Brightline Contact Solutions', 'title' => 'Contract Agent',
             'role_id' => $role('Customer Service'), 'access_ends_on' => now()->subMonths(2)->endOfMonth()->toDateString(), 'active' => false, 'location' => 'Off-site (Brightline Contact Solutions)'], $password);

@@ -85,20 +85,20 @@ class TicketController extends Controller
         $ticket->load(['customer.plan', 'assignee', 'watchers', 'messages.user', 'messages.attachments', 'notes.user', 'attachments.user', 'managerRequester']);
 
         return view('backend.ranger.ticket', ['t' => $ticket, 'manager' => RangerAgent::isManager($request->user()),
-            'agents' => RangerAgent::with('user')->where('active', true)->get()->sortBy('user.name')->values(),
+            'agents' => RangerAgent::with('user')->where('active', true)->get()->sortBy('user.name')
+                ->when(RangerAgent::companyOf($request->user()), fn ($c, $co) => $c->filter(fn ($a) => $a->user->company === $co))->values(),
             'agentOf' => RangerAgent::whereIn('user_id', array_filter([$ticket->assigned_to, ...$ticket->watchers->pluck('id')]))->get()->keyBy('user_id'),
             'history' => $ticket->customer_id ? SupportTicket::where('customer_id', $ticket->customer_id)->count() : 0]);
     }
 
     /**
-     * A reply to the customer (in My Account or by email, with attachments), a phone call logged with
+     * A reply to the customer (in My Account or by email), a phone call logged with
      * its direction and length, or an internal note (an account note, staff only); optionally a new status.
      */
     public function reply(Request $request, SupportTicket $ticket): RedirectResponse
     {
         $data = $request->validate(['body' => ['required', 'string', 'max:5000'], 'kind' => ['required', 'in:agent,note'],
             'via' => ['nullable', Rule::in(array_keys(SupportTicketMessage::VIA))], 'direction' => ['nullable', 'in:in,out'], 'minutes' => ['nullable', 'integer', 'min:0', 'max:600'],
-            'attachments' => SupportTicketAttachment::RULES, 'attachments.*' => SupportTicketAttachment::FILE_RULES,
             'priority' => ['nullable', Rule::in(config('corral.priorities'))], 'status' => ['nullable', Rule::in(['open', 'waiting', 'solved'])]]);
         $this->mayWork($request, $ticket);
         $me = $request->user();
@@ -106,16 +106,11 @@ class TicketController extends Controller
         if ($data['kind'] === 'note') {
             $ticket->addNote($data['body'], $me, $data['priority'] ?? null);
         } else {
-            $m = $ticket->post('agent', $data['body'], $me, ['via' => $via] + match ($via) {
+            $ticket->post('agent', $data['body'], $me, ['via' => $via] + match ($via) {
                 'phone' => ['direction' => $data['direction'] ?? 'out', 'duration' => (int) ($data['minutes'] ?? 0) * 60, 'contact' => $ticket->customer?->phone],
                 'email' => ['contact' => $ticket->email],
                 default => [],
             });
-            if ($via !== 'phone') {
-                foreach ($request->file('attachments', []) as $file) {
-                    SupportTicketAttachment::store($m, $file, $me, false);
-                }
-            }
         }
         if (! $ticket->assigned_to) {
             $ticket->update(['assigned_to' => $me->id]);   // whoever answers first owns it
@@ -167,6 +162,9 @@ class TicketController extends Controller
         if (array_key_exists('assigned_to', $data) && $data['assigned_to'] && (int) $data['assigned_to'] !== $ticket->assigned_to) {
             // Agents can pick a ticket up for themselves; handing one to someone else is for managers
             abort_unless((int) $data['assigned_to'] === $me->id || RangerAgent::isManager($me), 403, 'Only managers can assign tickets to someone else.');
+            if ($co = RangerAgent::companyOf($me)) {
+                abort_unless(User::whereKey($data['assigned_to'])->value('company') === $co, 403, 'You can only assign tickets to people from '.$co.'.');
+            }
             $changes['assigned_to'] = (int) $data['assigned_to'];
             $ticket->post('system', $me->name.' assigned this to '.User::find($data['assigned_to'])->name.'.', $me);
         }

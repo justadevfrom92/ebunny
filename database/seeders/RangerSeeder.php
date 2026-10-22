@@ -32,6 +32,7 @@ class RangerSeeder extends Seeder
             ['alex.o@brightline.example.net', 'third_party', 'agent'], ['blair.a@brightline.example.net', 'third_party', 'agent'],
             ['cameron.w@brightline.example.net', 'third_party', 'agent'], ['devon.s@brightline.example.net', 'third_party', 'manager'],
             ['kai.f@brightline.example.net', 'third_party', 'agent'],
+            ['3p.csr@example.com', 'third_party', 'agent'], ['3p.manager@example.com', 'third_party', 'manager'], ['3p.admin@example.com', 'third_party', 'company_admin'],
         ];
         $lead = $byEmail('lead@example.com');
         foreach ($team as $i => [$email, $t, $level]) {
@@ -75,7 +76,7 @@ class RangerSeeder extends Seeder
             $opened = ($n < 24 ? now()->subMinutes(mt_rand(20, 60 * ($n < 8 ? 10 : 70))) : now()->subMinutes(mt_rand(60 * 6, 60 * 24 * 90)))->startOfMinute();
             // A bit over a third go to the 3rd-party team
             $pool = $workers->filter(fn ($a) => $a->team === ($n % 8 < 3 ? 'third_party' : 'office'))->values();
-            $owner = $state === 'new' ? null : $pool[$n % $pool->count()]->user;
+            $owner = $state === 'new' ? null : $pool[($n + intdiv($n, 8)) % $pool->count()]->user;
             // Lots of phone calls, some emails, the rest from My Account (new, unanswered ones can't be calls)
             $channel = $n < 8 ? ($n % 3 === 1 ? 'Email' : 'My Account') : (in_array($n % 9, [0, 2, 4, 6], true) ? 'Phone' : (in_array($n % 9, [1, 5], true) ? 'Email' : 'My Account'));
             $via = ['My Account' => 'portal', 'Email' => 'email', 'Phone' => 'phone'][$channel];
@@ -113,7 +114,7 @@ class RangerSeeder extends Seeder
                 }
             } else {
                 $first = $msg('customer', $ask, null, 0, 'Low', $mail('customer'));
-                if ($n % 4 === 1) {
+                if ($n % 3 === 1) {
                     SupportTicketAttachment::store($first, $this->customerFile($topic, $c), null, true);
                 }
             }
@@ -123,10 +124,7 @@ class RangerSeeder extends Seeder
                 if ($n % 2 === 1) {
                     $msg('note', $n % 4 === 1 ? 'Checked the meter reads with the utility before replying; both actual reads.' : 'Looked at the last 3 bills and payments before answering.', $owner, mt_rand(2, 20));
                 }
-                $reply = $msg('agent', 'Hi '.Str::before($c->name, ' ').', '.$answer, $owner, mt_rand(3, 30), 'Low', $mail('agent'));
-                if (in_array($topic, ['plan', 'billing'], true) && $n % 3 === 0) {
-                    SupportTicketAttachment::store($reply, $this->ourFile($topic, $c, $subject), $owner, false);
-                }
+                $msg('agent', 'Hi '.Str::before($c->name, ' ').', '.$answer, $owner, mt_rand(3, 30), 'Low', $mail('agent'));
                 $t->forceFill(['first_response_at' => $at])->save();
                 // Managers: some tickets they joined in on, a few they took over
                 if ($n % 9 === 2 && $managers->isNotEmpty()) {
@@ -142,7 +140,10 @@ class RangerSeeder extends Seeder
                     $owner = $m->user;
                 }
                 if ($followUp && $state !== 'waiting') {
-                    $msg('customer', $followUp, null, mt_rand(30, 600), 'Low', $mail('customer'));
+                    $more = $msg('customer', $followUp, null, mt_rand(30, 600), 'Low', $mail('customer'));
+                    if ($n % 5 === 2) {
+                        SupportTicketAttachment::store($more, $this->customerFile($n % 2 ? 'other' : $topic, $c), null, true);
+                    }
                     if ($final) {
                         $msg('agent', $final, $owner, mt_rand(10, 180), 'Low', $mail('agent'));
                     }
@@ -197,16 +198,5 @@ class RangerSeeder extends Seeder
         imagepng($img);
 
         return [$topic === 'account' ? 'screenshot.png' : 'bill-photo.png', (string) ob_get_clean(), 'image/png'];
-    }
-
-    /** What the team sends back: a payment plan or plan summary PDF (fictional). */
-    private function ourFile(string $topic, Customer $c, string $subject): array
-    {
-        $title = $topic === 'plan' ? 'Your Plan Options' : 'Your Payment Arrangement';
-        $pdf = (new Pdf)->text(54, 70, $title, 18, true)->text(54, 100, 'Account '.$c->account.' · '.$c->name)->text(54, 116, 'Re: '.$subject)
-            ->text(54, 140, $topic === 'plan' ? '12 months or 24 months (0.4 cents less per kWh)' : 'Half due on this bill, half on the next one.')
-            ->text(54, 170, 'Sample document for testing.', 9);
-
-        return [$topic === 'plan' ? 'plan-options.pdf' : 'payment-arrangement.pdf', $pdf->output($title), 'application/pdf'];
     }
 }

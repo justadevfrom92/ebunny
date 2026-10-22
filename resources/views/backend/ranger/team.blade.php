@@ -2,11 +2,11 @@
 
 @section('content')
     @php $days = (int) ($f['days'] ?? 90); $url = fn (array $set) => route('ranger.team', array_filter(array_merge($f, $set))); @endphp
-    @include('backend.partials.page-head', ['title' => 'Ticket Team', 'sub' => 'Everyone who works Ranger tickets, in the office and at 3rd-party companies. Click someone for their page. Approval = 👍 ÷ all ratings, last '.$days.' days.',
+    @include('backend.partials.page-head', ['title' => $company ? $company.' — Ticket Team' : 'Ticket Team', 'sub' => 'Everyone who works Ranger tickets, in the office and at 3rd-party companies. Click someone for their page. Approval = 👍 ÷ all ratings, last '.$days.' days.',
         'actions' => '<a class="btn cyan" href="'.route('ranger.team.create').'">Add a Team Member</a>'])
 
     <div class="actions" style="margin-bottom:12px;justify-content:space-between">
-        <div class="chips small"><a class="chip-link {{ empty($f['team']) ? 'on' : '' }}" href="{{ $url(['team' => null]) }}">Everyone</a>@foreach (\App\Models\RangerAgent::TEAMS as $k => $l)<a class="chip-link {{ ($f['team'] ?? '') === $k ? 'on' : '' }}" href="{{ $url(['team' => $k]) }}">{{ $l }}</a>@endforeach</div>
+        @if ($company)<span class="help">Only your company's people.</span>@else<div class="chips small"><a class="chip-link {{ empty($f['team']) ? 'on' : '' }}" href="{{ $url(['team' => null]) }}">Everyone</a>@foreach (\App\Models\RangerAgent::TEAMS as $k => $l)<a class="chip-link {{ ($f['team'] ?? '') === $k ? 'on' : '' }}" href="{{ $url(['team' => $k]) }}">{{ $l }}</a>@endforeach</div>@endif
         <div class="chips small">@foreach ([30, 90, 365] as $d)<a class="chip-link {{ $days === $d ? 'on' : '' }}" href="{{ $url(['days' => $d]) }}">{{ $d === 365 ? '1 year' : $d.' days' }}</a>@endforeach</div>
     </div>
 

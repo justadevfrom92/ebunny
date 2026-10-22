@@ -133,10 +133,10 @@ class RangerTest extends TestCase
         $this->assertTrue($a->from_customer);
         $this->get(route('myaccount.support.file', [$t->id, $a->id]))->assertOk();
 
-        // The agent sees it, opens its page, emails back with a PDF and logs a call
+        // The agent sees it and opens its page, emails back (staff don't attach files) and logs a call
         $csr = $this->user('csr@example.com');
         $this->actingAs($csr, 'web');
-        $this->get(route('ranger.tickets.show', $t))->assertSee('my-bill.png')->assertSee(route('ranger.tickets.attachment', [$t, $a]));
+        $this->get(route('ranger.tickets.show', $t))->assertSee('my-bill.png')->assertSee(route('ranger.tickets.attachment', [$t, $a]))->assertDontSee('name="attachments[]"', false);
         $this->get(route('ranger.tickets.attachment', [$t, $a]))->assertOk()->assertSee('my-bill.png')->assertSee('Download');
         $this->get(route('ranger.tickets.attachment.file', [$t, $a]))->assertOk();
         $this->post(route('ranger.tickets.reply', $t), ['kind' => 'agent', 'via' => 'email', 'body' => 'Here is your payment plan.',
@@ -144,12 +144,12 @@ class RangerTest extends TestCase
         $this->post(route('ranger.tickets.reply', $t), ['kind' => 'agent', 'via' => 'phone', 'direction' => 'out', 'minutes' => 6, 'body' => 'CALLNOTE walked them through it'])->assertRedirect();
         $email = $t->messages()->reorder()->where('via', 'email')->firstOrFail();
         $phone = $t->messages()->reorder()->where('via', 'phone')->firstOrFail();
-        $this->assertSame([$t->email, 1], [$email->contact, $email->attachments()->count()]);
+        $this->assertSame([$t->email, 0], [$email->contact, $email->attachments()->count()]);   // a file sent along is ignored
         $this->assertSame(['out', 360], [$phone->direction, $phone->duration]);
         $this->get(route('ranger.tickets.show', $t))->assertSee('Outbound call')->assertSee('6:00')->assertSee('Email to');
 
-        // The customer sees the email and its PDF; the call shows as a line without the call notes
-        $this->actingAs($c, 'customer')->get(route('myaccount.support.show', $t->id))->assertSee('Here is your payment plan.')->assertSee('plan.pdf')
+        // The customer sees the email and their own file; the call shows as a line without the call notes
+        $this->actingAs($c, 'customer')->get(route('myaccount.support.show', $t->id))->assertSee('Here is your payment plan.')->assertSee('my-bill.png')->assertDontSee('plan.pdf')
             ->assertSee('We called you')->assertDontSee('CALLNOTE');
         // Someone else's ticket's file is off limits
         $other = SupportTicket::where('customer_id', '!=', $c->id)->firstOrFail();
@@ -157,6 +157,33 @@ class RangerTest extends TestCase
 
         // Only managers and admins see Assign To
         $this->actingAs($this->user('lead@example.com'), 'web')->get(route('ranger.tickets.show', $t))->assertSee('Assign To');
+    }
+
+    public function test_third_party_rep_manager_and_company_admin(): void
+    {
+        $rep = $this->user('3p.csr@example.com');
+        $mgr = $this->user('3p.manager@example.com');
+        $admin = $this->user('3p.admin@example.com');
+        $this->assertSame(['Brightline Contact Solutions', false, true, true], [$rep->company, RangerAgent::isManager($rep), RangerAgent::isManager($mgr), RangerAgent::isManager($admin)]);
+        // All three are test sign-ins
+        $this->get(route('admin.login'))->assertSee('Sam Contractrep')->assertSee('Reese Shiftlead')->assertSee('Jamie Accountlead');
+
+        // The rep works their own tickets but can't assign
+        $mine = SupportTicket::active()->where('assigned_to', $rep->id)->firstOrFail();
+        $this->actingAs($rep, 'web')->get(route('ranger.tickets.show', $mine))->assertOk()->assertDontSee('Assign To')->assertSee('Ask for a Manager');
+
+        // The company admin sees only Brightline's people, can add and change them, and assigns only among them
+        $this->actingAs($admin, 'web');
+        $this->get(route('ranger.team'))->assertOk()->assertSee('Brightline Contact Solutions — Ticket Team')->assertSee('Sam Contractrep')->assertDontSee('Morgan Placeholder');
+        $office = RangerAgent::where('team', 'office')->firstOrFail();
+        $this->get(route('ranger.team.show', $office))->assertForbidden();
+        $this->patch(route('ranger.team.update', $office), ['active' => 0])->assertForbidden();
+        $this->post(route('ranger.team.store'), ['who' => 'new', 'name' => 'Pat Newhire', 'email' => 'pat.n@brightline.example.net', 'password' => 'a-long-temp-password', 'team' => 'office', 'level' => 'agent'])->assertRedirect();
+        $this->assertSame(['Brightline Contact Solutions', 'third_party'], [User::where('email', 'pat.n@brightline.example.net')->value('company'), RangerAgent::where('user_id', User::where('email', 'pat.n@brightline.example.net')->value('id'))->value('team')]);
+        $this->post(route('ranger.team.store'), ['who' => 'existing', 'user_id' => $this->user('finance@example.com')->id, 'team' => 'third_party', 'level' => 'agent'])->assertForbidden();
+        $this->get(route('ranger.tickets.show', $mine))->assertSee('Assign To')->assertSee('Alex Overflow')->assertDontSee('Morgan Placeholder');
+        $this->patch(route('ranger.tickets.update', $mine), ['assigned_to' => $this->user('morgan.placeholder@staff.example.com')->id])->assertForbidden();
+        $this->patch(route('ranger.tickets.update', $mine), ['assigned_to' => $this->user('alex.o@brightline.example.net')->id])->assertRedirect();
     }
 
     public function test_team_members_can_be_seen_and_added(): void
