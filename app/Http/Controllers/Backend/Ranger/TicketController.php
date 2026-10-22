@@ -6,12 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\RangerAgent;
 use App\Models\SupportTicket;
+use App\Models\SupportTicketAttachment;
+use App\Models\SupportTicketMessage;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Ranger: the support tickets customers open from My Account. The queue, each ticket's conversation
@@ -77,7 +82,7 @@ class TicketController extends Controller
 
     public function show(Request $request, SupportTicket $ticket): View
     {
-        $ticket->load(['customer.plan', 'assignee', 'watchers', 'messages.user', 'notes.user', 'managerRequester']);
+        $ticket->load(['customer.plan', 'assignee', 'watchers', 'messages.user', 'messages.attachments', 'notes.user', 'attachments.user', 'managerRequester']);
 
         return view('backend.ranger.ticket', ['t' => $ticket, 'manager' => RangerAgent::isManager($request->user()),
             'agents' => RangerAgent::with('user')->where('active', true)->get()->sortBy('user.name')->values(),
@@ -85,25 +90,62 @@ class TicketController extends Controller
             'history' => $ticket->customer_id ? SupportTicket::where('customer_id', $ticket->customer_id)->count() : 0]);
     }
 
-    /** A reply (the customer sees it) or an internal note (staff only), and optionally a new status. */
+    /**
+     * A reply to the customer (in My Account or by email, with attachments), a phone call logged with
+     * its direction and length, or an internal note (an account note, staff only); optionally a new status.
+     */
     public function reply(Request $request, SupportTicket $ticket): RedirectResponse
     {
         $data = $request->validate(['body' => ['required', 'string', 'max:5000'], 'kind' => ['required', 'in:agent,note'],
+            'via' => ['nullable', Rule::in(array_keys(SupportTicketMessage::VIA))], 'direction' => ['nullable', 'in:in,out'], 'minutes' => ['nullable', 'integer', 'min:0', 'max:600'],
+            'attachments' => SupportTicketAttachment::RULES, 'attachments.*' => SupportTicketAttachment::FILE_RULES,
             'priority' => ['nullable', Rule::in(config('corral.priorities'))], 'status' => ['nullable', Rule::in(['open', 'waiting', 'solved'])]]);
         $this->mayWork($request, $ticket);
+        $me = $request->user();
+        $via = $data['via'] ?? 'portal';
         if ($data['kind'] === 'note') {
-            $ticket->addNote($data['body'], $request->user(), $data['priority'] ?? null);
+            $ticket->addNote($data['body'], $me, $data['priority'] ?? null);
         } else {
-            $ticket->post('agent', $data['body'], $request->user());
+            $m = $ticket->post('agent', $data['body'], $me, ['via' => $via] + match ($via) {
+                'phone' => ['direction' => $data['direction'] ?? 'out', 'duration' => (int) ($data['minutes'] ?? 0) * 60, 'contact' => $ticket->customer?->phone],
+                'email' => ['contact' => $ticket->email],
+                default => [],
+            });
+            if ($via !== 'phone') {
+                foreach ($request->file('attachments', []) as $file) {
+                    SupportTicketAttachment::store($m, $file, $me, false);
+                }
+            }
         }
         if (! $ticket->assigned_to) {
-            $ticket->update(['assigned_to' => $request->user()->id]);   // whoever answers first owns it
+            $ticket->update(['assigned_to' => $me->id]);   // whoever answers first owns it
         }
         if ($status = $data['status'] ?? null) {
             $ticket->update(['status' => $status, 'solved_at' => $status === 'solved' ? now() : null]);
         }
+        $done = $data['kind'] === 'note' ? 'Internal note added (it\'s on the customer\'s account notes too)' : ['portal' => 'Reply sent', 'email' => 'Email sent', 'phone' => 'Phone call logged'][$via];
 
-        return back()->with('status', $data['kind'] === 'note' ? 'Internal note added (it\'s on the customer\'s account notes too)' : 'Reply sent'.(isset($status) ? ' · '.SupportTicket::STATUSES[$status][0] : ''));
+        return back()->with('status', $done.(isset($status) ? ' · '.SupportTicket::STATUSES[$status][0] : ''));
+    }
+
+    /** One attachment: who sent it, when, on which message, with a preview for images, PDFs and text. */
+    public function attachment(SupportTicket $ticket, SupportTicketAttachment $attachment): View
+    {
+        abort_unless($attachment->support_ticket_id === $ticket->id, 404);
+        $attachment->load(['message.user', 'user']);
+        $text = $attachment->isText() ? Str::limit((string) Storage::disk('local')->get($attachment->path), 20000) : null;
+
+        return view('backend.ranger.attachment', ['t' => $ticket, 'a' => $attachment, 'text' => $text]);
+    }
+
+    /** The file itself: inline (for the preview) or as a download. */
+    public function attachmentFile(Request $request, SupportTicket $ticket, SupportTicketAttachment $attachment): StreamedResponse
+    {
+        abort_unless($attachment->support_ticket_id === $ticket->id && Storage::disk('local')->exists($attachment->path), 404);
+
+        return $request->boolean('inline') && ($attachment->isImage() || $attachment->isPdf())
+            ? Storage::disk('local')->response($attachment->path, $attachment->name, ['Content-Type' => $attachment->mime])
+            : Storage::disk('local')->download($attachment->path, $attachment->name);
     }
 
     /** Status, priority or assignee. */

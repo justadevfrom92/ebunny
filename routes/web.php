@@ -80,6 +80,7 @@ Route::prefix('myaccount')->name('myaccount.')->group(function () {
         Route::post('support', [MyAccount\SupportController::class, 'store'])->middleware('throttle:10,1')->name('support.store');
         Route::get('support/{ticket}', [MyAccount\SupportController::class, 'show'])->whereNumber('ticket')->name('support.show');
         Route::post('support/{ticket}/reply', [MyAccount\SupportController::class, 'reply'])->whereNumber('ticket')->middleware('throttle:20,1')->name('support.reply');
+        Route::get('support/{ticket}/files/{attachment}', [MyAccount\SupportController::class, 'file'])->whereNumber(['ticket', 'attachment'])->name('support.file');
         Route::post('support/{ticket}/rate', [MyAccount\SupportController::class, 'rate'])->whereNumber('ticket')->name('support.rate');
         // Shop: checkout (the cart itself is /shop/cart) and orders
         Route::get('checkout', [MyAccount\CheckoutController::class, 'form'])->name('checkout');
@@ -346,6 +347,8 @@ Route::prefix('admin')->group(function () {
             Route::post('tickets/{ticket}/join', [Backend\Ranger\TicketController::class, 'join'])->name('tickets.join');
             Route::post('tickets/{ticket}/leave', [Backend\Ranger\TicketController::class, 'leave'])->name('tickets.leave');
             Route::post('tickets/{ticket}/ask-manager', [Backend\Ranger\TicketController::class, 'askManager'])->name('tickets.ask-manager');
+            Route::get('tickets/{ticket}/files/{attachment}', [Backend\Ranger\TicketController::class, 'attachment'])->whereNumber('attachment')->name('tickets.attachment');
+            Route::get('tickets/{ticket}/files/{attachment}/file', [Backend\Ranger\TicketController::class, 'attachmentFile'])->whereNumber('attachment')->name('tickets.attachment.file');
             Route::post('tickets/{ticket}/cancel-manager', [Backend\Ranger\TicketController::class, 'cancelManager'])->name('tickets.cancel-manager');
             Route::get('team', [Backend\Ranger\TeamController::class, 'index'])->name('team');
             Route::get('team/add', [Backend\Ranger\TeamController::class, 'create'])->name('team.create');

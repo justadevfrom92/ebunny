@@ -24,16 +24,26 @@
 
     <div class="sp-thread">
       @foreach ($messages as $m)
-        <div class="sp-msg sp-{{ $m->author === 'customer' ? 'you' : 'us' }}">
-          <div class="sp-who"><b>{{ $m->author === 'customer' ? 'You' : ($m->user ? \Illuminate\Support\Str::before($m->user->name, ' ') : 'Support').' · '.config('brand.name') }}</b> <small>{{ $m->created_at->format('M j, Y g:i A') }}</small></div>
-          <div>{!! nl2br(e($m->body)) !!}</div>
-        </div>
+        @php $who = $m->author === 'customer' ? 'You' : ($m->user ? \Illuminate\Support\Str::before($m->user->name, ' ') : 'Support').' · '.config('brand.name'); @endphp
+        @if ($m->via === 'phone')
+          {{-- Calls show as a line; the call notes are the team's own --}}
+          <p class="sp-call">📞 {{ $m->direction === 'in' ? 'You called us' : 'We called you' }}{{ $m->user ? ' · spoke with '.\Illuminate\Support\Str::before($m->user->name, ' ') : '' }} · {{ $m->durationLabel() }} min <small>{{ $m->created_at->format('M j, Y g:i A') }}</small></p>
+        @else
+          <div class="sp-msg sp-{{ $m->author === 'customer' ? 'you' : 'us' }}">
+            <div class="sp-who"><b>{{ $who }}</b> @if ($m->via === 'email')<small>✉ by email</small> @endif<small>{{ $m->created_at->format('M j, Y g:i A') }}</small></div>
+            <div>{!! nl2br(e($m->body)) !!}</div>
+            @if ($m->attachments->isNotEmpty())
+              <div class="sp-files">@foreach ($m->attachments as $a)<a href="{{ route('myaccount.support.file', [$t->id, $a->id]) }}">{{ $a->icon() }} {{ $a->name }} <small>{{ $a->sizeLabel() }}</small></a>@endforeach</div>
+            @endif
+          </div>
+        @endif
       @endforeach
     </div>
 
     @if ($t->status !== 'closed')
-      <form method="post" action="{{ route('myaccount.support.reply', $t->id) }}">@csrf
+      <form method="post" action="{{ route('myaccount.support.reply', $t->id) }}" enctype="multipart/form-data">@csrf
         <div class="field"><label for="sp-reply">{{ $t->isDone() ? 'Still need help? Reply and we\'ll reopen it' : 'Reply' }}</label><textarea id="sp-reply" name="body" required maxlength="5000"></textarea></div>
+        <div class="field"><label for="sp-files">Attach files (optional)</label><input id="sp-files" type="file" name="attachments[]" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.heic,.txt,.csv,.doc,.docx,.xls,.xlsx"></div>
         <div class="sp-actions"><a class="btn btn-outline btn-back" href="{{ route('myaccount.support') }}">Back</a><button class="btn">Send</button></div>
       </form>
     @else

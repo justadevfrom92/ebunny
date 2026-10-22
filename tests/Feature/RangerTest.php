@@ -8,6 +8,8 @@ use App\Models\RangerAgent;
 use App\Models\SupportTicket;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /** Ranger: My Account tickets, replies and internal notes, managers taking over / joining in, the team, and approval %. */
@@ -60,7 +62,9 @@ class RangerTest extends TestCase
         // An internal note is an account note on the customer, linked to the ticket
         $note = Note::where('support_ticket_id', $t->id)->firstOrFail();
         $this->assertSame([$c->id, 'Ticket', 'High', $t->number()], [$note->customer_id, $note->category, $note->priority, $note->disposition]);
-        $this->get(route('ranger.tickets.show', $t))->assertSee('SECRET internal note')->assertSee('Ticket History');
+        // Notes are listed at the bottom, each linking to the Note page
+        $this->get(route('ranger.tickets.show', $t))->assertSee('SECRET internal note')->assertSee('Ticket History')->assertSee('<h2>Notes</h2>', false)
+            ->assertSee(route('corral.items.show', ['id' => $note->id, 'model' => 'ItemNote_model']));
         $this->get(route('corral.customers.show', $c))->assertSee('SECRET internal note');
         $this->post(route('ranger.tickets.reply', $t), ['kind' => 'agent', 'body' => 'Your usage went up in the heat wave.', 'status' => 'solved'])->assertRedirect();
         $t->refresh();
@@ -95,7 +99,7 @@ class RangerTest extends TestCase
 
         // The owner can't assign it to someone else but can ask for a manager
         $this->actingAs($owner);
-        $this->get(route('ranger.tickets.show', $t))->assertSee('Ask for a Manager')->assertDontSee('Assign to');
+        $this->get(route('ranger.tickets.show', $t))->assertSee('Ask for a Manager')->assertDontSee('Assign To');
         $this->post(route('ranger.tickets.ask-manager', $t), ['reason' => 'Wants a big refund'])->assertRedirect();
         $this->assertNotNull($t->fresh()->manager_requested_at);
         $this->actingAs($this->user('lead@example.com'));
@@ -115,6 +119,44 @@ class RangerTest extends TestCase
         $this->assertSame($lead->id, $t->fresh()->assigned_to);
         $this->assertTrue($t->watchers()->where('users.id', $owner->id)->exists());
         $this->assertStringContainsString('took over', $t->messages()->reorder()->where('author', 'system')->latest('id')->value('body'));
+    }
+
+    public function test_emails_phone_calls_and_attachments(): void
+    {
+        Storage::fake('local');
+        $c = Customer::whereNotNull('password')->firstOrFail();
+        // The customer opens a ticket with a photo of their bill
+        $this->actingAs($c, 'customer')->post(route('myaccount.support.store'), ['topic' => 'billing', 'subject' => 'Bill photo attached', 'body' => 'See attached.',
+            'attachments' => [UploadedFile::fake()->image('my-bill.png')]])->assertRedirect();
+        $t = SupportTicket::latest('id')->firstOrFail();
+        $a = $t->attachments()->firstOrFail();
+        $this->assertTrue($a->from_customer);
+        $this->get(route('myaccount.support.file', [$t->id, $a->id]))->assertOk();
+
+        // The agent sees it, opens its page, emails back with a PDF and logs a call
+        $csr = $this->user('csr@example.com');
+        $this->actingAs($csr, 'web');
+        $this->get(route('ranger.tickets.show', $t))->assertSee('my-bill.png')->assertSee(route('ranger.tickets.attachment', [$t, $a]));
+        $this->get(route('ranger.tickets.attachment', [$t, $a]))->assertOk()->assertSee('my-bill.png')->assertSee('Download');
+        $this->get(route('ranger.tickets.attachment.file', [$t, $a]))->assertOk();
+        $this->post(route('ranger.tickets.reply', $t), ['kind' => 'agent', 'via' => 'email', 'body' => 'Here is your payment plan.',
+            'attachments' => [UploadedFile::fake()->create('plan.pdf', 20, 'application/pdf')]])->assertRedirect();
+        $this->post(route('ranger.tickets.reply', $t), ['kind' => 'agent', 'via' => 'phone', 'direction' => 'out', 'minutes' => 6, 'body' => 'CALLNOTE walked them through it'])->assertRedirect();
+        $email = $t->messages()->reorder()->where('via', 'email')->firstOrFail();
+        $phone = $t->messages()->reorder()->where('via', 'phone')->firstOrFail();
+        $this->assertSame([$t->email, 1], [$email->contact, $email->attachments()->count()]);
+        $this->assertSame(['out', 360], [$phone->direction, $phone->duration]);
+        $this->get(route('ranger.tickets.show', $t))->assertSee('Outbound call')->assertSee('6:00')->assertSee('Email to');
+
+        // The customer sees the email and its PDF; the call shows as a line without the call notes
+        $this->actingAs($c, 'customer')->get(route('myaccount.support.show', $t->id))->assertSee('Here is your payment plan.')->assertSee('plan.pdf')
+            ->assertSee('We called you')->assertDontSee('CALLNOTE');
+        // Someone else's ticket's file is off limits
+        $other = SupportTicket::where('customer_id', '!=', $c->id)->firstOrFail();
+        $this->get(route('myaccount.support.file', [$other->id, $a->id]))->assertNotFound();
+
+        // Only managers and admins see Assign To
+        $this->actingAs($this->user('lead@example.com'), 'web')->get(route('ranger.tickets.show', $t))->assertSee('Assign To');
     }
 
     public function test_team_members_can_be_seen_and_added(): void

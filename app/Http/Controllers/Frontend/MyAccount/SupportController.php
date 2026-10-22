@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Frontend\MyAccount;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\SupportTicket;
+use App\Models\SupportTicketAttachment;
+use App\Models\SupportTicketMessage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * My Account → Support Tickets: open a ticket, follow the conversation, reply, and once it's solved
@@ -47,29 +51,48 @@ class SupportController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $c = $this->c($request);
-        $data = $request->validate(['topic' => ['required', Rule::in(array_keys(SupportTicket::TOPICS))], 'subject' => ['required', 'string', 'max:200'], 'body' => ['required', 'string', 'max:5000']]);
+        $data = $request->validate(['topic' => ['required', Rule::in(array_keys(SupportTicket::TOPICS))], 'subject' => ['required', 'string', 'max:200'], 'body' => ['required', 'string', 'max:5000'],
+            'attachments' => SupportTicketAttachment::RULES, 'attachments.*' => SupportTicketAttachment::FILE_RULES]);
         $t = SupportTicket::create(['customer_id' => $c->id, 'name' => $c->name, 'email' => $c->email ?? '', 'subject' => $data['subject'], 'topic' => $data['topic'],
             'channel' => 'My Account', 'status' => 'new', 'priority' => $data['topic'] === 'outage' ? 'high' : 'normal', 'last_activity_at' => now()]);
-        $t->post('customer', $data['body']);
+        $this->attach($request, $t->post('customer', $data['body']));
 
         return redirect()->route('myaccount.support.show', $t->id)->with('status', 'Ticket '.$t->number().' is open. We\'ll reply here and email you.');
     }
 
     public function show(Request $request, int $ticket): View
     {
-        $t = $this->mine($request, $ticket)->load(['messages.user']);
+        $t = $this->mine($request, $ticket)->load(['messages.user', 'messages.attachments']);
 
         return view('frontend.myaccount.support-ticket', ['c' => $this->c($request), 't' => $t,
             'messages' => $t->messages->whereIn('author', ['customer', 'agent'])->values()]);
+    }
+
+    /** An attachment on one of your tickets (yours or ours). */
+    public function file(Request $request, int $ticket, SupportTicketAttachment $attachment): StreamedResponse
+    {
+        $t = $this->mine($request, $ticket);
+        abort_unless($attachment->support_ticket_id === $t->id && Storage::disk('local')->exists($attachment->path), 404);
+
+        return Storage::disk('local')->download($attachment->path, $attachment->name);
     }
 
     public function reply(Request $request, int $ticket): RedirectResponse
     {
         $t = $this->mine($request, $ticket);
         abort_if($t->status === 'closed', 403, 'This ticket is closed. Open a new one.');
-        $t->post('customer', $request->validate(['body' => ['required', 'string', 'max:5000']])['body']);
+        $data = $request->validate(['body' => ['required', 'string', 'max:5000'], 'attachments' => SupportTicketAttachment::RULES, 'attachments.*' => SupportTicketAttachment::FILE_RULES]);
+        $this->attach($request, $t->post('customer', $data['body']));
 
         return back()->with('status', 'Sent. We\'ll get back to you soon.');
+    }
+
+    /** Files sent with a message. */
+    private function attach(Request $request, SupportTicketMessage $m): void
+    {
+        foreach ($request->file('attachments', []) as $file) {
+            SupportTicketAttachment::store($m, $file, null, true);
+        }
     }
 
     /** "Did we help?" once the ticket is solved: thumbs up or down, with an optional comment. */

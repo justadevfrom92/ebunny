@@ -6,14 +6,18 @@ use App\Models\Customer;
 use App\Models\Note;
 use App\Models\RangerAgent;
 use App\Models\SupportTicket;
+use App\Models\SupportTicketAttachment;
+use App\Models\SupportTicketMessage;
 use App\Models\User;
+use App\Support\Pdf;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
  * Ranger sample data (fictional): the ticket team (in-office staff and a 3rd-party call center, each
- * with managers) and three months of My Account support tickets with replies, notes, managers joining
- * in or taking over, and customers' 👍 / 👎 ratings.
+ * with managers) and three months of support tickets — from My Account, email and (most often) phone
+ * calls — with replies, attachments, notes, managers joining in or taking over, and 👍 / 👎 ratings.
  */
 class RangerSeeder extends Seeder
 {
@@ -59,6 +63,7 @@ class RangerSeeder extends Seeder
         $goodComments = ['Fast and friendly, thank you!', 'Super helpful.', 'Fixed it the same day.', 'Easy, thanks!', null, null, null];
 
         // Customers with a My Account login first, so the test sign-ins have tickets to look at
+        Storage::disk('local')->deleteDirectory('ranger');
         $customers = Customer::whereNotNull('email')->orderByRaw('password is null')->orderBy('id')->get();
         for ($n = 0; $n < 140; $n++) {
             [$topic, $subject, $ask, $answer, $followUp, $final] = $scripts[$n % count($scripts)];
@@ -71,28 +76,57 @@ class RangerSeeder extends Seeder
             // A bit over a third go to the 3rd-party team
             $pool = $workers->filter(fn ($a) => $a->team === ($n % 8 < 3 ? 'third_party' : 'office'))->values();
             $owner = $state === 'new' ? null : $pool[$n % $pool->count()]->user;
-            $t = SupportTicket::create(['customer_id' => $c->id, 'name' => $c->name, 'email' => $c->email, 'subject' => $subject, 'topic' => $topic, 'channel' => 'My Account',
+            // Lots of phone calls, some emails, the rest from My Account (new, unanswered ones can't be calls)
+            $channel = $n < 8 ? ($n % 3 === 1 ? 'Email' : 'My Account') : (in_array($n % 9, [0, 2, 4, 6], true) ? 'Phone' : (in_array($n % 9, [1, 5], true) ? 'Email' : 'My Account'));
+            $via = ['My Account' => 'portal', 'Email' => 'email', 'Phone' => 'phone'][$channel];
+            $t = SupportTicket::create(['customer_id' => $c->id, 'name' => $c->name, 'email' => $c->email, 'subject' => $subject, 'topic' => $topic, 'channel' => $channel,
                 'status' => $state, 'priority' => $topic === 'outage' ? 'high' : ($n % 17 === 0 ? 'urgent' : ($n % 6 === 0 ? 'low' : 'normal')),
                 'assigned_to' => $owner?->id, 'created_at' => $opened, 'updated_at' => $opened, 'last_activity_at' => $opened]);
             $at = $opened->copy();
-            $msg = function (string $author, string $body, ?User $u = null, int $minutes = 0, string $priority = 'Low') use ($t, &$at) {
+            $msg = function (string $author, string $body, ?User $u = null, int $minutes = 0, string $priority = 'Low', array $extra = []) use ($t, &$at): ?SupportTicketMessage {
                 $at = $at->copy()->addMinutes($minutes);
                 if ($author === 'note') {
                     // Internal notes are account notes (category Ticket) linked to the ticket
                     Note::create(['customer_id' => $t->customer_id, 'user_id' => $u->id, 'author' => $u->name, 'category' => 'Ticket', 'action' => 'Internal Note',
                         'disposition' => $t->number(), 'priority' => $priority, 'body' => $body, 'support_ticket_id' => $t->id, 'created_at' => $at, 'updated_at' => $at]);
-                } else {
-                    $t->messages()->create(['author' => $author, 'body' => $body, 'user_id' => $u?->id, 'created_at' => $at]);
+
+                    return null;
                 }
+
+                return $t->messages()->create(['author' => $author, 'body' => $body, 'user_id' => $u?->id, 'created_at' => $at] + $extra);
             };
-            $msg('customer', $ask);
-            if ($owner) {
+            $mail = fn (string $who) => $via === 'email' ? ['via' => 'email', 'contact' => $c->email] : [];
+            $call = fn (string $dir) => ['via' => 'phone', 'direction' => $dir, 'duration' => mt_rand(90, 1100), 'contact' => $c->phone ?? '(555) 555-0100'];
+
+            if ($channel === 'Phone') {
+                // The agent who took the call opened the ticket and logged it
+                $msg('agent', "Called about: {$ask}\n\nWhat I did: {$answer}", $owner, 0, 'Low', $call('in'));
+                $t->forceFill(['first_response_at' => $at])->save();
+                if ($n % 3 !== 2) {
+                    $msg('note', ['Verified identity with the last 4 of the account and the service address.', 'Checked the meter reads with the utility while they were on the line; both actual reads.',
+                        'Customer was polite; prefers a call back after 5pm.'][$n % 3], $owner, mt_rand(2, 20), ['Low', 'Medium', 'Low'][$n % 3]);
+                }
+                if ($followUp && $state !== 'waiting') {
+                    $msg('agent', 'Called back to confirm. They said: "'.$followUp.'"'.($final ? "\n\n".$final : ''), $owner, mt_rand(60, 900), 'Low', $call('out'));
+                } elseif ($state === 'waiting') {
+                    $msg('agent', 'Called back, no answer. Left a voicemail asking them to call us.', $owner, mt_rand(60, 600), 'Low', $call('out') + ['duration' => mt_rand(20, 60)]);
+                }
+            } else {
+                $first = $msg('customer', $ask, null, 0, 'Low', $mail('customer'));
+                if ($n % 4 === 1) {
+                    SupportTicketAttachment::store($first, $this->customerFile($topic, $c), null, true);
+                }
+            }
+            if ($owner && $channel !== 'Phone') {
                 $slow = $pool[0]->team === 'third_party' ? 1.6 : 1;
                 $msg('system', $owner->name.' picked this up.', $owner, (int) (mt_rand(5, 240) * $slow));
-                if ($n % 5 === 1) {
-                    $msg('note', 'Checked the meter reads with the utility before replying; both actual reads.', $owner, mt_rand(2, 20));
+                if ($n % 2 === 1) {
+                    $msg('note', $n % 4 === 1 ? 'Checked the meter reads with the utility before replying; both actual reads.' : 'Looked at the last 3 bills and payments before answering.', $owner, mt_rand(2, 20));
                 }
-                $msg('agent', 'Hi '.Str::before($c->name, ' ').', '.$answer, $owner, mt_rand(3, 30));
+                $reply = $msg('agent', 'Hi '.Str::before($c->name, ' ').', '.$answer, $owner, mt_rand(3, 30), 'Low', $mail('agent'));
+                if (in_array($topic, ['plan', 'billing'], true) && $n % 3 === 0) {
+                    SupportTicketAttachment::store($reply, $this->ourFile($topic, $c, $subject), $owner, false);
+                }
                 $t->forceFill(['first_response_at' => $at])->save();
                 // Managers: some tickets they joined in on, a few they took over
                 if ($n % 9 === 2 && $managers->isNotEmpty()) {
@@ -107,23 +141,24 @@ class RangerSeeder extends Seeder
                     $t->forceFill(['assigned_to' => $m->user_id])->save();
                     $owner = $m->user;
                 }
-                // A few open tickets where the agent asked for a manager
-                if (in_array($n, [9, 13, 19, 22], true) && RangerAgent::where('user_id', $owner->id)->value('level') !== 'manager') {
-                    $why = ['Customer is upset and wants to talk to a manager.', 'Not sure I can approve this; need a manager to OK it.', null, 'Second time they wrote in about this.'][$n % 4];
-                    $msg('system', $owner->name.' asked for a manager'.($why ? ': '.$why : '.'), $owner, 4);
-                    $t->forceFill(['manager_requested_at' => $at, 'manager_requested_by' => $owner->id, 'manager_request_note' => $why])->save();
-                }
                 if ($followUp && $state !== 'waiting') {
-                    $msg('customer', $followUp, null, mt_rand(30, 600));
+                    $msg('customer', $followUp, null, mt_rand(30, 600), 'Low', $mail('customer'));
                     if ($final) {
-                        $msg('agent', $final, $owner, mt_rand(10, 180));
+                        $msg('agent', $final, $owner, mt_rand(10, 180), 'Low', $mail('agent'));
                     }
                 }
+            }
+            // A few open tickets where the agent asked for a manager
+            if ($owner && in_array($n, [9, 13, 19, 22], true) && RangerAgent::where('user_id', $owner->id)->value('level') !== 'manager') {
+                $why = ['Customer is upset and wants to talk to a manager.', 'Not sure I can approve this; need a manager to OK it.', null, 'Second time they wrote in about this.'][$n % 4];
+                $msg('system', $owner->name.' asked for a manager'.($why ? ': '.$why : '.'), $owner, 4);
+                $t->forceFill(['manager_requested_at' => $at, 'manager_requested_by' => $owner->id, 'manager_request_note' => $why])->save();
             }
             $t->forceFill(['last_activity_at' => $at])->save();
             if (in_array($state, ['solved', 'closed'], true)) {
                 $t->forceFill(['solved_at' => $at->copy()->addMinutes(5)])->save();
-                $msg('system', $owner->name.' set the status to Solved.', $owner, 5);
+                $closer = User::find($t->assigned_to);
+                $msg('system', $closer->name.' set the status to Solved.', $closer, 5);
                 // Most customers rate; the 3rd-party team rates a little lower
                 if ($n % 4 !== 3) {
                     $third = RangerAgent::where('user_id', $t->assigned_to)->value('team') === 'third_party';
@@ -134,5 +169,44 @@ class RangerSeeder extends Seeder
                 }
             }
         }
+    }
+
+    /** What a customer might attach (fictional): a photo of their bill, a lease, a screenshot or a note. */
+    private function customerFile(string $topic, Customer $c): array
+    {
+        if (in_array($topic, ['service', 'plan'], true)) {
+            $pdf = (new Pdf)->text(54, 70, 'Residential Lease (sample)', 18, true)->text(54, 100, 'Tenant: '.$c->name)->text(54, 116, 'Move-in date: the 15th')
+                ->text(54, 132, 'This is sample data for testing. Not a real lease.', 9);
+
+            return ['lease.pdf', $pdf->output('Lease'), 'application/pdf'];
+        }
+        if ($topic === 'other') {
+            return ['details.txt', "Account {$c->account}\nPlease use the email on file.\n(Sample file for testing.)\n", 'text/plain'];
+        }
+        $img = imagecreatetruecolor(520, 300);
+        imagefill($img, 0, 0, imagecolorallocate($img, 250, 250, 248));
+        $ink = imagecolorallocate($img, 30, 40, 70);
+        imagefilledrectangle($img, 0, 0, 520, 44, imagecolorallocate($img, 0, 174, 239));
+        imagestring($img, 5, 16, 14, $topic === 'account' ? 'My Account - Sign in' : 'SAMPLE ENERGY - STATEMENT', imagecolorallocate($img, 255, 255, 255));
+        $lines = $topic === 'account' ? ['Email: '.$c->email, 'Password: ********', '', 'X  The password you entered is incorrect.']
+            : ['Account '.$c->account, 'Usage: 1,830 kWh', 'Amount due: $210.44', '', 'SAMPLE IMAGE - NOT A REAL BILL'];
+        foreach ($lines as $i => $l) {
+            imagestring($img, 4, 20, 70 + $i * 30, $l, $ink);
+        }
+        ob_start();
+        imagepng($img);
+
+        return [$topic === 'account' ? 'screenshot.png' : 'bill-photo.png', (string) ob_get_clean(), 'image/png'];
+    }
+
+    /** What the team sends back: a payment plan or plan summary PDF (fictional). */
+    private function ourFile(string $topic, Customer $c, string $subject): array
+    {
+        $title = $topic === 'plan' ? 'Your Plan Options' : 'Your Payment Arrangement';
+        $pdf = (new Pdf)->text(54, 70, $title, 18, true)->text(54, 100, 'Account '.$c->account.' · '.$c->name)->text(54, 116, 'Re: '.$subject)
+            ->text(54, 140, $topic === 'plan' ? '12 months or 24 months (0.4 cents less per kWh)' : 'Half due on this bill, half on the next one.')
+            ->text(54, 170, 'Sample document for testing.', 9);
+
+        return [$topic === 'plan' ? 'plan-options.pdf' : 'payment-arrangement.pdf', $pdf->output($title), 'application/pdf'];
     }
 }

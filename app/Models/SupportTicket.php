@@ -16,6 +16,9 @@ class SupportTicket extends Model
 
     public const PRIORITIES = ['low' => ['Low', ''], 'normal' => ['Normal', 'info'], 'high' => ['High', 'warn'], 'urgent' => ['Urgent', 'bad']];
 
+    /** Where the ticket came in: My Account, an email, or a phone call. */
+    public const CHANNELS = ['My Account' => '💬', 'Email' => '✉', 'Phone' => '📞'];
+
     public const TOPICS = ['billing' => 'Billing & Payments', 'service' => 'Start, Stop or Move Service', 'plan' => 'My Plan', 'rewards' => 'Rangler Rewards', 'account' => 'My Account & Login', 'outage' => 'Power Outage', 'other' => 'Something Else'];
 
     protected $guarded = ['id'];
@@ -77,6 +80,11 @@ class SupportTicket extends Model
         $this->update(['last_activity_at' => now()]);
     }
 
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(SupportTicketAttachment::class);
+    }
+
     public function watchers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'support_ticket_watchers')->withPivot('joined_at');
@@ -93,9 +101,9 @@ class SupportTicket extends Model
     }
 
     /** Add a message and keep the ticket's times and status in step. */
-    public function post(string $author, string $body, ?User $user = null): SupportTicketMessage
+    public function post(string $author, string $body, ?User $user = null, array $extra = []): SupportTicketMessage
     {
-        $m = $this->messages()->create(['author' => $author, 'body' => $body, 'user_id' => $user?->id, 'created_at' => now()]);
+        $m = $this->messages()->create(['author' => $author, 'body' => $body, 'user_id' => $user?->id, 'created_at' => now()] + $extra);
         $changes = ['last_activity_at' => now()];
         if ($author === 'agent') {
             $changes['first_response_at'] = $this->first_response_at ?? now();
