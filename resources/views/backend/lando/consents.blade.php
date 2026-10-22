@@ -11,11 +11,11 @@
     </div>
 
     {{-- Each cookie the website sets, and how many of the latest choices allow it --}}
-    <div class="panel" style="margin-bottom:20px"><div class="panel-head"><h2>Cookies</h2><span class="muted">allowed in the last 30 days</span></div><div class="table-wrap"><table class="table">
+    <div class="panel" style="margin-bottom:20px"><div class="panel-head"><h2>Cookies</h2><span class="muted">allowed in the last 30 days · click one for its page</span></div><div class="table-wrap"><table class="table">
         <thead><tr><th>Cookie</th><th>Category</th><th>What it's for</th><th>Lasts</th><th class="num">Said Yes</th></tr></thead>
         <tbody>@foreach (\App\Models\CookieConsent::COOKIES as $name => [$cat, $purpose, $lasts])
             @php $yes = $cat === 'necessary' ? $all : (int) $optIn->$cat; @endphp
-            <tr><td class="mono"><b>{{ $name }}</b></td><td>@include('backend.partials.pill', ['text' => ucfirst($cat), 'tone' => ['necessary' => '', 'analytics' => 'info', 'marketing' => 'warn'][$cat]])</td>
+            <tr class="click" data-href="{{ route('lando.consents.cookie', $name) }}"><td class="mono"><a href="{{ route('lando.consents.cookie', $name) }}"><b>{{ $name }}</b></a></td><td>@include('backend.partials.pill', ['text' => ucfirst($cat), 'tone' => ['necessary' => '', 'analytics' => 'info', 'marketing' => 'warn'][$cat]])</td>
                 <td class="wrap">{{ $purpose }}</td><td>{{ $lasts }}</td><td class="num">{{ number_format($yes) }} <span class="help">{{ $all ? round(100 * $yes / $all) : 0 }}%</span></td></tr>
         @endforeach</tbody>
     </table></div></div>

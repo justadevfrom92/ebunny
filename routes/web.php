@@ -289,6 +289,7 @@ Route::prefix('admin')->group(function () {
             Route::get('health', [Backend\Lando\DashboardController::class, 'health'])->name('health');
             Route::get('visitors', [Backend\Lando\DashboardController::class, 'visitors'])->name('visitors');
             Route::get('cookie-consents', [Backend\Lando\ConsentController::class, 'index'])->name('consents');
+            Route::get('cookie-consents/cookies/{name}', [Backend\Lando\ConsentController::class, 'cookie'])->where('name', '[A-Za-z0-9_\-]+')->name('consents.cookie');
             Route::get('cookie-consents/{consent}', [Backend\Lando\ConsentController::class, 'show'])->whereNumber('consent')->name('consents.show');
             foreach (['ips', 'areas'] as $kind) {
                 Route::controller(Backend\Lando\BlockedController::class)->prefix('blocked-'.$kind)->name('blocked.'.$kind)->group(function () {

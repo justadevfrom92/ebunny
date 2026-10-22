@@ -58,6 +58,10 @@ class CookieConsentTest extends TestCase
         $this->get(route('lando.consents'))->assertSee(route('lando.consents.show', $k))->assertSee('data-auto-search', false)->assertDontSee('>Search</button>', false);
         $this->get(route('lando.consents.show', $k))->assertOk()->assertSee('Cookie Cache')->assertSee('GA1.1.123.456')->assertSee('present but not allowed')
             ->assertSee('stray_cookie')->assertSee('Not on our list')->assertDontSee('abcdefghijklmnop');
+        // Each cookie has its own page, listing the browsers it was seen in
+        $this->get(route('lando.consents'))->assertSee(route('lando.consents.cookie', '_ga'));
+        $this->get(route('lando.consents.cookie', '_ga'))->assertOk()->assertSee('Google Analytics')->assertSee('Present but Not Allowed')->assertSee(route('lando.consents.show', $k));
+        $this->get(route('lando.consents.cookie', 'nope'))->assertNotFound();
         // Search finds it by IP
         $this->get(route('lando.consents', ['q' => $k->ip]))->assertSee(route('lando.consents.show', $k));
     }

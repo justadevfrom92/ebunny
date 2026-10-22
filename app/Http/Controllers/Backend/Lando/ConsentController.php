@@ -47,4 +47,21 @@ class ConsentController extends Controller
             'visits' => SiteVisit::where('visitor', $consent->visitor)->latest('created_at')->limit(50)->get(),
         ]);
     }
+
+    /** One of the site's cookies: what it is, how many choices allow it, and every browser it was seen in. */
+    public function cookie(string $name): View
+    {
+        abort_unless(isset(CookieConsent::COOKIES[$name]), 404);
+        [$cat] = CookieConsent::COOKIES[$name];
+        $since = today()->subDays(29);
+        $recent = CookieConsent::where('created_at', '>=', $since);
+        $allows = fn ($q) => $cat === 'necessary' ? $q : $q->where($cat, true);
+        $seen = CookieConsent::with(['customer', 'user'])->whereRaw('json_extract(cookie_jar, ?) is not null', ['$."'.$name.'"'])->latest('cookies_seen_at')->limit(200)->get();
+
+        return view('backend.lando.cookie', [
+            'name' => $name, 'cookie' => CookieConsent::COOKIES[$name],
+            'choices' => (clone $recent)->count(), 'allowing' => $allows(clone $recent)->count(),
+            'seen' => $seen, 'notAllowed' => $seen->filter(fn ($k) => ! in_array($name, $k->cookies(), true))->values(),
+        ]);
+    }
 }

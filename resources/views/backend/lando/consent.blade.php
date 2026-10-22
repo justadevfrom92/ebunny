@@ -46,7 +46,7 @@
             <tbody>
                 @foreach (\App\Models\CookieConsent::COOKIES as $name => [$cat, $purpose, $lasts])
                     @php $ok = in_array($name, $allowed, true); $has = array_key_exists($name, $jar); @endphp
-                    <tr @class(['row-warn' => $has && ! $ok])><td class="mono"><b>{{ $name }}</b></td>
+                    <tr @class(['click', 'row-warn' => $has && ! $ok]) data-href="{{ route('lando.consents.cookie', $name) }}"><td class="mono"><a href="{{ route('lando.consents.cookie', $name) }}"><b>{{ $name }}</b></a></td>
                         <td>@include('backend.partials.pill', ['text' => ucfirst($cat), 'tone' => $tones[$cat]])</td>
                         <td>{{ $ok ? '✓ Allowed' : '✗ Blocked' }}</td>
                         <td class="mono">@if ($has){{ $jar[$name] !== '' ? $jar[$name] : '(empty)' }}@if (! $ok)<div class="help" style="color:var(--bad)">present but not allowed</div>@endif @else<span class="muted">—</span>@endif</td>
