@@ -2,7 +2,7 @@
 
 @section('content')
     @php $days = (int) ($f['days'] ?? 90); $url = fn (array $set) => route('ranger.team', array_filter(array_merge($f, $set))); @endphp
-    @include('backend.partials.page-head', ['title' => $company ? $company.' — Ticket Team' : 'Ticket Team', 'sub' => 'Everyone who works Ranger tickets, in the office and at 3rd-party companies. Click someone for their page. Approval = 👍 ÷ all ratings, last '.$days.' days.',
+    @include('backend.partials.page-head', ['title' => $company ? $company.' — Ticket Team' : 'Ticket Team', 'sub' => ($company ? 'Your company\'s people who work Ranger tickets.' : 'Everyone who works Ranger tickets, in the office and at 3rd-party companies.').' Click someone for their page. Approval = 👍 ÷ all ratings, last '.$days.' days.',
         'actions' => '<a class="btn cyan" href="'.route('ranger.team.create').'">Add a Team Member</a>'])
 
     <div class="actions" style="margin-bottom:12px;justify-content:space-between">
