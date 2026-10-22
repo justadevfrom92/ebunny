@@ -128,12 +128,13 @@
         if (ctl) ctl.abort();
         ctl = window.AbortController ? new AbortController() : null;
         fetch(url, { signal: ctl ? ctl.signal : undefined, headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
-          .then(function (r) { return r.text(); })
+          .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
           .then(function (html) {
-            var doc = new DOMParser().parseFromString(html, 'text/html');
-            sels.forEach(function (sel) { var now = $(sel.trim()), fresh = doc.querySelector(sel.trim()); if (now && fresh) now.replaceWith(fresh); });
+            var doc = new DOMParser().parseFromString(html, 'text/html'), found = 0;
+            sels.forEach(function (sel) { var now = $(sel.trim()), fresh = doc.querySelector(sel.trim()); if (now && fresh) { now.replaceWith(fresh); found++; } });
+            if (!found) throw new Error('no results');
             history.replaceState(null, '', url);
-          }).catch(function () {});
+          }).catch(function (e) { if (!e || e.name !== 'AbortError') location.href = url; });   // fall back to loading the page
       }
     });
 
