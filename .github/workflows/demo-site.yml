@@ -1,0 +1,42 @@
+# Publishes the demo (the pages listed in config/demo.php, with sample data and a placeholder brand)
+# to GitHub Pages. Runs only when started by hand: Actions → Demo site → Run workflow.
+# One-time setup: Settings → Pages → Source: GitHub Actions.
+name: Demo site
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: demo-site
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_sqlite, mbstring, openssl, fileinfo, gd, zlib
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: php artisan start --fresh --no-serve --no-worker
+      - run: php artisan demo:export --out=build/demo
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/demo
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -86,7 +86,8 @@ class SiteController extends Controller
         };
         CookieConsent::create(['visitor' => $visitor, 'customer_id' => auth('customer')->id(), 'user_id' => auth('web')->id(), 'choice' => $data['choice'],
             'analytics' => $analytics, 'marketing' => $marketing, 'policy_version' => CookieConsent::POLICY_VERSION, 'ip' => $request->ip(),
-            'user_agent' => Str::limit((string) $request->userAgent(), 245, ''), 'page' => $data['page'] ?? null, 'created_at' => now()]);
+            'user_agent' => Str::limit((string) $request->userAgent(), 245, ''), 'page' => $data['page'] ?? null, 'created_at' => now(),
+            'cookie_jar' => CookieConsent::jarFrom($request), 'cookies_seen_at' => now()]);
 
         return response()->json(['consent' => ['analytics' => $analytics, 'marketing' => $marketing, 'choice' => $data['choice']]])
             ->withCookie(cookie(SiteTraffic::COOKIE, $visitor, 60 * 24 * 365));
@@ -98,6 +99,11 @@ class SiteController extends Controller
         $visitor = $request->cookie(SiteTraffic::COOKIE);
         if ($visitor && $id = $request->integer('v')) {
             SiteVisit::whereKey($id)->where('visitor', $visitor)->where('created_at', '>=', now()->subHours(12))->update(['seen_at' => now()]);
+        }
+        // Keep the cookie cache on this browser's latest choice current (at most every 10 minutes)
+        if ($visitor) {
+            CookieConsent::where('visitor', $visitor)->latest('id')->limit(1)->where(fn ($q) => $q->whereNull('cookies_seen_at')->orWhere('cookies_seen_at', '<', now()->subMinutes(10)))
+                ->get()->each(fn ($c) => $c->update(['cookie_jar' => CookieConsent::jarFrom($request), 'cookies_seen_at' => now()]));
         }
 
         return response()->json(['ok' => true])->header('Cache-Control', 'no-store');

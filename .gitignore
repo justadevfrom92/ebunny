@@ -29,3 +29,4 @@ Thumbs.db
 
 # Stray screenshots at the repo root
 /*.png
+/build

@@ -476,7 +476,7 @@
   // Show / hide password on every password field (static pages don't load it from the layout)
   ['password-toggle', 'datepicker'].forEach(function (name) {
     if (document.querySelector('script[src$="' + name + '.js"]')) return;
-    var sc = document.createElement('script'); sc.src = '/shared/' + name + '.js'; sc.defer = true; document.head.appendChild(sc);
+    var sc = document.createElement('script'); sc.src = ET.root + 'shared/' + name + '.js'; sc.defer = true; document.head.appendChild(sc);
   });
 
   ET.ready(function () {

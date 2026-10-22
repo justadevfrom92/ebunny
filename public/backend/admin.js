@@ -115,6 +115,28 @@
       input.addEventListener('input', run); run();
     });
 
+    // Search as you type: input[data-auto-search="#a,#b"] in a GET form reloads the page's results in
+    // the background (no Search button) and swaps in the listed parts, keeping the cursor in the box
+    $$('[data-auto-search]').forEach(function (input) {
+      var form = input.form, sels = input.dataset.autoSearch.split(','), timer, ctl;
+      form.addEventListener('submit', function (e) { e.preventDefault(); clearTimeout(timer); run(); });
+      input.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(run, 300); });
+      function run() {
+        var url = new URL(form.getAttribute('action') || location.pathname, location.href), params = new URLSearchParams();
+        new FormData(form).forEach(function (v, k) { if (String(v).trim() !== '') params.append(k, v); });
+        url.search = params.toString();
+        if (ctl) ctl.abort();
+        ctl = window.AbortController ? new AbortController() : null;
+        fetch(url, { signal: ctl ? ctl.signal : undefined, headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+          .then(function (r) { return r.text(); })
+          .then(function (html) {
+            var doc = new DOMParser().parseFromString(html, 'text/html');
+            sels.forEach(function (sel) { var now = $(sel.trim()), fresh = doc.querySelector(sel.trim()); if (now && fresh) now.replaceWith(fresh); });
+            history.replaceState(null, '', url);
+          }).catch(function () {});
+      }
+    });
+
     // Clickable table rows (delegated, so rows swapped in later, like Walker's live tables, work too)
     document.addEventListener('click', function (e) {
       var tr = e.target.closest && e.target.closest('tr[data-href]');

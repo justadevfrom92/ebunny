@@ -41,6 +41,14 @@ Website customer login (My Account, at `/myaccount`): username `demo.customer`, 
 
 Other commands: `php artisan test` (feature tests), `php artisan start --fresh` (reset the sample data and start).
 
+### Demo site (GitHub Pages)
+
+`php artisan demo:export` writes the pages listed in `config/demo.php` to `build/demo` as a static site with the sample data
+and a placeholder brand. Links between those pages work; links to any page that isn't listed are switched off, and forms
+don't save anything. Add or remove pages in `config/demo.php`, or add one-offs with `--page=/admin/ranger/tickets/12`.
+Open `build/demo/index.html` to check it, then publish the folder anywhere static. To publish it on GitHub Pages: Settings →
+Pages → Source: GitHub Actions, then Actions → **Demo site** → Run workflow (it sets up the sample data, exports and deploys).
+
 ### Production notes
 - Point the web server's document root at `public/` (Apache or Nginx + PHP-FPM, the usual Laravel setup).
 - Use MySQL by setting `DB_CONNECTION=mysql` and the `DB_*` values in `.env`, then `php artisan migrate --force`.

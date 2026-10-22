@@ -19,6 +19,7 @@ class CookieConsent extends Model
         'site_session' => ['necessary', 'Keeps you signed in and your cart between pages', 'Session'],
         'XSRF-TOKEN' => ['necessary', 'Protects forms from cross-site requests', 'Session'],
         'cookie_consent' => ['necessary', 'Remembers this cookie choice', '1 year'],
+        'et_vid' => ['necessary', 'Tells visits from the same browser apart for site traffic (no personal details)', '1 year'],
         '_ga' => ['analytics', 'Google Analytics: tells visits apart', '2 years'],
         '_ga_ID' => ['analytics', 'Google Analytics: keeps the visit going', '2 years'],
         '_clck' => ['analytics', 'Clarity: heat maps of clicks on pages', '1 year'],
@@ -37,7 +38,7 @@ class CookieConsent extends Model
 
     protected function casts(): array
     {
-        return ['analytics' => 'boolean', 'marketing' => 'boolean', 'created_at' => 'datetime'];
+        return ['analytics' => 'boolean', 'marketing' => 'boolean', 'created_at' => 'datetime', 'cookie_jar' => 'array', 'cookies_seen_at' => 'datetime'];
     }
 
     public function customer(): BelongsTo
@@ -62,6 +63,36 @@ class CookieConsent extends Model
         }
 
         return $visitor ? $q->where('visitor', $visitor)->first() : null;
+    }
+
+    /**
+     * The cookies a browser sent (from the raw Cookie header, so third-party ones like _ga are included).
+     * Sign-in and form tokens are cut short: enough to tell them apart, never enough to use.
+     *
+     * @return array<string, string>
+     */
+    public static function jarFrom(Request $request): array
+    {
+        $jar = [];
+        foreach (explode(';', (string) $request->header('Cookie')) as $pair) {
+            [$name, $value] = array_pad(explode('=', trim($pair), 2), 2, '');
+            if ($name === '' || count($jar) >= 40) {
+                continue;
+            }
+            $value = urldecode($value);
+            $secret = in_array($name, ['site_session', 'XSRF-TOKEN'], true) || str_contains(strtolower($name), 'session') || str_starts_with($name, 'remember_');
+            $jar[substr($name, 0, 60)] = $secret ? substr($value, 0, 8).'…' : mb_substr($value, 0, 120);
+        }
+
+        return $jar;
+    }
+
+    /** Cookies in the browser that this choice doesn't allow (set before they chose, or a script ignoring it). */
+    public function unexpected(): array
+    {
+        $allowed = $this->cookies();
+
+        return array_values(array_filter(array_keys($this->cookie_jar ?? []), fn ($n) => isset(self::COOKIES[$n]) && ! in_array($n, $allowed, true)));
     }
 
     public function label(): string
