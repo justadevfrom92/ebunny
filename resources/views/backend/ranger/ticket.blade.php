@@ -97,8 +97,7 @@
                             <div class="field"><label for="rt-min">Minutes</label><input id="rt-min" name="minutes" type="number" min="0" max="600" value="5" style="width:90px"></div>
                         </div>
                         <textarea name="body" required maxlength="5000" style="min-height:120px" aria-label="Message" placeholder="Hi {{ \Illuminate\Support\Str::before($t->name, ' ') }}, …"></textarea>
-                        <div class="field"><label>Then set the ticket to</label><div class="chips small"><label><input type="radio" name="status" value="" checked><span>Leave as is</span></label>
-                            <label><input type="radio" name="status" value="waiting"><span>Waiting on Customer</span></label><label><input type="radio" name="status" value="solved"><span>Solved</span></label></div></div>
+                        <div class="field" style="max-width:280px"><label for="rt-then">Then set the ticket to</label><select id="rt-then" name="status"><option value="">Leave as is</option><option value="waiting">Waiting on Customer</option><option value="solved">Solved</option></select></div>
                         <div><button class="btn cyan">Save</button> <span class="help">Messages and emails reach the customer; call notes stay with the team.</span></div>
                     </div>
                 </form>
@@ -155,8 +154,8 @@
                 </dl>
             </div>
                 <form method="post" action="{{ route('ranger.tickets.update', $t) }}" class="panel-body" style="border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px">@csrf @method('patch')
-                    <div class="field"><label>Status</label><div class="chips small">@foreach (\App\Models\SupportTicket::STATUSES as $k => [$l])<label><input type="radio" name="status" value="{{ $k }}" @checked($t->status === $k)><span>{{ $l }}</span></label>@endforeach</div></div>
-                    <div class="field"><label>Priority</label><div class="chips small">@foreach (\App\Models\SupportTicket::PRIORITIES as $k => [$l])<label><input type="radio" name="priority" value="{{ $k }}" @checked($t->priority === $k)><span>{{ $l }}</span></label>@endforeach</div></div>
+                    <div class="field"><label for="rt-status">Status</label><select id="rt-status" name="status">@foreach (\App\Models\SupportTicket::STATUSES as $k => [$l])<option value="{{ $k }}" @selected($t->status === $k)>{{ $l }}</option>@endforeach</select></div>
+                    <div class="field"><label for="rt-priority">Priority</label><select id="rt-priority" name="priority">@foreach (\App\Models\SupportTicket::PRIORITIES as $k => [$l])<option value="{{ $k }}" @selected($t->priority === $k)>{{ $l }}</option>@endforeach</select></div>
                     <div><button class="btn">Save</button></div>
                 </form>
             </div>

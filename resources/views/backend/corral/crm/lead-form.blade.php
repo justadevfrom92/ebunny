@@ -8,7 +8,7 @@
 
     <form method="post" action="{{ $lead->exists ? route('corral.crm.leads.update', $lead) : route('corral.crm.leads.store') }}" class="stack" style="max-width:980px">@csrf @if ($lead->exists) @method('put') @endif
         <div class="panel"><div class="panel-head"><h2>Who</h2></div><div class="panel-body stack">
-            <div class="field"><label>Kind</label><div class="chips small">@foreach (\App\Models\CrmLead::KINDS as $k)<label><input type="radio" name="kind" value="{{ $k }}" @checked($v('kind') === $k)><span>{{ $k }}</span></label>@endforeach</div></div>
+            <div class="field"><label for="sel-kind">Kind</label><select name="kind" id="sel-kind" style="max-width:320px">@foreach (\App\Models\CrmLead::KINDS as $k)<option value="{{ $k }}" @selected($v('kind') === $k)>{{ $k }}</option>@endforeach</select></div>
             <div class="grid-2">
                 <div class="field"><label for="name">Contact name</label><input id="name" name="name" required maxlength="150" value="{{ $v('name') }}"></div>
                 <div class="field"><label for="company">Business name</label><input id="company" name="company" maxlength="150" value="{{ $v('company') }}"><div class="help">Leave empty for a home.</div></div>
@@ -17,7 +17,7 @@
                 <div class="field"><label for="phone">Phone</label><input id="phone" name="phone" maxlength="30" value="{{ $v('phone') }}"></div>
                 <div class="field"><label for="city">City</label><input id="city" name="city" maxlength="80" value="{{ $v('city') }}"></div>
             </div>
-            <div class="field"><label>Utility area</label><div class="chips small"><label><input type="radio" name="market_id" value="" @checked(! $v('market_id'))><span>Not sure</span></label>@foreach ($markets as $mk)<label><input type="radio" name="market_id" value="{{ $mk->id }}" @checked((string) $v('market_id') === (string) $mk->id)><span>{{ $mk->name }}</span></label>@endforeach</div></div>
+            <div class="field"><label>Utility area</label><select name="market_id" id="sel-market_id" style="max-width:320px"><option value="">Not sure</option>@foreach ($markets as $mk)<option value="{{ $mk->id }}" @selected((string) $v('market_id') === (string) $mk->id)>{{ $mk->name }}</option>@endforeach</select></div>
         </div></div>
 
         <div class="panel"><div class="panel-head"><h2>Opportunity</h2></div><div class="panel-body stack">
@@ -33,7 +33,7 @@
         </div></div>
 
         <div class="panel"><div class="panel-head"><h2>Source &amp; Owner</h2></div><div class="panel-body stack">
-            <div class="field"><label>Source</label><div class="chips small">@foreach (\App\Models\CrmLead::SOURCES as $s)<label><input type="radio" name="source" value="{{ $s }}" @checked($v('source') === $s)><span>{{ $s }}</span></label>@endforeach</div></div>
+            <div class="field"><label for="sel-source">Source</label><select name="source" id="sel-source" style="max-width:320px">@foreach (\App\Models\CrmLead::SOURCES as $s)<option value="{{ $s }}" @selected($v('source') === $s)>{{ $s }}</option>@endforeach</select></div>
             <div class="field"><label>Broker or partner <span class="help">(for Broker and Partner leads)</span></label>
                 <div class="table-wrap pick-list"><table class="table"><tbody>
                     <tr><td style="width:32px"><input type="radio" id="p0" name="partner_id" value="" @checked(! $v('partner_id'))></td><td><label for="p0">None</label></td><td></td></tr>

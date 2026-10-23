@@ -39,7 +39,7 @@
     <form method="post" action="{{ route('corral.crm.partners.activity', $p) }}" class="panel">@csrf
         <div class="panel-head"><h2>Log Activity</h2></div>
         <div class="panel-body stack">
-            <div class="chips small">@foreach (\App\Models\CrmActivity::TYPES as $t => [$label])<label><input type="radio" name="type" value="{{ $t }}" @checked(old('type', 'call') === $t)><span>{{ $label }}</span></label>@endforeach</div>
+            <select name="type" id="sel-type" style="max-width:320px">@foreach (\App\Models\CrmActivity::TYPES as $t => [$label])<option value="{{ $t }}" @selected(old('type', 'call') === $t)>{{ $label }}</option>@endforeach</select>
             <div class="grid-2"><div class="field"><label for="subject">What happened</label><input id="subject" name="subject" required maxlength="200"></div>
                 <div class="field"><label for="due_on">Follow up on</label><input id="due_on" name="due_on" type="date"></div></div>
             <div class="field"><label for="body">Details</label><textarea id="body" name="body" rows="2" maxlength="2000"></textarea></div>

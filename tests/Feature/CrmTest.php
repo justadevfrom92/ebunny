@@ -30,7 +30,7 @@ class CrmTest extends TestCase
         $this->get(route('corral.crm.pipeline'))->assertOk()->assertSee('Open Pipeline')->assertSee('Proposal Sent')->assertSee('Recent Wins');
         $this->get(route('corral.crm.leads', ['stage' => 'won']))->assertOk()->assertDontSee('No leads match.');
         $this->get(route('corral.crm.leads.show', $lead))->assertOk()->assertSee($lead->displayName())->assertSee('Timeline')->assertSee('Log Activity');
-        $this->get(route('corral.crm.leads.create'))->assertOk()->assertSee('pick-list', false)->assertDontSee('<select name', false)->assertDontSee('<select id="owner', false);
+        $this->get(route('corral.crm.leads.create'))->assertOk()->assertSee('pick-list', false)->assertSee('<select name="kind"', false)->assertDontSee('<select id="owner', false);   // kind, source and stage are dropdowns; the owner is still a pick list
         $this->get(route('corral.crm.tasks'))->assertOk()->assertSee('Overdue')->assertSee('Due Today');
         $this->get(route('corral.crm.partners'))->assertOk()->assertSee($partner->name);
         $this->get(route('corral.crm.partners.show', $partner))->assertOk()->assertSee('Commission Earned');

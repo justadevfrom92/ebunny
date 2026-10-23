@@ -13,9 +13,9 @@
     <form method="post" action="{{ route('corral.crm.leads.stage', $lead) }}" class="panel" id="stage-form">@csrf
         <div class="panel-head"><h2>Stage</h2><span class="muted">since {{ ($lead->stage_changed_at ?? $lead->created_at)->format('n/j/Y') }}</span></div>
         <div class="panel-body stack">
-            <div class="chips stage-chips">@foreach (\App\Models\CrmLead::STAGES as $s => [$label, $chance])<label><input type="radio" name="stage" value="{{ $s }}" @checked($lead->stage === $s)><span><b>{{ $label }}</b><small>{{ $s === 'lost' ? 'closed' : $chance.'% chance' }}</small></span></label>@endforeach</div>
+            <div class="field" style="max-width:320px"><label for="stage">Stage</label><select id="stage" name="stage">@foreach (\App\Models\CrmLead::STAGES as $s => [$label, $chance])<option value="{{ $s }}" @selected($lead->stage === $s)>{{ $label }} ({{ $s === 'lost' ? 'closed' : $chance.'% chance' }})</option>@endforeach</select></div>
             <div class="grid-2" data-stage-extra>
-                <div class="field" data-for="lost"><label>Why it was lost</label><div class="chips small">@foreach (\App\Models\CrmLead::LOST_REASONS as $r)<label><input type="radio" name="lost_reason" value="{{ $r }}" @checked(old('lost_reason', $lead->lost_reason) === $r)><span>{{ $r }}</span></label>@endforeach</div>
+                <div class="field" data-for="lost"><label for="lost_reason">Why it was lost</label><select id="lost_reason" name="lost_reason"><option value="">Pick a reason</option>@foreach (\App\Models\CrmLead::LOST_REASONS as $r)<option @selected(old('lost_reason', $lead->lost_reason) === $r)>{{ $r }}</option>@endforeach</select>
                     <input name="lost_other" maxlength="200" value="{{ in_array($lead->lost_reason, \App\Models\CrmLead::LOST_REASONS, true) ? '' : $lead->lost_reason }}" placeholder="Or type another reason" aria-label="Other reason" style="margin-top:8px"></div>
                 <div class="field" data-for="won"><label for="account">New account number (optional)</label><input id="account" name="account" class="mono" maxlength="20" value="{{ old('account', $lead->customer?->account) }}" placeholder="1219…"></div>
             </div>
@@ -61,7 +61,7 @@
     <form method="post" action="{{ route('corral.crm.leads.activity', $lead) }}" class="panel">@csrf
         <div class="panel-head"><h2>Log Activity</h2><span class="muted">a call, email, meeting or note, or set a follow-up</span></div>
         <div class="panel-body stack">
-            <div class="chips small">@foreach (\App\Models\CrmActivity::TYPES as $t => [$label])<label><input type="radio" name="type" value="{{ $t }}" @checked(old('type', 'call') === $t)><span>{{ $label }}</span></label>@endforeach</div>
+            <select name="type" id="sel-type" style="max-width:320px">@foreach (\App\Models\CrmActivity::TYPES as $t => [$label])<option value="{{ $t }}" @selected(old('type', 'call') === $t)>{{ $label }}</option>@endforeach</select>
             <div class="grid-2"><div class="field"><label for="subject">What happened</label><input id="subject" name="subject" required maxlength="200" value="{{ old('subject') }}" placeholder="e.g. Sent the 24-month business quote"></div>
                 <div class="field"><label for="due_on">Follow up on</label><input id="due_on" name="due_on" type="date" value="{{ old('due_on') }}"><div class="help">Needed for a follow-up.</div></div></div>
             <div class="field"><label for="body">Details</label><textarea id="body" name="body" rows="3" maxlength="2000">{{ old('body') }}</textarea></div>
@@ -84,7 +84,7 @@
     <script>
     (function () {
         var f = document.getElementById('stage-form'); if (!f) return;
-        function sync() { var v = (f.querySelector('input[name=stage]:checked') || {}).value; f.querySelectorAll('[data-for]').forEach(function (el) { el.hidden = el.dataset.for !== v; }); f.querySelector('[data-stage-extra]').hidden = v !== 'won' && v !== 'lost'; }
+        function sync() { var v = f.querySelector('[name=stage]').value; f.querySelectorAll('[data-for]').forEach(function (el) { el.hidden = el.dataset.for !== v; }); f.querySelector('[data-stage-extra]').hidden = v !== 'won' && v !== 'lost'; }
         f.addEventListener('change', sync); sync();
     })();
     </script>

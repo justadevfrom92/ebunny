@@ -36,9 +36,9 @@
         </dl></div>
             @if ($manager)
                 <form method="post" action="{{ route('ranger.team.update', $agent) }}" class="panel-body" style="border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px">@csrf @method('patch')
-                    @unless ($company)<div class="field"><label>Team</label><div class="chips small">@foreach (\App\Models\RangerAgent::TEAMS as $k => $l)<label><input type="radio" name="team" value="{{ $k }}" @checked($agent->team === $k)><span>{{ $l }}</span></label>@endforeach</div></div>@endunless
-                    <div class="field"><label>Level</label><div class="chips small">@foreach (\App\Models\RangerAgent::LEVELS as $k => $l)@if ($k !== 'company_admin' || (! $company && $agent->team === 'third_party'))<label><input type="radio" name="level" value="{{ $k }}" @checked($agent->level === $k)><span>{{ $l }}</span></label>@endif @endforeach</div></div>
-                    <div class="field"><label>Working tickets</label><div class="chips small"><label><input type="radio" name="active" value="1" @checked($agent->active)><span>Yes</span></label><label><input type="radio" name="active" value="0" @checked(! $agent->active)><span>Off tickets</span></label></div>
+                    @unless ($company)<div class="field"><label for="tm-team">Team</label><select id="tm-team" name="team">@foreach (\App\Models\RangerAgent::TEAMS as $k => $l)<option value="{{ $k }}" @selected($agent->team === $k)>{{ $l }}</option>@endforeach</select></div>@endunless
+                    <div class="field"><label for="tm-level">Level</label><select id="tm-level" name="level">@foreach (\App\Models\RangerAgent::LEVELS as $k => $l)@if ($k !== 'company_admin' || (! $company && $agent->team === 'third_party'))<option value="{{ $k }}" @selected($agent->level === $k)>{{ $l }}</option>@endif @endforeach</select></div>
+                    <div class="field"><label for="tm-active">Status</label><select id="tm-active" name="active"><option value="1" @selected($agent->active)>Working tickets</option><option value="0" @selected(! $agent->active)>Off tickets</option></select>
                         <span class="help">Taking someone off tickets sends their open tickets back to Unassigned.</span></div>
                     <div><button class="btn">Save</button></div>
                 </form>

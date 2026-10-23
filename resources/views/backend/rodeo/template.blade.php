@@ -9,15 +9,15 @@
         <form method="post" action="{{ $template->exists ? route('rodeo.templates.update', $template) : route('rodeo.templates.store') }}" class="panel">@csrf @if ($template->exists) @method('put') @endif
             <div class="panel-body form-grid" style="grid-template-columns:1fr">
                 <label for="name">Name</label><input id="name" name="name" required value="{{ old('name', $template->name) }}">
-                <label>Category</label><div class="chips small"><label><input type="radio" name="email_category_id" value="" @checked(! old('email_category_id', $template->email_category_id))><span>None</span></label>@foreach ($categories as $cat)<label><input type="radio" name="email_category_id" value="{{ $cat->id }}" @checked(old('email_category_id', $template->email_category_id) == $cat->id)><span>{{ $cat->name }}</span></label>@endforeach</div>
+                <label for="email_category_id">Category</label><select id="email_category_id" name="email_category_id"><option value="">None</option>@foreach ($categories as $cat)<option value="{{ $cat->id }}" @selected(old('email_category_id', $template->email_category_id) == $cat->id)>{{ $cat->name }}</option>@endforeach</select>
                 <label for="subject">Subject</label><input id="subject" name="subject" required value="{{ old('subject', $template->subject) }}">
                 @foreach (['header' => 'Header', 'footer' => 'Footer'] as $kind => $label)
                     @php $field = 'email_'.$kind.'_id'; $default = $parts[$kind]->firstWhere('is_default', true); @endphp
-                    <label>{{ $label }}</label>
-                    <div><div class="chips small" data-part="{{ $kind }}">
-                        <label><input type="radio" name="{{ $field }}" value="" @checked(! old($field, $template->$field))><span>Default{{ $default ? ' ('.$default->name.')' : '' }}</span></label>
-                        @foreach ($parts[$kind] as $p)<label><input type="radio" name="{{ $field }}" value="{{ $p->id }}" @checked(old($field, $template->$field) == $p->id)><span>{{ $p->name }}</span></label>@endforeach
-                    </div><div class="help"><a href="{{ route('rodeo.parts') }}">Edit headers &amp; footers</a></div></div>
+                    <label for="{{ $field }}">{{ $label }}</label>
+                    <div><select id="{{ $field }}" name="{{ $field }}" data-part="{{ $kind }}">
+                        <option value="" @selected(! old($field, $template->$field))>Default{{ $default ? ' ('.$default->name.')' : '' }}</option>
+                        @foreach ($parts[$kind] as $p)<option value="{{ $p->id }}" @selected(old($field, $template->$field) == $p->id)>{{ $p->name }}</option>@endforeach
+                    </select><div class="help"><a href="{{ route('rodeo.parts') }}">Edit headers &amp; footers</a></div></div>
                 @endforeach
                 <label for="b-html">Body (HTML)</label><textarea id="b-html" name="body" spellcheck="false">{{ old('body', $template->body) }}</textarea>
             </div>
@@ -36,12 +36,12 @@
     <script>
     (function () {
         function part(kind) {
-            var picked = document.querySelector('[data-part="' + kind + '"] input:checked');
+            var picked = document.querySelector('select[data-part="' + kind + '"]');
             var t = document.querySelector('template[data-part-html="' + kind + ':' + (picked ? picked.value : '') + '"]');
             return t ? t.innerHTML : '';
         }
         window.emailWrap = function (body) { return part('header') + body + part('footer'); };
-        document.querySelectorAll('[data-part] input').forEach(function (r) { r.addEventListener('change', function () { document.dispatchEvent(new Event('email-parts-changed')); }); });
+        document.querySelectorAll('select[data-part]').forEach(function (r) { r.addEventListener('change', function () { document.dispatchEvent(new Event('email-parts-changed')); }); });
     })();
     </script>
 @endsection

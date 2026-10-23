@@ -44,7 +44,7 @@
                 <div class="panel-head"><h2>Edit</h2></div>
                 <div class="panel-body" style="display:flex;flex-direction:column;gap:12px">
                     <div class="field"><label for="u-title">Title</label><input id="u-title" name="title" required maxlength="150" value="{{ old('title', $u->title) }}"></div>
-                    <div class="field"><label>Folder</label><div class="chips small">@foreach (config('walker.upload_categories') as $c)<label><input type="radio" name="category" value="{{ $c }}" @checked(old('category', $u->category) === $c)><span>{{ $c }}</span></label>@endforeach</div></div>
+                    <div class="field"><label for="up-folder">Folder</label><select name="category" id="up-folder" style="max-width:280px">@foreach (config('walker.upload_categories') as $c)<option @selected(old('category', $u->category) === $c)>{{ $c }}</option>@endforeach</select></div>
                     <div class="field"><label for="u-desc">Description</label><textarea id="u-desc" name="description" maxlength="1000" style="min-height:70px;font-family:inherit">{{ old('description', $u->description) }}</textarea></div>
                     <div class="field"><label for="u-file">New version (optional)</label><input id="u-file" type="file" name="file" accept=".xlsx,.xls,.csv,.pdf,.txt,.zip"><div class="help">Replaces the file; the title and folder stay.</div></div>
                     <div class="actions"><button class="btn cyan">Save</button></div>

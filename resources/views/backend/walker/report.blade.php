@@ -23,8 +23,8 @@
                                 @foreach ($options as $v => $l)<label class="check"><input type="checkbox" name="{{ $name }}[]" value="{{ $v }}" @checked(in_array($v, (array) $value))> {{ $l }}</label>@endforeach
                             </div></div>
                         @elseif ($type === 'select')
-                            <div class="field"><label>{{ $label }}</label><div class="chips small"><label><input type="radio" name="{{ $name }}" value="" @checked((string) $value === '')><span>Any</span></label>
-                                @foreach ($options as $v => $l)<label><input type="radio" name="{{ $name }}" value="{{ $v }}" @checked((string) $value === (string) $v)><span>{{ $l }}</span></label>@endforeach</div></div>
+                            <div class="field"><label for="f-{{ $name }}">{{ $label }}</label><select id="f-{{ $name }}" name="{{ $name }}"><option value="">Any</option>
+                                @foreach ($options as $v => $l)<option value="{{ $v }}" @selected((string) $value === (string) $v)>{{ $l }}</option>@endforeach</select></div>
                         @else
                             <div class="field"><label for="f-{{ $name }}">{{ $label }}</label><input id="f-{{ $name }}" name="{{ $name }}" type="{{ $type === 'date' ? 'date' : 'text' }}" value="{{ $value }}"></div>
                         @endif

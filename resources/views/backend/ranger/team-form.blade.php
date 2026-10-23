@@ -29,12 +29,12 @@
             @if ($company)
                 <label>Company</label><div><b>{{ $company }}</b><input type="hidden" name="team" value="third_party"><div class="help">You add people to your own company's team (3rd Party).</div></div>
             @else
-            <label>Team</label><div class="chips small">@foreach (\App\Models\RangerAgent::TEAMS as $k => $l)<label><input type="radio" name="team" value="{{ $k }}" @checked(old('team', 'office') === $k)><span>{{ $l }}</span></label>@endforeach</div>
+            <label for="tm-team">Team</label><select id="tm-team" name="team">@foreach (\App\Models\RangerAgent::TEAMS as $k => $l)<option value="{{ $k }}" @selected(old('team', 'office') === $k)>{{ $l }}</option>@endforeach</select>
             <label for="tm-company" data-team="third_party">Company</label><div data-team="third_party"><input id="tm-company" name="company" maxlength="120" value="{{ old('company') }}" placeholder="e.g. Brightline Contact Solutions"><div class="help">The 3rd-party company they work for.</div>@error('company')<div class="help" style="color:var(--red)">{{ $message }}</div>@enderror</div>
             @endif
-            <label>Level</label><div><div class="chips small"><label><input type="radio" name="level" value="agent" @checked(old('level', 'agent') === 'agent')><span>Agent</span></label>
-                @if ($manager)<label><input type="radio" name="level" value="manager" @checked(old('level') === 'manager')><span>Manager</span></label>@endif
-                @if ($manager && ! $company)<label data-team-level="third_party"><input type="radio" name="level" value="company_admin" @checked(old('level') === 'company_admin')><span>Company Admin</span></label>@endif</div>
+            <label for="tm-level">Level</label><div><select id="tm-level" name="level"><option value="agent" @selected(old('level', 'agent') === 'agent')>Agent</option>
+                @if ($manager)<option value="manager" @selected(old('level') === 'manager')>Manager</option>@endif
+                @if ($manager && ! $company)<option value="company_admin" data-team-level="third_party" @selected(old('level') === 'company_admin')>Company Admin</option>@endif</select>
                 <div class="help">Managers can take over a ticket, join in on one, and assign tickets to others.{{ $manager ? '' : ' Only a manager can add a manager.' }}@if ($manager && ! $company) A company admin (3rd party only) also runs their company's team: adds and changes their people and sees their numbers.@endif</div></div>
         </div>
         <div class="panel-body actions"><button class="btn cyan">Add to Team</button><a class="btn ghost" href="{{ route('ranger.team') }}">Cancel</a></div>
@@ -44,8 +44,8 @@
     (function () {
         var form = document.querySelector('[data-who-form]');
         function sync() {
-            var who = form.querySelector('input[name=who]:checked').value, teamIn = form.querySelector('input[name=team]:checked') || form.querySelector('input[name=team]'), team = teamIn.value;
-            form.querySelectorAll('[data-team-level]').forEach(function (el) { el.hidden = el.dataset.teamLevel !== team; if (el.hidden) el.querySelector('input').checked = false; });
+            var who = form.querySelector('input[name=who]:checked').value, team = form.querySelector('[name=team]').value;
+            form.querySelectorAll('[data-team-level]').forEach(function (el) { el.hidden = el.disabled = el.dataset.teamLevel !== team; if (el.disabled && el.selected) form.querySelector('[name=level]').value = 'agent'; });
             form.querySelectorAll('[data-who]').forEach(function (el) { el.hidden = el.dataset.who !== who; });
             form.querySelectorAll('[data-team]').forEach(function (el) { el.hidden = !(who === 'new' && el.dataset.team === team); });
         }

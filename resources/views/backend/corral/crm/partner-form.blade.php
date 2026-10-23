@@ -7,7 +7,7 @@
     @include('backend.partials.page-head', ['title' => $p->exists ? 'Edit '.$p->name : 'New Partner', 'sub' => 'A broker or referral partner who sends leads.'])
     <form method="post" action="{{ $p->exists ? route('corral.crm.partners.update', $p) : route('corral.crm.partners.store') }}" class="stack" style="max-width:980px">@csrf @if ($p->exists) @method('put') @endif
         <div class="panel"><div class="panel-body stack">
-            <div class="field"><label>Kind</label><div class="chips small">@foreach (\App\Models\CrmPartner::KINDS as $k)<label><input type="radio" name="kind" value="{{ $k }}" @checked($v('kind') === $k)><span>{{ $k }}</span></label>@endforeach</div></div>
+            <div class="field"><label for="sel-kind">Kind</label><select name="kind" id="sel-kind" style="max-width:320px">@foreach (\App\Models\CrmPartner::KINDS as $k)<option value="{{ $k }}" @selected($v('kind') === $k)>{{ $k }}</option>@endforeach</select></div>
             <div class="grid-2">
                 <div class="field"><label for="name">Name</label><input id="name" name="name" required maxlength="150" value="{{ $v('name') }}"></div>
                 <div class="field"><label for="contact_name">Contact</label><input id="contact_name" name="contact_name" maxlength="120" value="{{ $v('contact_name') }}"></div>
@@ -18,7 +18,7 @@
             </div>
             <div class="field"><label>Commission paid</label><div class="chips small"><label><input type="radio" name="commission_basis" value="kwh" @checked($v('commission_basis') === 'kwh')><span>Per kWh</span></label><label><input type="radio" name="commission_basis" value="flat" @checked($v('commission_basis') === 'flat')><span>Share of first-year revenue</span></label></div></div>
             <div class="field"><label for="commission_rate">Rate</label><input id="commission_rate" name="commission_rate" type="number" step="0.0001" min="0" max="1" required value="{{ $v('commission_rate') }}" style="max-width:16ch"><div class="help">Per kWh in dollars (0.004 = 0.4¢), or a share (0.05 = 5%).</div></div>
-            <div class="field"><label>Status</label><div class="chips small">@foreach (\App\Models\CrmPartner::STATUSES as $s)<label><input type="radio" name="status" value="{{ $s }}" @checked($v('status') === $s)><span>{{ $s }}</span></label>@endforeach</div></div>
+            <div class="field"><label for="p-status">Status</label><select id="p-status" name="status" style="max-width:240px">@foreach (\App\Models\CrmPartner::STATUSES as $s)<option @selected($v('status') === $s)>{{ $s }}</option>@endforeach</select></div>
             <div class="field"><label>Our contact</label><div class="table-wrap pick-list"><table class="table"><tbody>@foreach ($owners as $o)
                 <tr><td style="width:32px"><input type="radio" id="o{{ $o->id }}" name="owner_id" value="{{ $o->id }}" @checked((string) $v('owner_id') === (string) $o->id)></td><td><label for="o{{ $o->id }}"><b>{{ $o->name }}</b></label></td><td class="help">{{ $o->title }}</td></tr>
             @endforeach</tbody></table></div></div>
