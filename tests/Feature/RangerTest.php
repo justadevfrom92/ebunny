@@ -58,7 +58,12 @@ class RangerTest extends TestCase
         // An agent answers: the reply shows in My Account, the internal note doesn't; answering first makes it theirs
         $csr = $this->user('csr@example.com');
         $this->actingAs($csr, 'web')->get(route('ranger.tickets', ['view' => 'unassigned']))->assertSee('Test question about my bill');
-        $this->post(route('ranger.tickets.reply', $t), ['kind' => 'note', 'body' => 'SECRET internal note', 'priority' => 'High'])->assertRedirect();
+        // Notes come from the Notes section (category, action, priority), not the reply box
+        $this->get(route('ranger.tickets.show', $t))->assertSee('Reply to the Customer')->assertDontSee('value="note"', false)->assertSee('Add Note');
+        $this->post(route('ranger.tickets.notes', $t), ['category' => 'Billing', 'action' => 'Usage', 'body' => 'x', 'priority' => 'High'])->assertRedirect();
+        $this->post(route('ranger.tickets.notes', $t), ['category' => 'Ticket', 'action' => 'Usage', 'body' => 'x', 'priority' => 'High'])->assertSessionHasErrors('action');
+        Note::where('support_ticket_id', $t->id)->delete();
+        $this->post(route('ranger.tickets.notes', $t), ['category' => 'Ticket', 'action' => 'Internal Note', 'body' => 'SECRET internal note', 'priority' => 'High'])->assertRedirect();
         // An internal note is an account note on the customer, linked to the ticket
         $note = Note::where('support_ticket_id', $t->id)->firstOrFail();
         $this->assertSame([$c->id, 'Ticket', 'High', $t->number()], [$note->customer_id, $note->category, $note->priority, $note->disposition]);
@@ -66,7 +71,7 @@ class RangerTest extends TestCase
         $this->get(route('ranger.tickets.show', $t))->assertSee('SECRET internal note')->assertSee('Ticket History')->assertSee('<h2>Notes</h2>', false)
             ->assertSee(route('corral.items.show', ['id' => $note->id, 'model' => 'ItemNote_model']));
         $this->get(route('corral.customers.show', $c))->assertSee('SECRET internal note');
-        $this->post(route('ranger.tickets.reply', $t), ['kind' => 'agent', 'body' => 'Your usage went up in the heat wave.', 'status' => 'solved'])->assertRedirect();
+        $this->post(route('ranger.tickets.reply', $t), ['body' => 'Your usage went up in the heat wave.', 'status' => 'solved'])->assertRedirect();
         $t->refresh();
         $this->assertSame([$csr->id, 'solved'], [$t->assigned_to, $t->status]);
         $this->assertNotNull($t->first_response_at);
@@ -92,7 +97,7 @@ class RangerTest extends TestCase
         // Another agent can't answer someone else's ticket, join in or take it over
         $this->actingAs($agent);
         $this->get(route('ranger.tickets.show', $t))->assertOk()->assertDontSee('Take Over')->assertSee('A manager can join you in');
-        $this->post(route('ranger.tickets.reply', $t), ['kind' => 'agent', 'body' => 'x'])->assertForbidden();
+        $this->post(route('ranger.tickets.reply', $t), ['body' => 'x'])->assertForbidden();
         $this->post(route('ranger.tickets.take-over', $t))->assertForbidden();
         $this->post(route('ranger.tickets.join', $t))->assertForbidden();
         $this->post(route('ranger.tickets.ask-manager', $t))->assertForbidden();
@@ -102,6 +107,10 @@ class RangerTest extends TestCase
         $this->get(route('ranger.tickets.show', $t))->assertSee('Ask for a Manager')->assertDontSee('Assign To');
         $this->post(route('ranger.tickets.ask-manager', $t), ['reason' => 'Wants a big refund'])->assertRedirect();
         $this->assertNotNull($t->fresh()->manager_requested_at);
+        // The why is a Note (Manager Request), not a line in the conversation or a banner
+        $this->assertSame('Manager Request', Note::where('support_ticket_id', $t->id)->latest('id')->value('action'));
+        $this->assertSame(0, $t->messages()->where('body', 'like', '%asked for a manager%')->count());
+        $this->get(route('ranger.tickets.show', $t))->assertDontSee('asked for a manager')->assertSee('No Longer Needed');
         $this->actingAs($this->user('lead@example.com'));
         $this->get(route('ranger.dashboard'))->assertSee('Wants a big refund');
         $this->get(route('ranger.tickets', ['view' => 'manager']))->assertSee($t->number());
@@ -113,7 +122,7 @@ class RangerTest extends TestCase
         $this->post(route('ranger.tickets.join', $t))->assertRedirect();
         $this->assertNull($t->fresh()->manager_requested_at);
         $this->assertTrue($t->watchers()->where('users.id', $lead->id)->exists());
-        $this->post(route('ranger.tickets.reply', $t), ['kind' => 'agent', 'body' => 'Manager here, helping out.'])->assertRedirect();
+        $this->post(route('ranger.tickets.reply', $t), ['body' => 'Manager here, helping out.'])->assertRedirect();
         $this->assertSame($owner->id, $t->fresh()->assigned_to);
         $this->post(route('ranger.tickets.take-over', $t))->assertRedirect();
         $this->assertSame($lead->id, $t->fresh()->assigned_to);
@@ -139,9 +148,9 @@ class RangerTest extends TestCase
         $this->get(route('ranger.tickets.show', $t))->assertSee('my-bill.png')->assertSee(route('ranger.tickets.attachment', [$t, $a]))->assertDontSee('name="attachments[]"', false);
         $this->get(route('ranger.tickets.attachment', [$t, $a]))->assertOk()->assertSee('my-bill.png')->assertSee('Download');
         $this->get(route('ranger.tickets.attachment.file', [$t, $a]))->assertOk();
-        $this->post(route('ranger.tickets.reply', $t), ['kind' => 'agent', 'via' => 'email', 'body' => 'Here is your payment plan.',
+        $this->post(route('ranger.tickets.reply', $t), ['via' => 'email', 'body' => 'Here is your payment plan.',
             'attachments' => [UploadedFile::fake()->create('plan.pdf', 20, 'application/pdf')]])->assertRedirect();
-        $this->post(route('ranger.tickets.reply', $t), ['kind' => 'agent', 'via' => 'phone', 'direction' => 'out', 'minutes' => 6, 'body' => 'CALLNOTE walked them through it'])->assertRedirect();
+        $this->post(route('ranger.tickets.reply', $t), ['via' => 'phone', 'direction' => 'out', 'minutes' => 6, 'body' => 'CALLNOTE walked them through it'])->assertRedirect();
         $email = $t->messages()->reorder()->where('via', 'email')->firstOrFail();
         $phone = $t->messages()->reorder()->where('via', 'phone')->firstOrFail();
         $this->assertSame([$t->email, 0], [$email->contact, $email->attachments()->count()]);   // a file sent along is ignored

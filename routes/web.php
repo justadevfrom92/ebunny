@@ -347,6 +347,7 @@ Route::prefix('admin')->group(function () {
             Route::post('tickets/{ticket}/take-over', [Backend\Ranger\TicketController::class, 'takeOver'])->name('tickets.take-over');
             Route::post('tickets/{ticket}/join', [Backend\Ranger\TicketController::class, 'join'])->name('tickets.join');
             Route::post('tickets/{ticket}/leave', [Backend\Ranger\TicketController::class, 'leave'])->name('tickets.leave');
+            Route::post('tickets/{ticket}/notes', [Backend\Ranger\TicketController::class, 'addNote'])->name('tickets.notes');
             Route::post('tickets/{ticket}/ask-manager', [Backend\Ranger\TicketController::class, 'askManager'])->name('tickets.ask-manager');
             Route::get('tickets/{ticket}/files/{attachment}', [Backend\Ranger\TicketController::class, 'attachment'])->whereNumber('attachment')->name('tickets.attachment');
             Route::get('tickets/{ticket}/files/{attachment}/file', [Backend\Ranger\TicketController::class, 'attachmentFile'])->whereNumber('attachment')->name('tickets.attachment.file');

@@ -84,11 +84,11 @@ class RangerSeeder extends Seeder
                 'status' => $state, 'priority' => $topic === 'outage' ? 'high' : ($n % 17 === 0 ? 'urgent' : ($n % 6 === 0 ? 'low' : 'normal')),
                 'assigned_to' => $owner?->id, 'created_at' => $opened, 'updated_at' => $opened, 'last_activity_at' => $opened]);
             $at = $opened->copy();
-            $msg = function (string $author, string $body, ?User $u = null, int $minutes = 0, string $priority = 'Low', array $extra = []) use ($t, &$at): ?SupportTicketMessage {
+            $msg = function (string $author, string $body, ?User $u = null, int $minutes = 0, string $priority = 'Low', array $extra = [], string $action = 'Internal Note') use ($t, &$at): ?SupportTicketMessage {
                 $at = $at->copy()->addMinutes($minutes);
                 if ($author === 'note') {
                     // Internal notes are account notes (category Ticket) linked to the ticket
-                    Note::create(['customer_id' => $t->customer_id, 'user_id' => $u->id, 'author' => $u->name, 'category' => 'Ticket', 'action' => 'Internal Note',
+                    Note::create(['customer_id' => $t->customer_id, 'user_id' => $u->id, 'author' => $u->name, 'category' => 'Ticket', 'action' => $action,
                         'disposition' => $t->number(), 'priority' => $priority, 'body' => $body, 'support_ticket_id' => $t->id, 'created_at' => $at, 'updated_at' => $at]);
 
                     return null;
@@ -152,7 +152,9 @@ class RangerSeeder extends Seeder
             // A few open tickets where the agent asked for a manager
             if ($owner && in_array($n, [9, 13, 19, 22], true) && RangerAgent::where('user_id', $owner->id)->value('level') !== 'manager') {
                 $why = ['Customer is upset and wants to talk to a manager.', 'Not sure I can approve this; need a manager to OK it.', null, 'Second time they wrote in about this.'][$n % 4];
-                $msg('system', $owner->name.' asked for a manager'.($why ? ': '.$why : '.'), $owner, 4);
+                if ($why) {
+                    $msg('note', $why, $owner, 4, 'Medium', [], 'Manager Request');
+                }
                 $t->forceFill(['manager_requested_at' => $at, 'manager_requested_by' => $owner->id, 'manager_request_note' => $why])->save();
             }
             $t->forceFill(['last_activity_at' => $at])->save();

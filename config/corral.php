@@ -109,7 +109,7 @@ return [
         'MVO/Cancel/Rescission' => ['Cancel - Changed Mind', 'Cancel - Contract', 'Cancel - Not Moving to Address', 'Cancel - Price', 'MVO', 'Rescission'],
         'Order' => ['Change Plan', 'Date Change', 'Deposit Waiver Docs', 'General Inquiry', 'Link Accounts', 'Meter/ESI Inquiry', 'Military/First Responder', 'MT Request/Status', 'New Enrollment', 'Re-run Credit', 'Reject/Rejection', 'Renewal', 'Status Inquiry', 'Switch Hold', 'Transfer of Service', 'Verify ID'],
         'Payment' => ['AutoPay Set Up', 'Deposit Refund Request', 'DPP Set Up', 'Duplicate Payment/Refund', 'Missing Payment', 'PA/DPP/Extension Inquiry', 'Pay Deposit', 'Payment Arrangement Set up', 'Payment Dispute', 'Payment Made', 'Pledge Inquiry', 'Remove Autopay'],
-        'Ticket' => ['Internal Note'],
+        'Ticket' => ['Internal Note', 'Manager Request', 'Follow-up', 'Call Note'],
         'Products' => ['Add ecobee', 'Add Freedom Flex', 'Add Home Warranty', 'Add Peak Perks/Plus', 'Add Solar Buy Back', 'Ecobee Inquiry', 'Refer A Friend (RAF)', 'Remove ecobee', 'Remove Freedom Flex', 'Remove Home Warranty', 'Remove Paperless Billing', 'Remove Peak Perks/Plus', 'Remove Solar Buy Back', 'Solar BuyBack Inquiry'],
         'Rewards' => ['Gift Card', 'Promo Code', 'Redeem Stars'],
         'Website/Mobile' => ['Cannot Log in', 'Online Issue', 'Reset Username/Password'],

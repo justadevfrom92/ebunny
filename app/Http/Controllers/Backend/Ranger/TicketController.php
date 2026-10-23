@@ -91,36 +91,44 @@ class TicketController extends Controller
             'history' => $ticket->customer_id ? SupportTicket::where('customer_id', $ticket->customer_id)->count() : 0]);
     }
 
-    /**
-     * A reply to the customer (in My Account or by email), a phone call logged with
-     * its direction and length, or an internal note (an account note, staff only); optionally a new status.
-     */
+    /** A reply to the customer (in My Account or by email) or a phone call logged with its direction and length; optionally a new status. */
     public function reply(Request $request, SupportTicket $ticket): RedirectResponse
     {
-        $data = $request->validate(['body' => ['required', 'string', 'max:5000'], 'kind' => ['required', 'in:agent,note'],
+        $data = $request->validate(['body' => ['required', 'string', 'max:5000'],
             'via' => ['nullable', Rule::in(array_keys(SupportTicketMessage::VIA))], 'direction' => ['nullable', 'in:in,out'], 'minutes' => ['nullable', 'integer', 'min:0', 'max:600'],
-            'priority' => ['nullable', Rule::in(config('corral.priorities'))], 'status' => ['nullable', Rule::in(['open', 'waiting', 'solved'])]]);
+            'status' => ['nullable', Rule::in(['open', 'waiting', 'solved'])]]);
         $this->mayWork($request, $ticket);
         $me = $request->user();
         $via = $data['via'] ?? 'portal';
-        if ($data['kind'] === 'note') {
-            $ticket->addNote($data['body'], $me, $data['priority'] ?? null);
-        } else {
-            $ticket->post('agent', $data['body'], $me, ['via' => $via] + match ($via) {
-                'phone' => ['direction' => $data['direction'] ?? 'out', 'duration' => (int) ($data['minutes'] ?? 0) * 60, 'contact' => $ticket->customer?->phone],
-                'email' => ['contact' => $ticket->email],
-                default => [],
-            });
-        }
+        $ticket->post('agent', $data['body'], $me, ['via' => $via] + match ($via) {
+            'phone' => ['direction' => $data['direction'] ?? 'out', 'duration' => (int) ($data['minutes'] ?? 0) * 60, 'contact' => $ticket->customer?->phone],
+            'email' => ['contact' => $ticket->email],
+            default => [],
+        });
         if (! $ticket->assigned_to) {
             $ticket->update(['assigned_to' => $me->id]);   // whoever answers first owns it
         }
         if ($status = $data['status'] ?? null) {
             $ticket->update(['status' => $status, 'solved_at' => $status === 'solved' ? now() : null]);
         }
-        $done = $data['kind'] === 'note' ? 'Internal note added (it\'s on the customer\'s account notes too)' : ['portal' => 'Reply sent', 'email' => 'Email sent', 'phone' => 'Phone call logged'][$via];
 
-        return back()->with('status', $done.(isset($status) ? ' · '.SupportTicket::STATUSES[$status][0] : ''));
+        return back()->with('status', ['portal' => 'Reply sent', 'email' => 'Email sent', 'phone' => 'Phone call logged'][$via].(isset($status) ? ' · '.SupportTicket::STATUSES[$status][0] : ''));
+    }
+
+    /** A note on the ticket: an account Note (category, action, priority), staff only. */
+    public function addNote(Request $request, SupportTicket $ticket): RedirectResponse
+    {
+        $categories = config('corral.note_categories');
+        $data = $request->validate([
+            'body' => ['required', 'string', 'max:5000'],
+            'category' => ['required', Rule::in(array_keys($categories))],
+            'action' => ['required', 'string', Rule::in($categories[$request->input('category')] ?? [])],
+            'priority' => ['required', Rule::in(config('corral.priorities'))],
+        ]);
+        $this->mayWork($request, $ticket);
+        $ticket->addNote($data['body'], $request->user(), $data['priority'], $data['category'], $data['action']);
+
+        return redirect(route('ranger.tickets.show', $ticket).'#notes')->with('status', 'Note added (it\'s on the customer\'s account notes too)');
     }
 
     /** One attachment: who sent it, when, on which message, with a preview for images, PDFs and text. */
@@ -214,7 +222,9 @@ class TicketController extends Controller
         $this->mayWork($request, $ticket);
         $data = $request->validate(['reason' => ['nullable', 'string', 'max:500']]);
         $ticket->update(['manager_requested_at' => now(), 'manager_requested_by' => $request->user()->id, 'manager_request_note' => $data['reason'] ?? null]);
-        $ticket->post('system', $request->user()->name.' asked for a manager'.(! empty($data['reason']) ? ': '.$data['reason'] : '.'), $request->user());
+        if (! empty($data['reason'])) {
+            $ticket->addNote($data['reason'], $request->user(), 'Medium', 'Ticket', 'Manager Request');   // the why is a note, not a line in the conversation
+        }
 
         return back()->with('status', 'A manager has been asked to help on '.$ticket->number().'.');
     }
@@ -223,7 +233,6 @@ class TicketController extends Controller
     {
         $this->mayWork($request, $ticket);
         $ticket->update(['manager_requested_at' => null]);
-        $ticket->post('system', $request->user()->name.' no longer needs a manager.', $request->user());
 
         return back()->with('status', 'Manager request cancelled.');
     }

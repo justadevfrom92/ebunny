@@ -69,10 +69,10 @@ class SupportTicket extends Model
     }
 
     /** An internal note: an account Note on the customer (category Ticket), linked to this ticket. */
-    public function addNote(string $body, User $by, ?string $priority = null): void
+    public function addNote(string $body, User $by, ?string $priority = null, string $category = 'Ticket', string $action = 'Internal Note'): void
     {
         if ($this->customer_id) {
-            Note::create(['customer_id' => $this->customer_id, 'user_id' => $by->id, 'author' => $by->name, 'category' => 'Ticket', 'action' => 'Internal Note',
+            Note::create(['customer_id' => $this->customer_id, 'user_id' => $by->id, 'author' => $by->name, 'category' => $category, 'action' => $action,
                 'disposition' => $this->number(), 'priority' => $priority ?? 'Low', 'body' => $body, 'support_ticket_id' => $this->id]);
         } else {
             $this->messages()->create(['author' => 'note', 'body' => $body, 'user_id' => $by->id, 'created_at' => now()]);   // no account to file it on

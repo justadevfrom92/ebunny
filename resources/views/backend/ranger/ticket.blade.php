@@ -31,11 +31,6 @@
 
     <div class="grid-2" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr);align-items:start">
         <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
-            @if ($t->manager_requested_at)
-                <div class="alert warn"><b>{{ $t->managerRequester?->name ?? 'Someone' }} asked for a manager</b> {{ $t->manager_requested_at->diffForHumans() }}@if ($t->manager_request_note): “{{ $t->manager_request_note }}”@endif
-                    @if (! $manager && $canWork)<form method="post" action="{{ route('ranger.tickets.cancel-manager', $t) }}" class="inline">@csrf<button class="btn sm ghost">No Longer Needed</button></form>@endif</div>
-            @endif
-
             @php
                 $entries = $t->messages->where('author', '!=', 'system');
                 $calls = $entries->where('via', 'phone')->count();
@@ -57,7 +52,7 @@
                         @else
                             <div class="rt-msg rt-{{ $m->author }}">
                                 <div class="rt-who"><b>{{ $m->author === 'customer' ? $t->name : ($m->user?->name ?? 'Support') }}</b>
-                                    @if ($m->author === 'note')<span class="pill warn">Internal note</span>
+                                    @if ($m->author === 'note')<span class="pill warn">Note</span>
                                     @else<span class="help">{{ \App\Models\SupportTicketMessage::VIA[$m->via][1] }} {{ $m->via === 'email' ? ($m->author === 'customer' ? 'Email from ' : 'Email to ').($m->contact ?? $t->email) : 'My Account' }}</span>@endif
                                     @if ($m->author === 'agent' && $team($m->user_id))<span class="help">{{ $team($m->user_id) }}</span>@endif
                                     <span class="help">{{ $m->created_at->format('n/j/Y g:i A') }}</span></div>
@@ -73,8 +68,7 @@
 
             @if ($canWork)
                 <form method="post" action="{{ route('ranger.tickets.reply', $t) }}" class="panel rt-reply">@csrf
-                    <div class="panel-head"><h2>Reply</h2>
-                        <div class="chips small"><label><input type="radio" name="kind" value="agent" checked><span>To the customer</span></label><label><input type="radio" name="kind" value="note"><span>Internal note</span></label></div></div>
+                    <div class="panel-head"><h2>Reply to the Customer</h2></div>
                     <div class="panel-body" style="display:flex;flex-direction:column;gap:12px">
                         <div class="field rt-agent-only"><label>Send by</label><div class="chips small">
                             <label><input type="radio" name="via" value="portal" @checked($t->channel === 'My Account')><span>💬 My Account</span></label>
@@ -85,16 +79,53 @@
                             <div class="field"><label for="rt-min">Minutes</label><input id="rt-min" name="minutes" type="number" min="0" max="600" value="5" style="width:90px"></div>
                         </div>
                         <textarea name="body" required maxlength="5000" style="min-height:120px" aria-label="Message" placeholder="Hi {{ \Illuminate\Support\Str::before($t->name, ' ') }}, …"></textarea>
-                        <div class="field rt-note-only"><label>Note priority</label><div class="chips small">@foreach (config('corral.priorities') as $pr)<label><input type="radio" name="priority" value="{{ $pr }}" @checked($loop->first)><span>{{ $pr }}</span></label>@endforeach</div>
-                            <span class="help">Internal notes are saved as account notes (category Ticket) and listed under Notes below.</span></div>
                         <div class="field"><label>Then set the ticket to</label><div class="chips small"><label><input type="radio" name="status" value="" checked><span>Leave as is</span></label>
                             <label><input type="radio" name="status" value="waiting"><span>Waiting on Customer</span></label><label><input type="radio" name="status" value="solved"><span>Solved</span></label></div></div>
-                        <div><button class="btn cyan">Save</button> <span class="help">Messages and emails reach the customer; call notes and internal notes stay with the team.</span></div>
+                        <div><button class="btn cyan">Save</button> <span class="help">Messages and emails reach the customer; call notes stay with the team.</span></div>
                     </div>
                 </form>
             @else
                 <div class="alert info"><b>{{ $t->assignee?->name }} has this ticket.</b> A manager can join you in or take it over.</div>
             @endif
+
+            {{-- Notes: account notes (the Note model) written on this ticket, staff only --}}
+            <div class="panel" id="notes"><div class="panel-head"><h2>Notes</h2><span class="muted">{{ $t->notes->count() }} · staff only, also on the account's notes</span></div>
+                @if ($canWork && $t->customer_id)
+                    @php $cats = config('corral.note_categories'); @endphp
+                    <form method="post" action="{{ route('ranger.tickets.notes', $t) }}" class="panel-body rt-note-form" style="display:flex;flex-direction:column;gap:12px">@csrf
+                        <div class="field"><label>Category</label><div class="chips small">@foreach (array_keys($cats) as $cat)<label><input type="radio" name="category" value="{{ $cat }}" @checked(old('category', 'Ticket') === $cat)><span>{{ $cat }}</span></label>@endforeach</div></div>
+                        <div class="field"><label>Action</label>
+                            @foreach ($cats as $cat => $acts)<div class="chips small" data-note-actions="{{ $cat }}">@foreach ($acts as $act)<label><input type="radio" name="action" value="{{ $act }}" @checked(old('action', 'Internal Note') === $act)><span>{{ $act }}</span></label>@endforeach</div>@endforeach</div>
+                        <div class="field"><label>Priority</label><div class="chips small">@foreach (config('corral.priorities') as $pr)<label><input type="radio" name="priority" value="{{ $pr }}" @checked(old('priority', 'Low') === $pr)><span>{{ $pr }}</span></label>@endforeach</div></div>
+                        <div class="field"><label for="rt-note">Note</label><textarea id="rt-note" name="body" required maxlength="5000" style="min-height:90px" placeholder="What the team should know about this ticket">{{ old('body') }}</textarea></div>
+                        <div><button class="btn">Add Note</button></div>
+                    </form>
+                    <script>
+                    (function () {   // Action shows the chosen category's actions only
+                        var f = document.querySelector('.rt-note-form');
+                        function sync() {
+                            var cat = (f.querySelector('input[name=category]:checked') || {}).value;
+                            f.querySelectorAll('[data-note-actions]').forEach(function (g) {
+                                var on = g.dataset.noteActions === cat; g.hidden = !on;
+                                g.querySelectorAll('input').forEach(function (i) { if (!on) i.checked = false; });
+                                if (on && !g.querySelector('input:checked')) g.querySelector('input').checked = true;
+                            });
+                        }
+                        f.addEventListener('change', function (e) { if (e.target.name === 'category') sync(); }); sync();
+                    })();
+                    </script>
+                @endif
+                <div class="table-wrap"><table data-page="10">
+                    <thead><tr><th>Added</th><th>By</th><th>Category / Action</th><th>Priority</th><th>Note</th></tr></thead>
+                    <tbody>@forelse ($t->notes->sortByDesc('created_at') as $n)
+                        @php $nUrl = route('corral.items.show', ['id' => $n->id, 'model' => 'ItemNote_model']); @endphp
+                        <tr class="click" data-href="{{ $nUrl }}"><td class="nowrap"><a href="{{ $nUrl }}">{{ $n->created_at->format('n/j/Y g:i A') }}</a></td><td>{{ $n->user?->name ?? $n->author }}</td>
+                            <td>{{ $n->category ?? '—' }}@if ($n->action)<div class="help">{{ $n->action }}</div>@endif</td>
+                            <td>@if ($n->priority)@include('backend.partials.pill', ['text' => $n->priority, 'tone' => ['High' => 'bad', 'Medium' => 'warn'][$n->priority] ?? ''])@else — @endif</td>
+                            <td class="wrap" style="min-width:160px">{{ \Illuminate\Support\Str::limit($n->body, 200) }}</td></tr>
+                    @empty <tr><td colspan="5" class="empty">No notes yet.</td></tr> @endforelse</tbody>
+                </table></div>
+            </div>
         </div>
 
         <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
@@ -113,10 +144,13 @@
                     <div class="field"><label>Priority</label><div class="chips small">@foreach (\App\Models\SupportTicket::PRIORITIES as $k => [$l])<label><input type="radio" name="priority" value="{{ $k }}" @checked($t->priority === $k)><span>{{ $l }}</span></label>@endforeach</div></div>
                     <div><button class="btn">Save</button></div>
                 </form>
-                @if (! $manager && $canWork && ! $t->manager_requested_at && ! $t->isDone())
+                @if (! $manager && $canWork && $t->manager_requested_at)
+                    <form method="post" action="{{ route('ranger.tickets.cancel-manager', $t) }}" class="panel-body" style="border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;flex-wrap:wrap">@csrf
+                        <span>@include('backend.partials.pill', ['text' => 'Manager requested', 'tone' => 'warn'])</span><button class="btn sm ghost">No Longer Needed</button></form>
+                @elseif (! $manager && $canWork && ! $t->isDone())
                     <form method="post" action="{{ route('ranger.tickets.ask-manager', $t) }}" class="panel-body" style="border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px">@csrf
                         <label for="rt-why"><b>Need help?</b> <span class="help">Managers assign tickets to other people, take over, or join in.</span></label>
-                        <input id="rt-why" name="reason" maxlength="500" placeholder="Why (optional), e.g. customer wants a refund over $100">
+                        <input id="rt-why" name="reason" maxlength="500" placeholder="Why (optional, saved as a note), e.g. customer wants a refund over $100">
                         <div><button class="btn cyan">Ask for a Manager</button></div>
                     </form>
                 @endif
@@ -159,12 +193,4 @@
         </div>
     </div>
 
-    <div class="panel"><div class="panel-head"><h2>Notes</h2><span class="muted">{{ $t->notes->count() }}</span></div><div class="table-wrap"><table data-page="10">
-        <thead><tr><th>Added</th><th>By</th><th>Priority</th><th>Note</th></tr></thead>
-        <tbody>@forelse ($t->notes->sortByDesc('created_at') as $n)
-            @php $nUrl = route('corral.items.show', ['id' => $n->id, 'model' => 'ItemNote_model']); @endphp
-            <tr class="click" data-href="{{ $nUrl }}"><td class="nowrap"><a href="{{ $nUrl }}">{{ $n->created_at->format('n/j/Y g:i A') }}</a></td><td>{{ $n->user?->name ?? $n->author }}</td>
-                <td>@include('backend.partials.pill', ['text' => $n->priority, 'tone' => ['High' => 'bad', 'Medium' => 'warn'][$n->priority] ?? ''])</td><td class="wrap">{{ \Illuminate\Support\Str::limit($n->body, 160) }}</td></tr>
-        @empty <tr><td colspan="4" class="empty">No notes yet. Choose Internal note in the reply box to add one.</td></tr> @endforelse</tbody>
-    </table></div></div>
 @endsection
