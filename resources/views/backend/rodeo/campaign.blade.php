@@ -100,7 +100,7 @@
     (function () {
         var f = document.getElementById('camp-form');
         function sync() {
-            var goal = (f.querySelector('input[name=goal]:checked') || {}).value, ch = (f.querySelector('input[name=channel]:checked') || {}).value;
+            var goal = f.elements.goal ? f.elements.goal.value : '', ch = (f.querySelector('input[name=channel]:checked') || {}).value;
             f.querySelector('.goal-product').hidden = goal !== 'product';
             f.querySelectorAll('.ch-email').forEach(function (e) { e.hidden = ch !== 'Email'; });
             f.querySelectorAll('.ch-sms').forEach(function (e) { e.hidden = ch !== 'SMS'; });

@@ -29,7 +29,7 @@ class CallController extends Controller
             ->when($f['user'] ?? null, fn ($q, $u) => $q->where('user_id', $u))
             ->when($f['direction'] ?? null, fn ($q, $d) => $q->where('direction', $d))
             ->when($f['issue'] ?? null, fn ($q, $i) => $q->where('disposition', $i))
-            ->latest('started_at')->paginate(50)->withQueryString();
+            ->latest('started_at')->paginate(25)->withQueryString();
 
         return view('backend.corral.calls.index', ['calls' => $calls, 'f' => $f,
             'issues' => Phonecall::whereNotNull('disposition')->distinct()->orderBy('disposition')->pluck('disposition'),

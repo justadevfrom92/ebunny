@@ -26,11 +26,9 @@
         </table></div></div>
     @endif
 
-    <div class="panel"><div class="panel-head"><h2>Latest Ratings</h2><a class="btn sm ghost" href="{{ route('ranger.satisfaction') }}">Approval Ratings</a></div><div class="table-wrap"><table>
-        <thead><tr><th>Rated</th><th>Ticket</th><th>Rating</th><th>What They Said</th><th>Handled By</th></tr></thead>
-        <tbody>@forelse ($recentRatings as $t)
-            <tr class="click" data-href="{{ route('ranger.tickets.show', $t) }}"><td class="nowrap">{{ $t->rated_at->format('n/j g:i A') }}</td><td><a class="mono" href="{{ route('ranger.tickets.show', $t) }}">{{ $t->number() }}</a></td>
-                <td>{{ $t->rating === 'good' ? '👍 Helped' : '👎 Didn\'t help' }}</td><td class="wrap">{{ $t->rating_comment ?? '—' }}</td><td>{{ $t->assignee?->name ?? '—' }}</td></tr>
-        @empty <tr><td colspan="5" class="empty">No ratings yet.</td></tr> @endforelse</tbody>
+    {{-- Every open ticket, most urgent first (urgent and high, then the longest waiting) --}}
+    <div class="panel"><div class="panel-head"><h2>Open Tickets</h2><a class="btn sm ghost" href="{{ route('ranger.tickets') }}">All Tickets</a></div><div class="table-wrap"><table data-page="10">
+        <thead><tr><th>Ticket</th><th>Subject</th><th>Customer</th><th>Status</th><th>Owner</th><th>Rating</th></tr></thead>
+        <tbody>@forelse ($open as $t)@include('backend.ranger._row')@empty<tr><td colspan="6" class="empty">No open tickets. Nice.</td></tr>@endforelse</tbody>
     </table></div></div>
 @endsection

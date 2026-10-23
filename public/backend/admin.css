@@ -794,3 +794,11 @@ tr.edit-row > td { background: var(--row); white-space: normal; }
 .note-selects { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .note-selects select { width: 100%; }
 @media (max-width: 700px) { .note-selects { grid-template-columns: 1fr; } }
+/* Every dropdown on its own line */
+.pill-select { display: block; width: 100%; max-width: 420px; }
+.actions .pill-select, .panel-head .pill-select { width: auto; min-width: 200px; }
+.note-selects { grid-template-columns: 1fr !important; max-width: 420px; }
+.panel-body .form-row:has(select) { flex-direction: column; align-items: stretch; }
+.panel-body .form-row:has(select) > * { max-width: 420px; width: 100%; }
+.multi { display: block; max-width: 420px; }
+.panel-body .grid-2:has(select), .panel-body .grid-3:has(select), .panel-body .grid-2:has(.multi), .panel-body .grid-3:has(.multi) { grid-template-columns: minmax(0, 1fr) !important; }

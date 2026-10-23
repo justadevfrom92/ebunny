@@ -38,7 +38,7 @@ class TicketController extends Controller
             ],
             'overall' => SupportTicket::approval(SupportTicket::where('rated_at', '>=', $since)),
             'teams' => $teams,
-            'recentRatings' => SupportTicket::whereNotNull('rated_at')->with('assignee')->latest('rated_at')->limit(8)->get(),
+            'open' => SupportTicket::active()->with(['customer', 'assignee'])->orderByRaw($this->urgency())->get(),
             'managerRequests' => SupportTicket::active()->whereNotNull('manager_requested_at')->with(['customer', 'managerRequester'])->oldest('manager_requested_at')->get(),
             'manager' => RangerAgent::isManager($request->user()),
         ]);
