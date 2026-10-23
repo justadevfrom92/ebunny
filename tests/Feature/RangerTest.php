@@ -104,7 +104,7 @@ class RangerTest extends TestCase
 
         // The owner can't assign it to someone else but can ask for a manager
         $this->actingAs($owner);
-        $this->get(route('ranger.tickets.show', $t))->assertSee('Ask for a Manager')->assertDontSee('Assign To');
+        $this->get(route('ranger.tickets.show', $t))->assertSee('Need Help?')->assertSee('Ask for a Manager')->assertDontSee('Assign To');
         $this->post(route('ranger.tickets.ask-manager', $t), ['reason' => 'Wants a big refund'])->assertRedirect();
         $this->assertNotNull($t->fresh()->manager_requested_at);
         // The why is a Note (Manager Request), not a line in the conversation or a banner

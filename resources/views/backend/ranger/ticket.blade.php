@@ -24,10 +24,28 @@
         if (! $t->assigned_to) {
             $actions .= '<form method="post" action="'.route('ranger.tickets.update', $t).'" class="inline">'.csrf_field().method_field('patch').'<input type="hidden" name="assigned_to" value="'.$me->id.'"><button class="btn cyan">Pick Up</button></form>';
         }
+        // Agents don't assign tickets; when they need a manager they ask from here
+        if (! $manager && $canWork && ! $t->isDone()) {
+            $actions .= $t->manager_requested_at
+                ? '<form method="post" action="'.route('ranger.tickets.cancel-manager', $t).'" class="inline">'.csrf_field().view('backend.partials.pill', ['text' => 'Manager requested', 'tone' => 'warn'])->render().' <button class="btn ghost">No Longer Needed</button></form>'
+                : '<a class="btn cyan" href="#need-help">Need Help?</a>';
+        }
     @endphp
     @include('backend.partials.page-head', ['title' => $t->subject, 'sub' => '<span class="mono">'.$t->number().'</span> · '.view('backend.partials.pill', ['text' => $sLabel, 'tone' => $sTone])->render()
         .' · '.e(\App\Models\SupportTicket::TOPICS[$t->topic] ?? $t->topic).' · opened '.$t->created_at->format('n/j/Y g:i A').' from '.(\App\Models\SupportTicket::CHANNELS[$t->channel] ?? '').' '.e($t->channel),
         'actions' => $actions ?: null])
+
+    @if (! $manager && $canWork && ! $t->isDone() && ! $t->manager_requested_at)
+        {{-- Need Help? (top right) opens this: ask a manager to assign, take over or join in --}}
+        <form method="post" action="{{ route('ranger.tickets.ask-manager', $t) }}" class="panel need-help" id="need-help">@csrf
+            <div class="panel-head"><h2>Ask for a Manager</h2><a class="btn sm ghost" href="#">Cancel</a></div>
+            <div class="panel-body" style="display:flex;flex-direction:column;gap:10px">
+                <span class="help">A manager can assign this ticket to someone else, take it over, or join in. Your reason is saved as a note.</span>
+                <input name="reason" maxlength="500" aria-label="Why" placeholder="Why (optional), e.g. customer wants a refund over $100">
+                <div><button class="btn cyan">Ask for a Manager</button></div>
+            </div>
+        </form>
+    @endif
 
     <div class="grid-2" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr);align-items:start">
         <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
@@ -93,25 +111,22 @@
                 @if ($canWork && $t->customer_id)
                     @php $cats = config('corral.note_categories'); @endphp
                     <form method="post" action="{{ route('ranger.tickets.notes', $t) }}" class="panel-body rt-note-form" style="display:flex;flex-direction:column;gap:12px">@csrf
-                        <div class="field"><label>Category</label><div class="chips small">@foreach (array_keys($cats) as $cat)<label><input type="radio" name="category" value="{{ $cat }}" @checked(old('category', 'Ticket') === $cat)><span>{{ $cat }}</span></label>@endforeach</div></div>
-                        <div class="field"><label>Action</label>
-                            @foreach ($cats as $cat => $acts)<div class="chips small" data-note-actions="{{ $cat }}">@foreach ($acts as $act)<label><input type="radio" name="action" value="{{ $act }}" @checked(old('action', 'Internal Note') === $act)><span>{{ $act }}</span></label>@endforeach</div>@endforeach</div>
-                        <div class="field"><label>Priority</label><div class="chips small">@foreach (config('corral.priorities') as $pr)<label><input type="radio" name="priority" value="{{ $pr }}" @checked(old('priority', 'Low') === $pr)><span>{{ $pr }}</span></label>@endforeach</div></div>
+                        <div class="form-row note-selects">
+                            <div class="field"><label for="rt-cat">Category</label><select id="rt-cat" name="category" required data-note-category>@foreach (array_keys($cats) as $cat)<option @selected(old('category', 'Ticket') === $cat)>{{ $cat }}</option>@endforeach</select></div>
+                            <div class="field"><label for="rt-act">Action</label><select id="rt-act" name="action" required data-note-action>@foreach ($cats as $cat => $acts)<optgroup label="{{ $cat }}">@foreach ($acts as $act)<option @selected(old('action', 'Internal Note') === $act && old('category', 'Ticket') === $cat)>{{ $act }}</option>@endforeach</optgroup>@endforeach</select></div>
+                            <div class="field"><label for="rt-pri">Priority</label><select id="rt-pri" name="priority" required>@foreach (config('corral.priorities') as $pr)<option @selected(old('priority', 'Low') === $pr)>{{ $pr }}</option>@endforeach</select></div>
+                        </div>
                         <div class="field"><label for="rt-note">Note</label><textarea id="rt-note" name="body" required maxlength="5000" style="min-height:90px" placeholder="What the team should know about this ticket">{{ old('body') }}</textarea></div>
                         <div><button class="btn">Add Note</button></div>
                     </form>
                     <script>
-                    (function () {   // Action shows the chosen category's actions only
-                        var f = document.querySelector('.rt-note-form');
+                    (function () {   // Action lists only the chosen category's actions
+                        var f = document.querySelector('.rt-note-form'), cat = f.querySelector('[data-note-category]'), act = f.querySelector('[data-note-action]');
                         function sync() {
-                            var cat = (f.querySelector('input[name=category]:checked') || {}).value;
-                            f.querySelectorAll('[data-note-actions]').forEach(function (g) {
-                                var on = g.dataset.noteActions === cat; g.hidden = !on;
-                                g.querySelectorAll('input').forEach(function (i) { if (!on) i.checked = false; });
-                                if (on && !g.querySelector('input:checked')) g.querySelector('input').checked = true;
-                            });
+                            [].forEach.call(act.querySelectorAll('optgroup'), function (g) { var on = g.label === cat.value; g.hidden = !on; g.disabled = !on; });
+                            if (!act.selectedOptions[0] || act.selectedOptions[0].parentNode.disabled) { var first = act.querySelector('optgroup:not([disabled]) option'); if (first) first.selected = true; }
                         }
-                        f.addEventListener('change', function (e) { if (e.target.name === 'category') sync(); }); sync();
+                        cat.addEventListener('change', sync); sync();
                     })();
                     </script>
                 @endif
@@ -144,16 +159,6 @@
                     <div class="field"><label>Priority</label><div class="chips small">@foreach (\App\Models\SupportTicket::PRIORITIES as $k => [$l])<label><input type="radio" name="priority" value="{{ $k }}" @checked($t->priority === $k)><span>{{ $l }}</span></label>@endforeach</div></div>
                     <div><button class="btn">Save</button></div>
                 </form>
-                @if (! $manager && $canWork && $t->manager_requested_at)
-                    <form method="post" action="{{ route('ranger.tickets.cancel-manager', $t) }}" class="panel-body" style="border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;flex-wrap:wrap">@csrf
-                        <span>@include('backend.partials.pill', ['text' => 'Manager requested', 'tone' => 'warn'])</span><button class="btn sm ghost">No Longer Needed</button></form>
-                @elseif (! $manager && $canWork && ! $t->isDone())
-                    <form method="post" action="{{ route('ranger.tickets.ask-manager', $t) }}" class="panel-body" style="border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px">@csrf
-                        <label for="rt-why"><b>Need help?</b> <span class="help">Managers assign tickets to other people, take over, or join in.</span></label>
-                        <input id="rt-why" name="reason" maxlength="500" placeholder="Why (optional, saved as a note), e.g. customer wants a refund over $100">
-                        <div><button class="btn cyan">Ask for a Manager</button></div>
-                    </form>
-                @endif
             </div>
 
             @if ($manager)

@@ -789,3 +789,8 @@ tr.edit-row > td { background: var(--row); white-space: normal; }
 .search-row .search-field input[type="search"]:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(0,174,239,.18); }
 .cookie-jar td.mono { overflow-wrap: anywhere; }
 .row-warn td { background: var(--warn-bg); }
+.need-help:not(:target) { display: none; }
+.need-help:target { margin-bottom: 20px; border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(0,174,239,.15); }
+.note-selects { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.note-selects select { width: 100%; }
+@media (max-width: 700px) { .note-selects { grid-template-columns: 1fr; } }
