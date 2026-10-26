@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\File;
  */
 class ExportDemo extends Command
 {
-    protected $signature = 'demo:export {--page=* : Extra pages to include, e.g. /admin/ranger/tickets/12} {--out= : Folder to write to (default config demo.output)} {--keep-brand : Don\'t swap in the placeholder brand}';
+    protected $signature = 'demo:export {--page=* : Extra pages to include, e.g. /admin/ranger/tickets/12} {--out= : Folder to write to (default config demo.output)} {--keep-brand : Don\'t swap in the placeholder brand} {--all : Every page you can reach by following links from the website, My Account and the admin} {--limit=1500 : With --all, stop after this many pages}';
 
     protected $description = 'Export chosen pages as a static demo site (e.g. for GitHub Pages)';
 
@@ -42,6 +42,11 @@ class ExportDemo extends Command
         $this->out = rtrim($this->option('out') ?: base_path(config('demo.output', 'build/demo')), '/');
         $this->root = rtrim((string) config('app.url'), '/');
         $list = array_values(array_unique([...config('demo.pages', []), ...$this->option('page')]));
+        $cache = [];
+        if ($this->option('all')) {
+            [$list, $cache] = $this->discover(array_values(array_unique(['/', '/myaccount/dashboard', '/admin', ...$list])), (int) $this->option('limit'));
+            $this->info('Found '.count($list).' pages by following links.');
+        }
         if (! $list) {
             $this->error('No pages to export. List them in config/demo.php.');
 
@@ -56,7 +61,7 @@ class ExportDemo extends Command
 
         $failed = 0;
         foreach ($list as $p) {
-            [$status, $html] = $this->fetch($p);
+            [$status, $html] = $cache[$p] ?? $this->fetch($p);
             if ($status !== 200 || ! str_contains((string) $html, '<')) {
                 $this->warn("  skipped {$p} (HTTP {$status})");
                 $failed++;
@@ -94,6 +99,41 @@ class ExportDemo extends Command
         $this->info(count($list) - $failed.' pages and '.count($this->files).' generated files written to '.$this->out.'. Open index.html, or publish the folder (e.g. GitHub Pages).');
 
         return $failed ? self::FAILURE : self::SUCCESS;
+    }
+
+    /**
+     * --all: start from the seeds and follow every link to another page of this app (no searches or
+     * filters, no downloads, nothing that signs out), fetching each page once.
+     *
+     * @return array{0: list<string>, 1: array<string, array>}
+     */
+    private function discover(array $seeds, int $limit): array
+    {
+        $queue = $seeds;
+        $seen = array_flip(array_map(fn ($u) => (string) $this->key($u), $seeds));
+        $found = $cache = [];
+        while ($queue && count($found) < $limit) {
+            $url = array_shift($queue);
+            $res = $this->fetch($url);
+            if ($res[0] !== 200 || ! str_contains((string) ($res[2] ?? 'text/html'), 'html')) {
+                continue;
+            }
+            $found[] = $url;
+            $cache[$url] = $res;
+            preg_match_all('/<a\s[^>]*href=(["\'])(.*?)\1/i', (string) $res[1], $m);
+            foreach ($m[2] as $href) {
+                $key = $this->key($href);
+                if ($key === null || isset($seen[$key]) || str_contains($key, '?')
+                    || preg_match('#(^|/)(logout|login|download|file|print|pdf|export|stop-impersonating)(/|$)|\.(xlsx|csv|pdf|zip|png|jpe?g)$#', $key)
+                    || ! preg_match('#^(admin|myaccount|shop|plans|business|contact|build-your-own|$)#', $key)) {
+                    continue;
+                }
+                $seen[$key] = true;
+                $queue[] = '/'.$key;
+            }
+        }
+
+        return [$found, $cache];
     }
 
     /** "/admin/ranger/tickets?view=unassigned" → "admin/ranger/tickets?view=unassigned" (no host, no trailing slash, sorted query). */

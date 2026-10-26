@@ -26,21 +26,34 @@
         </div>
     </div>
 
+    {{-- Who is on the website right now: one row per person, most recently active first --}}
+    <div class="panel" style="margin-bottom:20px">
+        <div class="panel-head"><h2>On the Site Now</h2><span class="actions"><span class="muted">{{ number_format($online) }} online · top 10</span><a class="btn sm ghost" href="{{ route('lando.visitors', ['who' => 'online']) }}">All Visitors Online</a></span></div>
+        <div class="table-wrap"><table>
+            <thead><tr><th>Who</th><th>On Page</th><th class="num">Pages Today</th><th>Arrived</th><th>Last Seen</th><th>Came From</th><th>Device</th><th>IP</th></tr></thead>
+            <tbody>@forelse ($onSite as $o)
+                @php $v = $o->visit; $url = route('lando.visitors', ['visitor' => $v->visitor]); @endphp
+                <tr class="click" data-href="{{ $url }}">
+                    <td>@if ($v->customer)<a href="{{ $url }}"><b>{{ $v->customer->name }}</b></a><div class="help">@include('backend.partials.account-link', ['c' => $v->customer]) · signed in</div>@else<a href="{{ $url }}"><b>Visitor</b></a><div class="help mono">{{ \Illuminate\Support\Str::limit($v->visitor, 10, '…') }}</div>@endif</td>
+                    <td class="path-cell">/{{ ltrim($v->path === '/' ? '' : $v->path, '/') }}@if ($o->trail->count() > 1)<div class="help">before: {{ $o->trail->reject(fn ($p) => $p === $v->path)->map(fn ($p) => '/'.ltrim($p === '/' ? '' : $p, '/'))->implode(', ') }}</div>@endif</td>
+                    <td class="num">{{ $o->pages }}</td>
+                    <td class="nowrap">{{ $o->arrived->format('g:i A') }}<div class="help">{{ $o->arrived->diffForHumans(null, true) }} on site</div></td>
+                    <td class="nowrap">{{ $v->seen_at->diffForHumans() }}</td>
+                    <td class="wrap">{{ $o->from ? parse_url($o->from, PHP_URL_HOST) ?: $o->from : 'Direct' }}</td>
+                    <td class="nowrap">{{ $o->device }}<div class="help">{{ $o->browser }}</div></td>
+                    <td class="mono">{{ $v->ip }}</td></tr>
+            @empty <tr><td colspan="8" class="empty">Nobody is on the website right now.</td></tr> @endforelse</tbody>
+        </table></div>
+    </div>
+
     <div class="grid-2" style="margin-bottom:20px">
         <div class="panel"><div class="panel-head"><h2>Site Health</h2><a class="btn sm ghost" href="{{ route('lando.health') }}">Details</a></div>
             @include('backend.lando.site._checks', ['checks' => collect($checks)->sortBy(fn ($c) => ['bad' => 0, 'warn' => 1, 'ok' => 2][$c['state']])->take(8)->values()->all(), 'compact' => true])
         </div>
-        <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:20px;align-content:start;min-width:0">
-            <div class="panel"><div class="panel-head"><h2>On the Site Now</h2><a class="btn sm ghost" href="{{ route('lando.visitors', ['who' => 'online']) }}">Who</a></div>
-                <div class="table-wrap"><table><tbody>@forelse ($onPages as $r)
-                    <tr><td class="path-cell">@if ($r->page_id)<a href="{{ route('lando.pages.activity', $r->page_id) }}">{{ $r->path }}</a>@else{{ $r->path }}@endif</td><td class="num">{{ $r->n }} {{ Str::plural('visitor', $r->n) }}</td></tr>
-                @empty <tr><td class="empty">Nobody right now.</td></tr> @endforelse</tbody></table></div>
-            </div>
-            <div class="panel"><div class="panel-head"><h2>Top Pages Today</h2></div>
-                <div class="table-wrap"><table><thead><tr><th>Page</th><th class="num">Views</th><th class="num">People</th></tr></thead><tbody>@forelse ($topPages as $r)
-                    <tr><td class="path-cell">@if ($r->page_id)<a href="{{ route('lando.pages.activity', $r->page_id) }}">{{ $r->path }}</a>@else{{ $r->path }}@endif</td><td class="num">{{ $r->n }}</td><td class="num">{{ $r->people }}</td></tr>
-                @empty <tr><td colspan="3" class="empty">No views yet today.</td></tr> @endforelse</tbody></table></div>
-            </div>
+        <div class="panel"><div class="panel-head"><h2>Top Pages Today</h2></div>
+            <div class="table-wrap"><table><thead><tr><th>Page</th><th class="num">Views</th><th class="num">People</th></tr></thead><tbody>@forelse ($topPages as $r)
+                <tr><td class="path-cell">@if ($r->page_id)<a href="{{ route('lando.pages.activity', $r->page_id) }}">{{ $r->path }}</a>@else{{ $r->path }}@endif</td><td class="num">{{ $r->n }}</td><td class="num">{{ $r->people }}</td></tr>
+            @empty <tr><td colspan="3" class="empty">No views yet today.</td></tr> @endforelse</tbody></table></div>
         </div>
     </div>
 

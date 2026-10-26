@@ -160,6 +160,14 @@ Route::prefix('admin')->group(function () {
             Route::post('files/{run}/rerun', 'rerun')->name('admin.files.rerun');
             Route::get('notifications', 'notifications')->name('admin.notifications');
         });
+        // Your notifications and Settings (user menu)
+        Route::controller(Backend\NotificationController::class)->group(function () {
+            Route::get('my/notifications', 'index')->name('admin.notifications.index');
+            Route::get('my/notifications/{notification}', 'open')->whereNumber('notification')->name('admin.notifications.open');
+            Route::post('my/notifications/read-all', 'readAll')->name('admin.notifications.read-all');
+            Route::get('my/settings', 'settings')->name('admin.settings');
+            Route::put('my/settings', 'saveSettings')->name('admin.settings.save');
+        });
         Route::get('/', Backend\LauncherController::class)->name('admin.launcher');
 
         // Admin apps created from the launcher's "New Admin App" button

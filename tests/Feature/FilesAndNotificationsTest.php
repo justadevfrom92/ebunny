@@ -21,10 +21,10 @@ class FilesAndNotificationsTest extends TestCase
         return User::where('email', 'admin@example.com')->firstOrFail();
     }
 
-    public function test_user_menu_has_files_switch_user_and_logout(): void
+    public function test_user_menu_has_notifications_files_settings_and_logout(): void
     {
         $this->actingAs($this->admin());
-        $this->get('/admin')->assertOk()->assertSee('data-user-menu', false)->assertSee('My Files')->assertSee('Switch user')->assertSee('Logout')
+        $this->get('/admin')->assertOk()->assertSee('data-user-menu', false)->assertSee('All Notifications')->assertSee('My Files')->assertSee('Settings')->assertDontSee('Switch user')->assertSee('Logout')
             ->assertSee(route('admin.notifications'), false);
         $this->get('/admin/corral')->assertSee('data-user-menu', false);
     }
@@ -35,6 +35,7 @@ class FilesAndNotificationsTest extends TestCase
         $user = User::where('email', 'csr@example.com')->firstOrFail();
         $this->actingAs($user);
         ReportRun::where('user_id', $user->id)->update(['seen_at' => now()]);
+        $user->adminNotifications()->update(['read_at' => now()]);
         $this->getJson(route('admin.notifications'))->assertOk()->assertJson(['count' => 0]);
 
         $this->get('/admin/corral/reports/notes?run=1&start=2020-01-01&format=csv')->assertRedirect();

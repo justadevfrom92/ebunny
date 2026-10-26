@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminNotification;
 use App\Models\ContactMessage;
 use App\Models\CookieConsent;
 use App\Models\SiteVisit;
@@ -12,6 +13,7 @@ use App\Support\SiteTraffic;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
 /** The few things the static website needs from Laravel. */
@@ -121,11 +123,13 @@ class SiteController extends Controller
             'message' => ['required', 'string', 'max:5000'],
         ]);
 
-        ContactMessage::create([
+        $msg = ContactMessage::create([
             'first_name' => $data['first'], 'last_name' => $data['last'], 'email' => $data['email'],
             'phone' => $data['phone'] ?? null, 'topic' => $data['topic'], 'message' => $data['message'],
             'ip' => $request->ip(),
         ]);
+        AdminNotification::notify(AdminNotification::appUsers('corral'), 'email', 'New email from '.$data['first'].' '.$data['last'], $data['topic'].': '.mb_substr($data['message'], 0, 140),
+            Route::has('corral.messages.show') ? route('corral.messages.show', $msg) : null);
 
         return response()->json(['ok' => true], 201);
     }

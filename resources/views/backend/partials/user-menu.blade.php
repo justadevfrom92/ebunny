@@ -1,24 +1,27 @@
-{{-- Top right: your avatar (with the number of finished files you haven't looked at on its corner) and name. Clicking your name opens My Files, Switch user and Logout. --}}
+{{-- Top right: your avatar (with the number of unread notifications on its corner) and name. Clicking your name opens your
+     latest 5 notifications, My Files, Settings and Logout. --}}
 @php
-    $unseen = \App\Models\ReportRun::unseenFor($user->id)->count();
+    $unread = $user->adminNotifications()->whereNull('read_at')->count();
+    $latest = $user->adminNotifications()->limit(5)->get();
     $myFiles = \App\Models\ReportRun::where('user_id', $user->id)->count();
-    $testUsers = \App\Http\Controllers\Backend\AuthController::testUsers()->reject(fn ($u) => $u->is($user));
 @endphp
 <div class="user-menu" data-user-menu data-notify="{{ route('admin.notifications') }}">
     <button type="button" class="user-chip" aria-haspopup="true" aria-expanded="false" data-user-toggle>
-        <span class="avatar-wrap"><span class="avatar">{{ $user->initials() }}</span><span class="files-badge" data-files-badge @if (! $unseen) hidden @endif aria-label="{{ $unseen }} new {{ Str::plural('file', $unseen) }}">{{ $unseen }}</span></span><span><span>{{ $user->name }}</span><small>{{ $user->role?->name }}</small></span>
+        <span class="avatar-wrap"><span class="avatar">{{ $user->initials() }}</span><span class="files-badge" data-files-badge @if (! $unread) hidden @endif aria-label="{{ $unread }} unread {{ Str::plural('notification', $unread) }}">{{ $unread }}</span></span><span><span>{{ $user->name }}</span><small>{{ $user->role?->name }}</small></span>
         <svg class="caret" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
     </button>
     <div class="user-pop" data-user-pop hidden>
         <div class="up-head"><b>{{ $user->name }}</b><span>{{ $user->email }}</span></div>
-        <a class="up-item" href="{{ route('admin.files') }}"><span>My Files</span><span class="up-count" data-files-total>{{ $myFiles }}</span>@if ($unseen)<span class="up-new" data-files-new>{{ $unseen }} new</span>@endif</a>
-        @if ($testUsers->isNotEmpty())
-            <div class="up-label">Switch user</div>
-            <input type="search" class="up-search" placeholder="Find a user" aria-label="Find a user to switch to" data-up-search>
-            <form method="post" class="up-users" data-test-switch>@csrf
-                @foreach ($testUsers as $u)<button type="submit" formaction="{{ route('admin.login.test', $u) }}" data-name="{{ strtolower($u->name.' '.$u->role?->name) }}"><span class="avatar sm">{{ $u->initials() }}</span><span><b>{{ $u->name }}</b><small>{{ $u->role?->name }}</small></span></button>@endforeach
-            </form>
-        @endif
+        <div class="up-label up-label-first"><span>Notifications</span>@if ($unread)<span class="up-new">{{ $unread }} new</span>@endif</div>
+        <div class="up-notes">
+            @forelse ($latest as $n)
+                <a class="up-note {{ $n->read_at ? '' : 'unread' }}" href="{{ route('admin.notifications.open', $n) }}"><span class="up-ico" aria-hidden="true">{{ $n->icon() }}</span>
+                    <span><b>{{ $n->title }}</b>@if ($n->body)<small>{{ \Illuminate\Support\Str::limit($n->body, 70) }}</small>@endif<small>{{ $n->created_at->diffForHumans() }}</small></span></a>
+            @empty <p class="up-empty">Nothing yet.</p> @endforelse
+        </div>
+        <a class="up-item" href="{{ route('admin.notifications.index') }}"><span>All Notifications</span></a>
+        <a class="up-item" href="{{ route('admin.files') }}"><span>My Files</span><span class="up-count" data-files-total>{{ $myFiles }}</span></a>
+        <a class="up-item" href="{{ route('admin.settings') }}"><span>Settings</span></a>
         <form method="post" action="{{ route('admin.logout') }}">@csrf<button class="up-item up-logout">Logout</button></form>
     </div>
 </div>

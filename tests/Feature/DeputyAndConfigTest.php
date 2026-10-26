@@ -33,10 +33,11 @@ class DeputyAndConfigTest extends TestCase
         $ai = User::where('email', 'ai@example.com')->firstOrFail();
         $this->post(route('admin.login.test', $ai))->assertRedirect(route('admin.launcher'));
         $this->assertAuthenticatedAs($ai);
-        $this->get('/admin')->assertOk()->assertSee('Deputy')->assertSee('Switch user');
+        $this->get('/admin')->assertOk()->assertSee('Deputy');
+        $this->get(route('admin.settings'))->assertOk()->assertSee('Switch User');   // switching lives in Settings
         $this->get('/admin/corral')->assertRedirect();   // no Corral access for this role
 
-        // Switch to another sample admin from the header
+        // Switch to another sample admin from Settings
         $csr = User::where('email', 'csr@example.com')->firstOrFail();
         $this->post(route('admin.login.test', $csr))->assertRedirect();
         $this->assertAuthenticatedAs($csr);

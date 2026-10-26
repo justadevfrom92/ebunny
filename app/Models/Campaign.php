@@ -100,6 +100,8 @@ class Campaign extends Model
             });
             $this->update(['status' => 'sent', 'sent_at' => now(), 'recipients' => $count, 'skipped' => $skipped]);
         });
+        AdminNotification::notify(AdminNotification::appUsers('rodeo'), 'campaign', 'Campaign sent: '.$this->name,
+            number_format($count).' '.($this->channel === 'SMS' ? 'texts' : 'emails').', '.number_format($skipped).' skipped', route('rodeo.campaigns.edit', $this));
 
         return [$count, $skipped];
     }

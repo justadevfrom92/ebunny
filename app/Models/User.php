@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role_id', 'active', 'last_login_at', 'employee_id', 'title', 'department', 'manager_id', 'phone_ext', 'location', 'hired_on', 'company', 'access_ends_on', 'extra_perms', 'denied_perms', 'access_note'])]
+#[Fillable(['name', 'email', 'password', 'role_id', 'active', 'last_login_at', 'employee_id', 'title', 'department', 'manager_id', 'phone_ext', 'location', 'hired_on', 'company', 'access_ends_on', 'extra_perms', 'denied_perms', 'access_note', 'notification_prefs'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -36,6 +36,7 @@ class User extends Authenticatable
             'hired_on' => 'date',
             'access_ends_on' => 'date',
             'extra_perms' => 'array',
+            'notification_prefs' => 'array',
             'denied_perms' => 'array',
         ];
     }
@@ -100,6 +101,17 @@ class User extends Authenticatable
      * True when this person may use an admin app (corral, lando, …) or a right (delete, refunds…):
      * their role grants it or it was added for them, and it wasn't taken away from them.
      */
+    /** Whether this person wants a kind of notification (all kinds are on until they turn one off in Settings). */
+    public function wantsNotification(string $kind): bool
+    {
+        return ($this->notification_prefs[$kind] ?? true) !== false;
+    }
+
+    public function adminNotifications(): HasMany
+    {
+        return $this->hasMany(AdminNotification::class)->latest('created_at')->latest('id');
+    }
+
     public function hasPerm(string $perm): bool
     {
         if (! $this->active || in_array($perm, $this->denied_perms ?? [], true)) {

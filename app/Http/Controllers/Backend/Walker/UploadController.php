@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Backend\Walker;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminNotification;
 use App\Models\ReportUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,6 +43,9 @@ class UploadController extends Controller
         $file = $request->file('file');
         $upload = ReportUpload::create(['title' => $data['title'], 'category' => $data['category'], 'description' => $data['description'] ?? null,
             'path' => $file->store('report-uploads', 'local'), 'original_name' => $file->getClientOriginalName(), 'size' => $file->getSize(), 'user_id' => $request->user()->id]);
+
+        AdminNotification::notify(AdminNotification::appUsers('walker')->reject(fn ($u) => $u->id === $request->user()->id), 'file',
+            'New file in '.$data['category'].': '.$data['title'], 'Added by '.$request->user()->name, route('walker.uploads.show', $upload));
 
         return redirect()->route('walker.uploads.show', $upload)->with('status', 'Uploaded '.$data['title']);
     }

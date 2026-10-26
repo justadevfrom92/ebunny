@@ -374,7 +374,7 @@
             var before = Number(badge.textContent) || 0;
             badge.textContent = d.count;
             badge.hidden = !d.count;
-            badge.setAttribute('aria-label', d.count + ' new ' + (d.count === 1 ? 'file' : 'files'));
+            badge.setAttribute('aria-label', d.count + ' unread ' + (d.count === 1 ? 'notification' : 'notifications'));
             if (d.count > before) { badge.classList.remove('bump'); void badge.offsetWidth; badge.classList.add('bump'); }
             var seen = notified(), fresh = d.items.filter(function (it) { return seen.indexOf(it.id) < 0; });
             fresh.slice(0, 3).forEach(popup);

@@ -26,8 +26,9 @@ class FilesController extends Controller
         $runs = (clone $mine)->when($f['status'] ?? null, fn ($q, $s) => $s === 'running' ? $q->whereIn('status', ['queued', 'running']) : $q->where('status', $s))
             ->latest('created_at')->latest('id')->paginate(25)->withQueryString();
         $unseen = (clone $mine)->unseenFor($request->user()->id)->pluck('id')->all();
-        // Opening the list counts as seeing them
+        // Opening the list counts as seeing them (and reading their notifications)
         (clone $mine)->unseenFor($request->user()->id)->update(['seen_at' => now()]);
+        $request->user()->adminNotifications()->whereNull('read_at')->whereIn('kind', ['report', 'file'])->where('url', 'like', '%/admin/files/%')->update(['read_at' => now()]);
 
         return view('backend.files.index', ['runs' => $runs, 'unseen' => $unseen, 'f' => $f,
             'counts' => ['all' => (clone $mine)->count(), 'running' => (clone $mine)->whereIn('status', ['queued', 'running'])->count(),
@@ -42,6 +43,8 @@ class FilesController extends Controller
         if (in_array($run->status, ['done', 'failed'], true) && ! $run->seen_at) {
             $run->forceFill(['seen_at' => now()])->save();
         }
+        // ...and so does its notification
+        $request->user()->adminNotifications()->whereNull('read_at')->where('url', route('admin.files.show', $run))->update(['read_at' => now()]);
 
         return view('backend.files.show', ['run' => $run, 'def' => config('walker.reports.'.$run->report)]);
     }
@@ -70,6 +73,7 @@ class FilesController extends Controller
     public function seen(Request $request): RedirectResponse
     {
         ReportRun::unseenFor($request->user()->id)->update(['seen_at' => now()]);
+        $request->user()->adminNotifications()->whereNull('read_at')->whereIn('kind', ['report', 'file'])->update(['read_at' => now()]);
 
         return back();
     }
@@ -80,7 +84,7 @@ class FilesController extends Controller
         $items = ReportRun::unseenFor($request->user()->id)->latest('finished_at')->limit(10)->get();
 
         return response()->json([
-            'count' => ReportRun::unseenFor($request->user()->id)->count(),
+            'count' => $request->user()->adminNotifications()->whereNull('read_at')->count(),   // every unread notification
             'running' => ReportRun::inState('running')->where('user_id', $request->user()->id)->count(),
             'items' => $items->map(fn ($r) => ['id' => $r->id, 'title' => $r->label(), 'ok' => $r->status === 'done', 'rows' => $r->rows, 'format' => $r->formatLabel(),
                 'url' => route('admin.files.show', $r), 'download' => $r->file ? route('admin.files.download', $r) : null])->values(),

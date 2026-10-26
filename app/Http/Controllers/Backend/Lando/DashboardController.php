@@ -10,6 +10,7 @@ use App\Models\SiteBlock;
 use App\Models\SiteVisit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -40,10 +41,30 @@ class DashboardController extends Controller
             'hours' => self::hours(),
             'topPages' => (clone $views)->where('created_at', '>=', $today)->selectRaw('path, page_id, count(*) as n, count(distinct visitor) as people')
                 ->groupBy('path', 'page_id')->orderByDesc('n')->limit(8)->get(),
-            'onPages' => SiteVisit::online()->where('blocked', false)->selectRaw('path, page_id, count(distinct visitor) as n')->groupBy('path', 'page_id')->orderByDesc('n')->limit(8)->get(),
+            'onSite' => self::onSite(),
             'recentBlocks' => SiteVisit::where('blocked', true)->latest()->limit(6)->get(),
             'changes' => HistoryItem::with('user')->whereIn('model', ['Page_model', 'ContentBlock_model', 'SiteBlock_model', 'Site_model'])->latest('id')->limit(6)->get(),
         ]);
+    }
+
+    /**
+     * The 10 most recently active people on the site now, one row each: who, the page they're on, how many
+     * pages they've seen today, when they arrived, where they came from, their device and IP.
+     */
+    private static function onSite(): Collection
+    {
+        $now = SiteVisit::online()->where('blocked', false)->with(['customer', 'page'])->latest('seen_at')->latest('id')->get()->unique('visitor')->take(10)->values();
+        $today = SiteVisit::whereIn('visitor', $now->pluck('visitor'))->where('created_at', '>=', today())->orderBy('created_at')->get()->groupBy('visitor');
+
+        return $now->map(function ($v) use ($today) {
+            $trail = $today[$v->visitor] ?? collect([$v]);
+            $agent = (string) $v->agent;
+            $device = str_contains($agent, 'iPhone') || str_contains($agent, 'Android') && str_contains($agent, 'Mobile') ? 'Phone' : (str_contains($agent, 'iPad') || str_contains($agent, 'Tablet') ? 'Tablet' : 'Computer');
+            $browser = collect(['Edg' => 'Edge', 'Chrome' => 'Chrome', 'Firefox' => 'Firefox', 'Safari' => 'Safari'])->first(fn ($name, $needle) => str_contains($agent, $needle)) ?? 'Other';
+
+            return (object) ['visit' => $v, 'pages' => $trail->count(), 'arrived' => $trail->first()->created_at, 'from' => $trail->first()->referrer,
+                'device' => $device, 'browser' => $browser, 'trail' => $trail->pluck('path')->unique()->take(4)->values()];
+        });
     }
 
     public function health(): View

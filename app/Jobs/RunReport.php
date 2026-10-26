@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\AdminNotification;
 use App\Models\ReportRun;
 use App\Reports\Report;
 use App\Support\Export;
@@ -44,10 +45,16 @@ class RunReport implements ShouldQueue
         $run->update(['status' => 'done', 'file' => $file, 'file_size' => strlen($content), 'rows' => $records->count(), 'finished_at' => now(),
             'duration_ms' => (int) round((microtime(true) - $started) * 1000),
             'preview' => ['header' => $header, 'rows' => $rows->take(25)->map(fn ($r) => array_values((array) $r))->all()]]);
+        // Walker reports are "reports done"; Corral exports are "files finished"
+        AdminNotification::notify($run->user, $run->app === 'walker' ? 'report' : 'file', ($run->app === 'walker' ? 'Report ready: ' : 'Export ready: ').$run->label(),
+            number_format($run->rows).' rows · '.$run->formatLabel(), route('admin.files.show', $run));
     }
 
     public function failed(Throwable $e): void
     {
         ReportRun::whereKey($this->runId)->update(['status' => 'failed', 'finished_at' => now(), 'error' => mb_substr($e->getMessage(), 0, 2000)]);
+        if ($run = ReportRun::find($this->runId)) {
+            AdminNotification::notify($run->user, $run->app === 'walker' ? 'report' : 'file', 'Report failed: '.$run->label(), mb_substr($e->getMessage(), 0, 200), route('admin.files.show', $run));
+        }
     }
 }

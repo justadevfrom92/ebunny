@@ -802,3 +802,23 @@ tr.edit-row > td { background: var(--row); white-space: normal; }
 .panel-body .form-row:has(select) > * { max-width: 420px; width: 100%; }
 .multi { display: block; max-width: 420px; }
 .panel-body .grid-2:has(select), .panel-body .grid-3:has(select), .panel-body .grid-2:has(.multi), .panel-body .grid-3:has(.multi) { grid-template-columns: minmax(0, 1fr) !important; }
+/* Notifications in the user menu */
+.user-pop { width: 340px; }
+.up-label-first { border-top: 0; margin-top: 0; display: flex; justify-content: space-between; align-items: center; }
+.up-notes { max-height: 320px; overflow-y: auto; }
+.up-note { display: flex; gap: 10px; padding: 8px 10px; border-radius: 6px; color: var(--ink); text-decoration: none; }
+.up-note:hover { background: var(--row); text-decoration: none; }
+.up-note b { display: block; font-size: .85rem; color: var(--navy); font-weight: 600; line-height: 1.3; }
+.up-note small { display: block; font-size: .75rem; color: var(--muted); }
+.up-note.unread { background: var(--info-bg); }
+.up-note.unread b::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--cyan); margin-right: 6px; vertical-align: middle; }
+.up-ico { font-size: 1.05rem; line-height: 1.3; }
+.up-empty { color: var(--muted); font-size: .85rem; padding: 6px 10px; margin: 0; }
+.row-unread td { background: var(--info-bg); } .row-unread td b { color: var(--navy); }
+/* Room under the last section so it can be scrolled up into the top half of the screen (a fixed amount, not a % or JS) */
+.content { padding-bottom: 26rem; }
+@media (max-width: 860px) { .content { padding-bottom: 18rem; } }
+/* Tablet and phone: every side-by-side section (50% / 33% on desktop) is full width */
+@media (max-width: 1180px) {
+  .grid-2, .grid-3, .it-grid, .search-layout, .camp-grid, .content [style*="grid-template-columns"]:not(.stat-row):not(.bc):not(.hour-chart):not(.form-grid):not(.kv) { grid-template-columns: minmax(0, 1fr) !important; }
+}

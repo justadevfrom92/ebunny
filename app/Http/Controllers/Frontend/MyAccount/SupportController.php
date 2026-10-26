@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Frontend\MyAccount;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminNotification;
 use App\Models\Customer;
+use App\Models\RangerAgent;
 use App\Models\SupportTicket;
 use App\Models\SupportTicketAttachment;
 use App\Models\SupportTicketMessage;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -56,6 +59,8 @@ class SupportController extends Controller
         $t = SupportTicket::create(['customer_id' => $c->id, 'name' => $c->name, 'email' => $c->email ?? '', 'subject' => $data['subject'], 'topic' => $data['topic'],
             'channel' => 'My Account', 'status' => 'new', 'priority' => $data['topic'] === 'outage' ? 'high' : 'normal', 'last_activity_at' => now()]);
         $this->attach($request, $t->post('customer', $data['body']));
+        AdminNotification::notify(User::whereIn('id', RangerAgent::where('active', true)->select('user_id'))->get(), 'ticket_new',
+            'New ticket '.$t->number().': '.$t->subject, $c->name.' · '.(SupportTicket::TOPICS[$t->topic] ?? ''), route('ranger.tickets.show', $t));
 
         return redirect()->route('myaccount.support.show', $t->id)->with('status', 'Ticket '.$t->number().' is open. We\'ll reply here and email you.');
     }
@@ -83,6 +88,9 @@ class SupportController extends Controller
         abort_if($t->status === 'closed', 403, 'This ticket is closed. Open a new one.');
         $data = $request->validate(['body' => ['required', 'string', 'max:5000'], 'attachments' => SupportTicketAttachment::RULES, 'attachments.*' => SupportTicketAttachment::FILE_RULES]);
         $this->attach($request, $t->post('customer', $data['body']));
+        // Whoever has the ticket, and anyone who joined it, hears that the customer wrote back
+        AdminNotification::notify(User::whereIn('id', array_filter([$t->assigned_to, ...$t->watchers()->pluck('users.id')]))->get(), 'ticket_reply',
+            $t->name.' wrote back on '.$t->number(), mb_substr($data['body'], 0, 140), route('ranger.tickets.show', $t));
 
         return back()->with('status', 'Sent. We\'ll get back to you soon.');
     }

@@ -49,7 +49,8 @@ Other commands: `php artisan test` (feature tests), `php artisan start --fresh` 
 `php artisan demo:export` writes the pages listed in `config/demo.php` to `build/demo` as a static site with the sample data
 and a placeholder brand. Links between those pages work; links to any page that isn't listed are switched off, and forms
 don't save anything. Add or remove pages in `config/demo.php`, or add one-offs with `--page=/admin/ranger/tickets/12`.
-Open `build/demo/index.html` to check it, then publish the folder anywhere static. To publish it on GitHub Pages: Settings →
+`php artisan demo:export --all` exports every page you can reach by following links from the website, My Account and the
+admin (up to `--limit`, default 1500). Open `build/demo/index.html` to check it, then publish the folder anywhere static. To publish it on GitHub Pages: Settings →
 Pages → Source: GitHub Actions, then Actions → **Demo site** → Run workflow (it sets up the sample data, exports and deploys).
 
 ### Production notes
