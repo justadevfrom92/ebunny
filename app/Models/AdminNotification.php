@@ -32,6 +32,12 @@ class AdminNotification extends Model
         return ['read_at' => 'datetime', 'created_at' => 'datetime'];
     }
 
+    /** Links are kept as paths ("/admin/ranger/tickets/12"), so they work on any host the admin runs on. */
+    protected function setUrlAttribute(?string $url): void
+    {
+        $this->attributes['url'] = $url === null ? null : (parse_url($url, PHP_URL_PATH) ?: '/').(($q = parse_url($url, PHP_URL_QUERY)) ? '?'.$q : '');
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

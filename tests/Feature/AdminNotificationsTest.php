@@ -43,7 +43,7 @@ class AdminNotificationsTest extends TestCase
 
         // Opening one marks it read and goes to it
         $n = $csr->adminNotifications()->whereNull('read_at')->firstOrFail();
-        $this->get(route('admin.notifications.open', $n))->assertRedirect($n->url);
+        $this->get(route('admin.notifications.open', $n))->assertRedirect(url($n->url));
         $this->assertNotNull($n->fresh()->read_at);
         $this->post(route('admin.notifications.read-all'))->assertRedirect();
         $this->assertSame(0, $csr->adminNotifications()->whereNull('read_at')->count());

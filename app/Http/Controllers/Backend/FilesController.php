@@ -44,7 +44,7 @@ class FilesController extends Controller
             $run->forceFill(['seen_at' => now()])->save();
         }
         // ...and so does its notification
-        $request->user()->adminNotifications()->whereNull('read_at')->where('url', route('admin.files.show', $run))->update(['read_at' => now()]);
+        $request->user()->adminNotifications()->whereNull('read_at')->where('url', route('admin.files.show', $run, false))->update(['read_at' => now()]);
 
         return view('backend.files.show', ['run' => $run, 'def' => config('walker.reports.'.$run->report)]);
     }
