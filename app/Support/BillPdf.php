@@ -21,6 +21,12 @@ class BillPdf
 
     public static function make(Bill $b): string
     {
+        return self::build($b)->output(config('brand.name').' bill '.($b->invoice ?: $b->reference));
+    }
+
+    /** The drawn page, before it's written out as a PDF (or shown as SVG). */
+    public static function build(Bill $b): Pdf
+    {
         $c = $b->customer;
         $pdf = new Pdf;
         $money = fn ($v) => '$'.number_format((float) $v, 2);
@@ -105,6 +111,6 @@ class BillPdf
             ->text(40, 744, 'Outages and emergencies: call your utility ('.($c->market?->short ?? 'TDSP').').', 8.5, false, self::GREY)
             ->text(40, 758, config('brand.name').' · PUCT Cert. No. '.config('brand.puct'), 8.5, false, self::GREY);
 
-        return $pdf->output(config('brand.name').' bill '.($b->invoice ?: $b->reference));
+        return $pdf;
     }
 }

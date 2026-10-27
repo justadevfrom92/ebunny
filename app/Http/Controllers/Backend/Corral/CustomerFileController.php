@@ -6,15 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Models\ContactLog;
 use App\Models\CustomerFile;
 use App\Support\CustomerDocument;
+use App\Support\CustomerFilePdf;
 use App\Support\History;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
-/** One file on an account: read it in English or Spanish, print it, or email it to the customer. */
+/** One file on an account: its PDF (view, download, regenerate) in English or Spanish, print it, or email it to the customer. */
 class CustomerFileController extends Controller
 {
     private function lang(Request $request, CustomerFile $file): string
@@ -31,7 +33,42 @@ class CustomerFileController extends Controller
 
         return view('backend.corral.customers.file', ['file' => $file, 'c' => $file->customer, 'lang' => $lang,
             'doc' => $file->path ? null : CustomerDocument::render($file, $lang),
+            // The PDF goes in the page as base64; the page turns it into a viewer and a download in the browser
+            'pdf64' => $file->path ? null : base64_encode(CustomerFilePdf::make($file, $lang)),
+            'page' => $file->path ? null : CustomerFilePdf::build($file, $lang)->svg(),
             'sent' => ContactLog::where('customer_id', $file->customer_id)->where('channel', 'Email')->where('template', 'like', 'Customer File: '.$file->name.'%')->latest()->limit(10)->get()]);
+    }
+
+    /** The PDF itself: inline to view, or ?download=1 to save it. */
+    public function pdf(Request $request, CustomerFile $file): Response
+    {
+        abort_if($file->path, 404);
+        $file->load('customer');
+        $lang = $this->lang($request, $file);
+
+        return response(CustomerFilePdf::make($file, $lang), 200, ['Content-Type' => 'application/pdf',
+            'Content-Disposition' => ($request->boolean('download') ? 'attachment' : 'inline').'; filename="'.self::pdfName($file, $lang).'"',
+            'Cache-Control' => 'private, no-store']);
+    }
+
+    /** Build the PDF again from the account as it is now (address, plan, latest bill). */
+    public function regenerate(Request $request, CustomerFile $file): RedirectResponse
+    {
+        abort_if($file->path, 404);
+        $file->load('customer');
+        $file->forceFill(['generated_at' => now(), 'regenerated' => $file->regenerated + 1])->save();
+        $file->forceFill(['size' => strlen(CustomerFilePdf::make($file, $this->lang($request, $file)))])->save();
+        History::record(['customer_id' => $file->customer_id, 'model' => 'ItemFile_model', 'group' => 'Billing & Files', 'record_id' => $file->id, 'action' => 'regenerated',
+            'summary' => $file->name.' PDF regenerated']);
+
+        return back()->with('status', $file->name.' regenerated.');
+    }
+
+    public static function pdfName(CustomerFile $file, string $lang): string
+    {
+        $base = preg_replace('/\.pdf$/i', '', $file->name);
+
+        return $base.($lang === 'es' ? '-es' : '').'.pdf';
     }
 
     public function print(Request $request, CustomerFile $file): View
@@ -54,6 +91,8 @@ class CustomerFileController extends Controller
             $m->to($data['email'])->subject($subject);
             if ($file->path && Storage::disk('local')->exists($file->path)) {
                 $m->attachData(Storage::disk('local')->get($file->path), $file->name);
+            } elseif (! $file->path) {
+                $m->attachData(CustomerFilePdf::make($file, $data['lang']), self::pdfName($file, $data['lang']), ['mime' => 'application/pdf']);
             }
         });
         $language = CustomerDocument::LANGUAGES[$data['lang']];

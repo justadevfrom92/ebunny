@@ -10,6 +10,9 @@ class Pdf
 {
     private array $ops = [];
 
+    /** The same drawing as SVG elements, for showing the page in a browser that can't display PDFs. */
+    private array $svg = [];
+
     public const W = 612;
 
     public const H = 792;
@@ -23,6 +26,8 @@ class Pdf
             $x -= $align === 'right' ? $w : $w / 2;
         }
         $this->ops[] = sprintf('BT %s rg /%s %.2F Tf %.2F %.2F Td (%s) Tj ET', self::rgb($rgb), $bold ? 'F2' : 'F1', $size, $x, self::H - $y, self::escape($s));
+        $this->svg[] = sprintf('<text x="%.2F" y="%.2F" font-size="%.2F"%s fill="%s">%s</text>', $x, $y, $size, $bold ? ' font-weight="bold"' : '', self::hex($rgb),
+            htmlspecialchars((string) @iconv('Windows-1252', 'UTF-8', $s), ENT_XML1));
 
         return $this;
     }
@@ -30,6 +35,7 @@ class Pdf
     public function rect(float $x, float $y, float $w, float $h, array $rgb): self
     {
         $this->ops[] = sprintf('%s rg %.2F %.2F %.2F %.2F re f', self::rgb($rgb), $x, self::H - $y - $h, $w, $h);
+        $this->svg[] = sprintf('<rect x="%.2F" y="%.2F" width="%.2F" height="%.2F" fill="%s"/>', $x, $y, $w, $h, self::hex($rgb));
 
         return $this;
     }
@@ -37,8 +43,16 @@ class Pdf
     public function line(float $x1, float $y1, float $x2, float $y2, array $rgb = [0.85, 0.87, 0.9], float $width = 0.8): self
     {
         $this->ops[] = sprintf('%s RG %.2F w %.2F %.2F m %.2F %.2F l S', self::rgb($rgb), $width, $x1, self::H - $y1, $x2, self::H - $y2);
+        $this->svg[] = sprintf('<line x1="%.2F" y1="%.2F" x2="%.2F" y2="%.2F" stroke="%s" stroke-width="%.2F"/>', $x1, $y1, $x2, $y2, self::hex($rgb), $width);
 
         return $this;
+    }
+
+    /** The page as an SVG image (white Letter page, Helvetica/Arial). */
+    public function svg(): string
+    {
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '.self::W.' '.self::H.'" font-family="Helvetica, Arial, sans-serif" role="img">'
+            .'<rect width="'.self::W.'" height="'.self::H.'" fill="#fff"/>'.implode('', $this->svg).'</svg>';
     }
 
     /** The finished PDF file. */
@@ -96,6 +110,11 @@ class Pdf
     private static function escape(string $s): string
     {
         return str_replace(['\\', '(', ')', "\r", "\n"], ['\\\\', '\\(', '\\)', '', ' '], $s);
+    }
+
+    private static function hex(array $c): string
+    {
+        return sprintf('#%02x%02x%02x', ...array_map(fn ($v) => (int) round($v * 255), $c));
     }
 
     private static function rgb(array $c): string

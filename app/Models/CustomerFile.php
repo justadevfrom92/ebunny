@@ -15,12 +15,23 @@ class CustomerFile extends Model
 
     protected function casts(): array
     {
-        return [];
+        return ['generated_at' => 'datetime'];
     }
 
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /** Built by the billing system (a PDF), not uploaded by staff. */
+    public function isGenerated(): bool
+    {
+        return ! $this->path;
+    }
+
+    public function sizeLabel(): string
+    {
+        return $this->size ? number_format($this->size / 1024, 1).' KB' : '—';
     }
 
     /** [model name, log group] for History. */

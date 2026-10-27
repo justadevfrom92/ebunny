@@ -108,6 +108,15 @@
   document.addEventListener('DOMContentLoaded', function () {
     pillsToSelects(document);
 
+    // Account file PDFs: the page carries the PDF as base64; turn it into a blob for View PDF and Download PDF
+    $$('.pdf-viewer[data-pdf64]').forEach(function (box) {
+      var bin = atob(box.getAttribute('data-pdf64')), bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      var url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })), name = box.getAttribute('data-pdf-name');
+      $$('[data-pdf-open]').forEach(function (a) { a.href = url; });
+      $$('[data-pdf-download]').forEach(function (a) { a.href = url; a.setAttribute('download', name); });
+    });
+
     // Mobile menu
     var menuBtn = $('#menu-btn');
     if (menuBtn) menuBtn.addEventListener('click', function () { $('#sidebar').classList.toggle('open'); });
