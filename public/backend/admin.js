@@ -152,6 +152,14 @@
       });
     });
 
+    // Style Guide changes kept in this browser: say so in the top bar, with Reset
+    var lsFlag = $('[data-local-style-flag]'), lsUntil = document.documentElement.getAttribute('data-local-styles');
+    if (lsFlag && lsUntil && !document.getElementById('sg-reset')) {
+      lsFlag.hidden = false;
+      $('[data-local-style-text]', lsFlag).textContent = 'Your style changes (this browser, until ' + lsUntil + ')';
+      $('[data-local-style-reset]', lsFlag).addEventListener('click', function () { try { localStorage.removeItem('et-admin-local-styles'); } catch (e) {} location.reload(); });
+    }
+
     // Popups: [data-open-dialog="id"] opens <dialog id>, [data-close-dialog] closes it; a file pick enables the form's button
     document.addEventListener('click', function (e) {
       var o = e.target.closest('[data-open-dialog]');

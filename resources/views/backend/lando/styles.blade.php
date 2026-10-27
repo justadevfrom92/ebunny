@@ -24,7 +24,7 @@
 
 @section('content')
     @include('backend.partials.page-head', ['title' => 'Style Guide',
-        'sub' => 'Every color and style variable used by the website and all admin apps, in one place. Shared colors live in <span class="mono">public/shared/css/tokens.css</span>; pick a swatch to try a new value live on this page.',
+        'sub' => 'Every color and style variable used by the website and all admin apps, in one place. Shared colors live in <span class="mono">public/shared/css/tokens.css</span>; pick a swatch to try a new value. Your changes apply to every admin page in this browser for 5 days (nobody else sees them); Copy Changed CSS to make them permanent for everyone.',
         'actions' => '<span class="muted" id="sg-changed" hidden></span><button type="button" class="btn ghost" id="sg-reset" disabled>Reset</button><button type="button" class="btn cyan" id="sg-copy" disabled>Copy Changed CSS</button>'])
 
     <div class="panel" id="sg-export" hidden style="margin-bottom:16px">
@@ -132,7 +132,9 @@
     <script type="text/plain" id="sg-site-css">{!! str_replace('</', '<\/', file_get_contents(public_path('shared/css/tokens.css'))."\n".preg_replace('/@import[^;]+tokens\.css[^;]*;/', '', file_get_contents(public_path('frontend/css/style.css')))) !!}</script>
     <script>
     (function () {
-        var root = document.documentElement, changed = {};
+        var root = document.documentElement, changed = {}, KEY = 'et-admin-local-styles', DAYS = 5 * 24 * 3600 * 1000;
+        // Changes are kept in this browser for 5 days and applied to every admin page here (partials/head); nobody else sees them
+        function save() { try { Object.keys(changed).length ? localStorage.setItem(KEY, JSON.stringify({ vars: changed, expires: Date.now() + DAYS })) : localStorage.removeItem(KEY); } catch (e) {} }
         var css = document.getElementById('sg-site-css').textContent.replace(/<\\\//g, '</');
         var frames = [].slice.call(document.querySelectorAll('[data-site-sample]'));
 
@@ -154,7 +156,8 @@
         }
         function refresh() {
             var names = Object.keys(changed), n = names.length, label = document.getElementById('sg-changed');
-            label.hidden = !n; label.textContent = n + ' changed (this page only)';
+            label.hidden = !n; label.textContent = n + ' changed · applied to the admin in this browser until ' + new Date(Date.now() + DAYS).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            save();
             document.getElementById('sg-reset').disabled = !n;
             document.getElementById('sg-copy').disabled = !n;
             var byFile = {};
@@ -174,6 +177,17 @@
             });
             var v = input.closest('tr').querySelector('[data-value]'); v.dataset.was = v.textContent;
         });
+
+        // Bring back this browser's saved changes
+        try {
+            var saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+            if (saved && saved.vars && saved.expires > Date.now()) {
+                Object.keys(saved.vars).forEach(function (name) {
+                    var input = document.querySelector('input[data-var="' + name + '"]');
+                    if (input) { input.value = saved.vars[name]; input.dispatchEvent(new Event('input')); }
+                });
+            }
+        } catch (e) {}
 
         document.getElementById('sg-reset').addEventListener('click', function () {
             [].slice.call(document.querySelectorAll('input[data-var]')).forEach(function (i) { if (changed[i.dataset.var]) { i.value = i.dataset.original; i.dispatchEvent(new Event('input')); } });
