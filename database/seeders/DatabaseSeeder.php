@@ -40,7 +40,8 @@ class DatabaseSeeder extends Seeder
             CampaignSeeder::class,   // after the account data (phone types, AutoPay) it targets
             SurveyEmailSeeder::class,
             HeartbeatSeeder::class,
-            ApiExchangeSeeder::class,   // what each sample API call sent and got back
+            ApiExchangeSeeder::class,
+            PdfTemplateSeeder::class,   // sample letters and notices, and PDFs made from them   // what each sample API call sent and got back
             AdminNotificationSeeder::class,   // last: points at tickets, reports, files, emails and campaigns
         ]);
     }

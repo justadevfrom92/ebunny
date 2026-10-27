@@ -210,7 +210,6 @@ Route::prefix('admin')->group(function () {
             Route::post('payment-methods/{method}/autopay', [Backend\Corral\AccountController::class, 'setAutopay'])->name('methods.autopay');
             Route::delete('payment-methods/{method}', [Backend\Corral\AccountController::class, 'removeMethod'])->name('methods.remove');
             Route::post('customers/{customer}/files', [Backend\Corral\AccountController::class, 'uploadFile'])->name('customers.files.upload');
-            Route::get('files', [Backend\Corral\CustomerFileController::class, 'index'])->name('files.index');
             Route::get('files/{file}', [Backend\Corral\AccountController::class, 'downloadFile'])->name('files.download');
             Route::get('files/{file}/page', [Backend\Corral\CustomerFileController::class, 'show'])->name('files.show');
             Route::get('files/{file}/pdf', [Backend\Corral\CustomerFileController::class, 'pdf'])->name('files.pdf');
@@ -455,6 +454,19 @@ Route::prefix('admin')->group(function () {
             Route::get('headers-footers/{part}', [Backend\Rodeo\EmailPartController::class, 'form'])->name('parts.edit');
             Route::put('headers-footers/{part}', [Backend\Rodeo\EmailPartController::class, 'save'])->name('parts.update');
             Route::delete('headers-footers/{part}', [Backend\Rodeo\EmailPartController::class, 'destroy'])->name('parts.destroy');
+            // PDFs: letter and notice templates, made into PDFs for an account
+            Route::controller(Backend\Rodeo\PdfTemplateController::class)->prefix('pdfs')->group(function () {
+                Route::get('/', 'index')->name('pdfs');
+                Route::get('new', 'form')->name('pdfs.create');
+                Route::post('/', 'save')->name('pdfs.store');
+                Route::get('made', 'generated')->name('pdfs.generated');
+                Route::get('made/{generation}', 'generatedShow')->name('pdfs.generated.show');
+                Route::get('made/{generation}/pdf', 'generatedPdf')->name('pdfs.generated.pdf');
+                Route::get('{template}', 'form')->whereNumber('template')->name('pdfs.edit');
+                Route::put('{template}', 'save')->whereNumber('template')->name('pdfs.update');
+                Route::delete('{template}', 'destroy')->whereNumber('template')->name('pdfs.destroy');
+                Route::post('{template}/make', 'generate')->whereNumber('template')->middleware('throttle:30,1')->name('pdfs.generate');
+            });
             Route::get('templates', 'templates')->name('templates');
             Route::get('templates/new', 'templateForm')->name('templates.create');
             Route::post('templates', 'saveTemplate')->name('templates.store');

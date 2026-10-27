@@ -26,19 +26,6 @@ class CustomerFileController extends Controller
         return array_key_exists($lang, CustomerDocument::LANGUAGES) ? $lang : 'en';
     }
 
-    public const KINDS = ['efl' => 'Electricity Facts Label', 'welcome' => 'Welcome Packet', 'invoice' => 'Invoice', 'yrac' => 'Your Rights as a Customer', 'tos' => 'Terms of Service'];
-
-    /** Every customer PDF the billing system made, newest first, by type. Each row opens the file's page. */
-    public function index(Request $request): View
-    {
-        $kind = array_key_exists((string) $request->query('kind'), self::KINDS) ? $request->query('kind') : null;
-        $q = CustomerFile::with('customer')->whereNull('path')->when($kind, fn ($q) => $q->where('kind', $kind));
-
-        return view('backend.corral.files', ['files' => $q->latest('created_at')->latest('id')->paginate(10)->withQueryString(), 'kind' => $kind,
-            'counts' => CustomerFile::whereNull('path')->selectRaw('kind, count(*) as n')->groupBy('kind')->pluck('n', 'kind'),
-            'regenerated' => CustomerFile::whereNull('path')->where('regenerated', '>', 0)->count()]);
-    }
-
     public function show(Request $request, CustomerFile $file): View
     {
         $file->load('customer');

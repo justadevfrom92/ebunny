@@ -893,3 +893,6 @@ select.pill-select:focus { outline: none; border-color: var(--cyan); box-shadow:
 .up-clear button:hover { border-color: var(--cyan); background: rgba(0,174,239,.08); }
 /* Pill rows that become dropdowns (more than 3 pills) stay hidden until admin.js has turned them into one */
 html.js:not(.pills-done) .chips:not([data-keep-pills]):has(> :nth-child(4)) { visibility: hidden; max-height: 44px; overflow: hidden; }
+/* PDF templates: pages stacked like a PDF viewer */
+.pdf-pages { display: flex; flex-direction: column; gap: 18px; }
+.pdf-pages .pdf-page { width: 100%; max-width: 640px; }

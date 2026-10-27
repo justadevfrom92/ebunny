@@ -24,7 +24,7 @@ return [
     'apps' => [
         'corral' => [
             'name' => 'Corral',
-            'desc' => 'Customer service and CRM: search accounts, create orders, work exception queues, the sales pipeline of leads, follow-ups and partners, and customer PDFs (EFLs, welcome packets, invoices, YRAC and TOS: view, download, regenerate, email).',
+            'desc' => 'Customer service and CRM: search accounts, create orders, work exception queues, the sales pipeline of leads, follow-ups and partners.',
             'icon' => 'users',
             'home' => 'corral.customers.index',
             // Same order as the original Corral menu. Unnamed (numbered) groups have no heading.
@@ -47,9 +47,6 @@ return [
                     ['Orders', 'corral.reports.orders'],
                     ['Notes', 'corral.reports.notes'],
                     ['Phonecalls', 'corral.reports.phonecalls'],
-                ],
-                'Files' => [
-                    ['Customer PDFs', 'corral.files.index'],
                 ],
                 'Website' => [
                     ['Web Messages', 'corral.messages.index', 'messages'], // contact form inbox (not in the original menu)
@@ -198,7 +195,7 @@ return [
         ],
         'rodeo' => [
             'name' => 'Rodeo',
-            'desc' => 'Marketing: email and SMS campaigns, email templates, customer surveys, MSIDs and promo codes.',
+            'desc' => 'Marketing: email and SMS campaigns, email templates, PDF templates (letters and notices made into PDFs), customer surveys, MSIDs and promo codes.',
             'icon' => 'megaphone',
             'home' => 'rodeo.dashboard',
             'menu' => [
@@ -214,6 +211,11 @@ return [
                     ['Headers & Footers', 'rodeo.parts'],
                     ['Categories', 'rodeo.emails.categories'],
                     ['Suppression List', 'rodeo.emails.suppressions'],
+                ],
+                'PDFs' => [
+                    ['PDF Templates', 'rodeo.pdfs'],
+                    ['New PDF Template', 'rodeo.pdfs.create'],
+                    ['PDFs Made', 'rodeo.pdfs.generated'],
                 ],
                 'Surveys' => [
                     ['All Surveys', 'rodeo.surveys'],

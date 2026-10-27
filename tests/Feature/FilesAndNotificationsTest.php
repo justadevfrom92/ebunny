@@ -120,7 +120,7 @@ class FilesAndNotificationsTest extends TestCase
 
     public function test_my_pages_live_in_the_account_area_with_clickable_breadcrumbs(): void
     {
-        $admin = \App\Models\User::where('email', 'admin@example.com')->firstOrFail();
+        $admin = User::where('email', 'admin@example.com')->firstOrFail();
         $this->actingAs($admin)->get(route('corral.customers.index'))->assertOk()
             ->assertSee('<a href="'.route('corral.customers.index').'">Corral</a>', false);
         foreach (['admin.notifications.index', 'admin.files', 'admin.settings'] as $r) {
