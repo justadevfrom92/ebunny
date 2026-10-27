@@ -547,6 +547,8 @@ Route::prefix('admin')->group(function () {
         // Sheriff — users, roles, integrations, jobs, reference data
         Route::prefix('sheriff')->name('sheriff.')->middleware('app:sheriff')->group(function () {
             Route::get('/', fn () => redirect()->route('sheriff.users.index'));
+            Route::get('heartbeat', [Backend\Sheriff\HeartbeatController::class, 'index'])->name('heartbeat');
+            Route::post('heartbeat/check', [Backend\Sheriff\HeartbeatController::class, 'check'])->middleware('throttle:10,1')->name('heartbeat.check');
             Route::get('users', [Backend\Sheriff\UserController::class, 'index'])->name('users.index');
             Route::post('users', [Backend\Sheriff\UserController::class, 'store'])->name('users.store');
             Route::get('users/new', [Backend\Sheriff\UserController::class, 'create'])->name('users.create');

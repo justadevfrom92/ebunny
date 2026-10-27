@@ -23,6 +23,7 @@ class AdminNotification extends Model
         'report' => ['Reports done', 'Your Walker reports finished running', '📊'],
         'file' => ['Files finished', 'Your exports are ready, and new files in Walker folders', '📁'],
         'campaign' => ['Campaigns finished', 'Rodeo campaigns finished sending', '📣'],
+        'health' => ['System health', 'Sheriff: a heartbeat check goes bad, and when it\'s healthy again', '❤'],
     ];
 
     protected $guarded = ['id'];

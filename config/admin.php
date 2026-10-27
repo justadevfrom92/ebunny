@@ -254,6 +254,7 @@ return [
                     ['Roles', 'sheriff.roles.index'],
                 ],
                 'Config' => [
+                    ['Heartbeat', 'sheriff.heartbeat', 'health_problems'],
                     ['Timeline', 'sheriff.timeline'],
                     ['Crons', 'sheriff.jobs.index', 'failed_jobs'],
                     ['Cron Automations', 'sheriff.automations'],

@@ -6,6 +6,7 @@ use App\Models\AiConversation;
 use App\Models\ContactLog;
 use App\Models\ContactMessage;
 use App\Models\CrmActivity;
+use App\Models\Heartbeat;
 use App\Models\JobRun;
 use App\Models\LedgerEntry;
 use App\Models\Refund;
@@ -117,6 +118,7 @@ class AdminMenu
             $key === 'sms' => self::unansweredTexts(),
             $key === 'messages' => ContactMessage::open()->count(),
             $key === 'failed_jobs' => self::failedJobs(),
+            $key === 'health_problems' => collect(Heartbeat::latest('checked_at')->latest('id')->value('results') ?? [])->filter(fn ($r) => ($r[0] ?? 'ok') === 'bad')->count(),
             $key === 'ranger_unassigned' => SupportTicket::active()->whereNull('assigned_to')->count(),
             $key === 'etl_failed' => collect(array_keys(config('walker.etl')))->filter(fn ($k) => JobRun::where('command', 'etl:'.$k)->latest('started_at')->value('status') === 'Failed')->count(),
             $key === 'report_problems' => ReportRun::inState('problem')->count(),

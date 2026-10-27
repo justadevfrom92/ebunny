@@ -10,3 +10,6 @@ use Illuminate\Support\Facades\Schedule;
 foreach (config('admin.jobs') as $command => [$name, $cron]) {
     Schedule::command($command)->cron($cron)->withoutOverlapping()->description($name);
 }
+
+// The heartbeat: every minute it checks the scheduler, queue worker, jobs, crons, reports and server (Sheriff → Heartbeat)
+Schedule::command('et:heartbeat')->everyMinute()->withoutOverlapping()->description('Heartbeat health check');
