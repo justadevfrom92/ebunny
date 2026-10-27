@@ -67,8 +67,8 @@ h3 { font-size: .95rem; color: var(--navy); margin-bottom: 8px; }
 .side-foot { padding: 12px; border-top: 1px solid rgba(255,255,255,.1); font-size: .8rem; display: flex; justify-content: space-between; align-items: center; }
 .side-foot a { color: rgba(255,255,255,.75); }
 .side-foot { background: var(--navy); }
-.side-foot .side-website { display: flex; align-items: center; justify-content: flex-start; width: 100%; padding: 10px 14px; border-radius: 8px; background: var(--cyan); color: #fff; font-size: 1rem; font-weight: 400; }
-.side-foot .side-website:hover { background: #0099d4; text-decoration: none; }
+.side-foot .side-website { display: flex; align-items: center; justify-content: flex-start; width: 100%; padding: 10px 14px; border-radius: 8px; background: transparent; border: 1px solid rgba(255,255,255,.25); color: #fff; font-size: 1rem; font-weight: 400; }
+.side-foot .side-website:hover { background: var(--navy-2); text-decoration: none; }
 .side-foot .side-website:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
 .main { margin-left: 250px; flex: 1; min-width: 0; display: flex; flex-direction: column; }
