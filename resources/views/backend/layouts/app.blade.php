@@ -40,7 +40,8 @@
             @endforeach
         </nav>
         <div class="side-foot">
-            <a href="/" target="_blank" rel="noopener">Website</a>
+            {{-- Always in the bottom-left corner, outside the scrolling menu --}}
+            <a class="side-website" href="/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>Website<span class="sr-only"> (opens in a new tab)</span></a>
         </div>
     </aside>
     <div class="main">
