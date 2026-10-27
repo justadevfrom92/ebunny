@@ -813,8 +813,11 @@ select.pill-select:focus { outline: none; border-color: var(--cyan); box-shadow:
 .content > select.pill-select { margin-bottom: 4px; }
 .actions .pill-select, .panel-head .pill-select { width: auto; min-width: 200px; }
 .note-selects { grid-template-columns: 1fr !important; max-width: 420px; }
-.panel-body .form-row:has(select) { flex-direction: column; align-items: stretch; }
-.panel-body .form-row:has(select) > * { max-width: 420px; width: 100%; }
+/* Each dropdown on its own line; the button (Add, Go, Save…) sits at normal size on the same line as the last one */
+.panel-body .form-row:has(select) { flex-direction: row; flex-wrap: wrap; align-items: flex-end; gap: 10px; max-width: 540px; }
+.panel-body .form-row:has(select) > * { flex: 0 0 100%; max-width: 100%; width: auto; min-width: 0; }
+.panel-body .form-row:has(select) > :has(+ :is(button, .btn)) { flex: 1 1 0; }
+.panel-body .form-row:has(select) > :is(button, .btn) { flex: 0 0 auto; width: auto; white-space: nowrap; }
 .multi { display: block; max-width: 420px; }
 .panel-body .grid-2:has(select), .panel-body .grid-3:has(select), .panel-body .grid-2:has(.multi), .panel-body .grid-3:has(.multi) { grid-template-columns: minmax(0, 1fr) !important; }
 /* Notifications in the user menu */
