@@ -47,7 +47,10 @@
     document.querySelector('[data-order-for]').addEventListener('submit', function (e) {
         e.preventDefault();
         var acct = this.account.value.replace(/\D/g, '');
-        if (acct) location.href = {!! json_encode(url('/admin/corral/customers')) !!} + '/' + acct + '/order-products?sku={{ urlencode($p->sku) }}';
+        if (!acct) return;
+        var a = document.createElement('a');   // a real link, so it opens like any other link on the page
+        a.href = {!! json_encode(url('/admin/corral/customers')) !!} + '/' + acct + '/order-products?sku={{ urlencode($p->sku) }}';
+        document.body.appendChild(a); a.click(); a.remove();
     });
     </script>
 @endsection
