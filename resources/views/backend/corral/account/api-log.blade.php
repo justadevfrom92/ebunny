@@ -12,7 +12,7 @@
     <div class="panel"><div class="table-wrap"><table>
         <thead><tr><th>ID</th><th>Time</th><th>API</th><th>Action</th><th>Status</th><th class="num">Response</th></tr></thead>
         <tbody>@forelse ($logs as $l)
-            @php $u = \App\Support\Records::url('api_log', $l->id); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $l->id }}</b></a></td><td>{{ $l->created_at->format('n/j/Y g:i:s A') }}</td><td>{{ $l->api }}</td><td class="mono">{{ $l->action }}</td>
+            @php $u = route('corral.api-calls.show', $l); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $l->id }}</b></a></td><td>{{ $l->created_at->format('n/j/Y g:i:s A') }}</td><td>{{ $l->api }}</td><td class="mono">{{ $l->action }}</td>
                 <td>@include('backend.partials.pill', ['text' => $l->status, 'tone' => str_starts_with($l->status, '2') ? 'ok' : 'bad'])</td>
                 <td class="num">{{ $l->response_ms !== null ? number_format($l->response_ms).' ms' : '—' }}</td></tr>
         @empty <tr><td colspan="6" class="empty">No API calls logged for this account.</td></tr> @endforelse</tbody>

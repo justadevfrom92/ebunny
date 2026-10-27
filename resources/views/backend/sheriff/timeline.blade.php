@@ -58,6 +58,7 @@
                         'job_run' => route('sheriff.jobs.show', $e->seq),
                         'report_run' => route('admin.files.show', $e->seq),
                         'history_item' => route('sheriff.history.show', $e->seq),
+                        'api_log' => route('sheriff.api-calls.show', $e->seq),
                         default => \App\Support\Records::url($e->src, $e->seq),
                     };
                     $link = match ($e->kind) {

@@ -8,7 +8,11 @@
         'actions' => ($unread ? '<form method="post" action="'.route('admin.notifications.read-all').'" class="inline">'.csrf_field().'<button class="btn ghost">Mark All Read</button></form>' : '')
             .'<a class="btn ghost" href="'.route('admin.settings').'">Settings</a>'])
 
-    <div class="chips small" style="margin-bottom:12px"><a class="chip-link {{ empty($f['kind']) ? 'on' : '' }}" href="{{ route('admin.notifications.index') }}">All</a>@foreach (\App\Models\AdminNotification::KINDS as $k => [$l])<a class="chip-link {{ ($f['kind'] ?? '') === $k ? 'on' : '' }}" href="{{ route('admin.notifications.index', ['kind' => $k]) }}">{{ $l }}</a>@endforeach</div>
+    {{-- A real dropdown from the server, so the page never flashes pills first --}}
+    <select class="pill-select" aria-label="Kind" style="margin-bottom:18px" onchange="location.href=this.value">
+        <option value="{{ route('admin.notifications.index') }}">All notifications</option>
+        @foreach (\App\Models\AdminNotification::KINDS as $k => [$l])<option value="{{ route('admin.notifications.index', ['kind' => $k]) }}" @selected(($f['kind'] ?? '') === $k)>{{ $l }}</option>@endforeach
+    </select>
 
     <div class="panel"><div class="table-wrap"><table>
         <thead><tr><th>ID</th><th>When</th><th>What</th><th>Kind</th></tr></thead>

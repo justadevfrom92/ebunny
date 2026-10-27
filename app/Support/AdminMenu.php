@@ -30,6 +30,10 @@ class AdminMenu
         if (config()->has('admin.apps.'.$key)) {
             return $key;
         }
+        // Your notifications, My Files and Settings live in their own Account area
+        if (self::isAccountPage()) {
+            return 'account';
+        }
 
         // Pages that belong to no one app (My Files): show the sidebar of the app the page asks for
         // (a file's own app), else the app you were last in, else the first one you can open
@@ -41,6 +45,24 @@ class AdminMenu
         }
 
         return $user ? collect(array_keys(config('admin.apps')))->first(fn ($k) => $user->hasPerm($k)) : null;
+    }
+
+    /** Notifications, My Files and Settings (the user menu's pages). */
+    public static function isAccountPage(): bool
+    {
+        return Str::is(['admin.files', 'admin.files.*', 'admin.notifications.*', 'admin.settings', 'admin.settings.*'], (string) Route::currentRouteName());
+    }
+
+    /** The app's name and home page, for the sidebar and the breadcrumbs (also for the Account area). */
+    public static function appInfo(?string $app): array
+    {
+        if ($app === 'account') {
+            return ['name' => config('admin.account.name'), 'home' => route(config('admin.account.home'))];
+        }
+        $a = AdminApps::get($app) ?? ['name' => 'Admin'];
+        $home = config("admin.apps.$app.home");
+
+        return ['home' => $home ? route($home) : ($app ? route('custom.show', ['appKey' => $app]) : route('admin.launcher'))] + $a;
     }
 
     /** Remember the app you're in, for pages that belong to no app. */
@@ -58,7 +80,7 @@ class AdminMenu
         $sections = [];
 
         // Apps created from the launcher: plain links, none of them is the current page
-        if (! config()->has("admin.apps.$app")) {
+        if ($app !== 'account' && ! config()->has("admin.apps.$app")) {
             foreach (AdminApps::get($app)['menu'] ?? [] as $heading => $items) {
                 foreach ($items as $it) {
                     $sections[$heading][] = $it + ['active' => false, 'badge' => null];
@@ -68,7 +90,7 @@ class AdminMenu
             return $sections;
         }
 
-        foreach (config("admin.apps.$app.menu") as $heading => $items) {
+        foreach ($app === 'account' ? config('admin.account.menu') : config("admin.apps.$app.menu") as $heading => $items) {
             if ($items === 'reference_tables') {
                 $items = collect(config('admin.reference_tables'))->filter(fn ($t) => ($t[2] ?? 'sheriff') === $app)
                     ->map(fn ($t, $key) => [$t[0], $app.'.data.show', null, ['table' => $key]])->sortBy(0)->values()->all();
@@ -118,6 +140,7 @@ class AdminMenu
             $key === 'sms' => self::unansweredTexts(),
             $key === 'messages' => ContactMessage::open()->count(),
             $key === 'failed_jobs' => self::failedJobs(),
+            $key === 'unread_notifications' => auth()->user()?->adminNotifications()->whereNull('read_at')->count() ?? 0,
             $key === 'health_problems' => collect(Heartbeat::latest('checked_at')->latest('id')->value('results') ?? [])->filter(fn ($r) => ($r[0] ?? 'ok') === 'bad')->count(),
             $key === 'ranger_unassigned' => SupportTicket::active()->whereNull('assigned_to')->count(),
             $key === 'etl_failed' => collect(array_keys(config('walker.etl')))->filter(fn ($k) => JobRun::where('command', 'etl:'.$k)->latest('started_at')->value('status') === 'Failed')->count(),

@@ -229,6 +229,7 @@ Route::prefix('admin')->group(function () {
             Route::get('customers/{customer}/contact-log', [Backend\Corral\AccountController::class, 'contactLog'])->name('customers.contact-log');
             Route::post('customers/{customer}/contact-log/marketing', [Backend\Corral\AccountController::class, 'toggleMarketing'])->name('customers.marketing-toggle');
             Route::get('customers/{customer}/api-log', [Backend\Corral\AccountController::class, 'apiLog'])->name('customers.api-log');
+            Route::get('api-calls/{call}', [Backend\ApiCallController::class, 'show'])->name('api-calls.show');
             // CRM: pipeline, leads, follow-ups, brokers and partners
             Route::controller(Backend\Corral\CrmController::class)->prefix('crm')->name('crm.')->group(function () {
                 Route::get('/', 'pipeline')->name('pipeline');
@@ -593,6 +594,7 @@ Route::prefix('admin')->group(function () {
             Route::get('jobs', [Backend\Sheriff\SystemController::class, 'jobs'])->name('jobs.index');
             Route::post('jobs/run', [Backend\Sheriff\SystemController::class, 'runJob'])->name('jobs.run');
             Route::get('jobs/runs/{run}', [Backend\Sheriff\SystemController::class, 'jobRun'])->name('jobs.show');
+            Route::get('api-calls/{call}', [Backend\ApiCallController::class, 'show'])->name('api-calls.show');
         });
 
         // A custom app's home page, e.g. /admin/marketing (built-in app routes above take priority)

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Backend\Sheriff;
 use App\Http\Controllers\Controller;
 use App\Models\ApiLog;
 use App\Models\IntegrationTest;
+use App\Support\ApiExchange;
 use App\Support\EnvFile;
 use App\Support\History;
 use App\Support\IntegrationTester;
@@ -69,9 +70,7 @@ class IntegrationConfigController extends Controller
     public function test(Request $request, string $integration): RedirectResponse
     {
         $i = self::find($integration);
-        $result = IntegrationTester::test($integration);
-        IntegrationTest::create(['integration' => $integration, 'ok' => $result['ok'], 'message' => $result['message'], 'response_ms' => $result['ms'], 'user_id' => $request->user()->id, 'created_at' => now()]);
-        ApiLog::create(['api' => $i['name'], 'action' => 'connection-test', 'status' => $result['ok'] ? '200' : 'failed', 'response_ms' => $result['ms'], 'created_at' => now()]);
+        $result = self::testAndLog($integration, $i, $request->user()->id);
 
         // From the All APIs page: back to the list with the result for that card
         if ($request->input('back') === 'list') {
@@ -81,14 +80,23 @@ class IntegrationConfigController extends Controller
         return redirect()->route('sheriff.integrations.configure', $integration)->with('test_result', $result);
     }
 
+    /** Test one integration, keep the result, and log the call with what was sent and what came back (secrets blanked). */
+    private static function testAndLog(string $key, array $i, int $userId): array
+    {
+        [$result, $method, $endpoint, $sent, $got] = ApiExchange::capture(fn () => IntegrationTester::test($key));
+        IntegrationTest::create(['integration' => $key, 'ok' => $result['ok'], 'message' => $result['message'], 'response_ms' => $result['ms'], 'user_id' => $userId, 'created_at' => now()]);
+        ApiLog::create(['api' => $i['name'], 'action' => 'connection-test', 'status' => $got['status'] ?? ($result['ok'] ? '200' : 'failed'), 'response_ms' => $result['ms'], 'created_at' => now(),
+            'method' => $method, 'endpoint' => $endpoint, 'request' => $sent, 'response' => $got ?? ['status' => 'not sent', 'body' => ['message' => $result['message']]]]);
+
+        return $result;
+    }
+
     /** All APIs → Test All: tests every integration and lists the results. */
     public function testAll(Request $request): RedirectResponse
     {
         $ok = 0;
         foreach (config('admin.integrations') as $key => $i) {
-            $result = IntegrationTester::test($key);
-            IntegrationTest::create(['integration' => $key, 'ok' => $result['ok'], 'message' => $result['message'], 'response_ms' => $result['ms'], 'user_id' => $request->user()->id, 'created_at' => now()]);
-            ApiLog::create(['api' => $i['name'], 'action' => 'connection-test', 'status' => $result['ok'] ? '200' : 'failed', 'response_ms' => $result['ms'], 'created_at' => now()]);
+            $result = self::testAndLog($key, $i, $request->user()->id);
             $ok += $result['ok'] ? 1 : 0;
         }
 

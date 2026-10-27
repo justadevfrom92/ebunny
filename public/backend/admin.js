@@ -107,6 +107,7 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     pillsToSelects(document);
+    document.documentElement.classList.add('pills-done');
 
     // Heartbeat timeline: click (or Enter on) a 15-minute block to see what happened in it
     var hbPicked = null;

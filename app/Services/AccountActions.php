@@ -137,7 +137,8 @@ class AccountActions
     public function creditRun(array $in): string
     {
         $ok = $this->configured('experian');
-        ApiLog::create(['customer_id' => $this->c->id, 'api' => 'Experian', 'action' => 'credit.check', 'status' => $ok ? 'not built' : 'skipped', 'created_at' => now()]);
+        ApiLog::create(['customer_id' => $this->c->id, 'api' => 'Experian', 'action' => 'credit.check', 'status' => $ok ? 'not built' : 'skipped', 'created_at' => now(),
+            'request' => ['body' => ['account' => $this->c->account, 'zip' => $this->c->zip, 'ssn' => '•••• hidden']], 'response' => ['status' => $ok ? 'not built' : 'skipped', 'body' => ['message' => $ok ? 'The credit check client has not been built yet: nothing was sent.' : 'Experian is not configured: nothing was sent.']]]);
 
         return $ok ? 'Experian credentials are set, but the credit check client has not been built yet.' : 'Credit not run: Experian is not configured.';
     }
@@ -288,7 +289,8 @@ class AccountActions
         Payment::create(['customer_id' => $this->c->id, 'reference' => 'PAY-'.strtoupper(Str::random(8)), 'paid_on' => today(), 'paid_time' => now()->format('H:i:s'),
             'amount' => $in['amount'], 'method' => 'Card', 'source' => $this->source, 'kind' => 'Balance Payment', 'payment_method_id' => $in['method'],
             'status' => $ok ? 'Failed' : 'Pending']);
-        ApiLog::create(['customer_id' => $this->c->id, 'api' => 'Stripe', 'action' => 'charges.create', 'status' => $ok ? 'not built' : 'skipped', 'created_at' => now()]);
+        ApiLog::create(['customer_id' => $this->c->id, 'api' => 'Stripe', 'action' => 'charges.create', 'status' => $ok ? 'not built' : 'skipped', 'created_at' => now(),
+            'request' => ['body' => ['amount' => (int) round($in['amount'] * 100), 'currency' => 'usd', 'description' => 'Payment for '.$this->c->account, 'source' => '•••• hidden']], 'response' => ['status' => $ok ? 'not built' : 'skipped', 'body' => ['message' => $ok ? 'The charge client has not been built yet: nothing was sent.' : 'Stripe is not configured: nothing was sent.']]]);
 
         return $ok
             ? 'Stripe credentials are set, but the charge client has not been built yet. Payment marked Failed.'

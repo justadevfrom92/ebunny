@@ -12,7 +12,9 @@
     </button>
     <div class="user-pop" data-user-pop hidden>
         <div class="up-head"><b>{{ $user->name }}</b><span>{{ $user->email }}</span></div>
-        <div class="up-label up-label-first"><span>Notifications</span>@if ($unread)<span class="up-new">{{ $unread }} new</span>@endif</div>
+        <div class="up-label up-label-first"><span>Notifications</span>@if ($unread)<span class="up-new">{{ $unread }} new</span>
+            {{-- Clear: marks them all read (they stay in All Notifications) --}}
+            <form method="post" action="{{ route('admin.notifications.read-all') }}" class="up-clear">@csrf<button type="submit">Clear</button></form>@endif</div>
         <div class="up-notes">
             @forelse ($latest as $n)
                 <a class="up-note {{ $n->read_at ? '' : 'unread' }}" href="{{ route('admin.notifications.open', $n) }}"><span class="up-ico" aria-hidden="true">{{ $n->icon() }}</span>

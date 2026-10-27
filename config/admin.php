@@ -278,6 +278,19 @@ return [
         ],
     ],
 
+    // Your own pages (user menu): notifications, My Files and settings, in their own Account area rather than inside an app
+    'account' => [
+        'name' => 'Account',
+        'home' => 'admin.notifications.index',
+        'menu' => [
+            'Account' => [
+                ['Notifications', 'admin.notifications.index', 'unread_notifications'],
+                ['My Files', 'admin.files'],
+                ['Settings', 'admin.settings'],
+            ],
+        ],
+    ],
+
     // Detail pages whose menu item isn't named after them: route area => menu route (Walker run pages sit under Report Status)
     'menu_parents' => [
         'walker.runs' => 'walker.home',

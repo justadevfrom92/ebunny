@@ -5,7 +5,7 @@
 @php
     $appKey = \App\Support\AdminMenu::currentApp();
     \App\Support\AdminMenu::remember($appKey);
-    $app = \App\Support\AdminApps::get($appKey);
+    $app = \App\Support\AdminMenu::appInfo($appKey);   // name and home page (the Account area too)
     $sections = \App\Support\AdminMenu::sections($appKey);
     $activeItem = collect($sections)->flatten(1)->firstWhere('active', true);
     $activeLabel = $activeItem['label'] ?? '';
@@ -47,7 +47,7 @@
     <div class="main">
         <header class="topbar">
             <button class="menu-btn" id="menu-btn" aria-label="Open menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
-            <div class="crumbs">{{ $app['name'] }} /@if ($activeItem && ! $activeItem['exact'] && View::hasSection('crumb') && trim(View::getSection('crumb')) !== $activeLabel) <a href="{{ $activeItem['url'] }}">{{ $activeLabel }}</a> /@endif <b>@yield('crumb', $activeLabel)</b></div>
+            <div class="crumbs">{{-- every part is a link: the app's home, the menu item, this page --}}<a href="{{ $app['home'] }}">{{ $app['name'] }}</a> /@if ($activeItem && ! $activeItem['exact'] && View::hasSection('crumb') && trim(View::getSection('crumb')) !== $activeLabel) <a href="{{ $activeItem['url'] }}">{{ $activeLabel }}</a> /@endif <a href="{{ url()->full() }}" aria-current="page"><b>@yield('crumb', $activeLabel)</b></a></div>
             @include('backend.partials.user-menu')
         </header>
         <main class="content">

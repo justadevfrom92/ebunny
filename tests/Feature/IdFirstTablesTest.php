@@ -32,10 +32,11 @@ class IdFirstTablesTest extends TestCase
         $this->actingAs(User::where('email', 'admin@example.com')->firstOrFail());
         $star = StarEntry::firstOrFail();
         $this->get(route('bounty.records.show', ['star_entry', $star->id]))->assertOk()->assertSee('Star Entry #'.$star->id)->assertSee($star->reason);
-        $this->get(route('corral.records.show', ['api_log', ApiLog::firstOrFail()->id]))->assertOk()->assertSee('API Call #');
+        $this->get(route('corral.api-calls.show', ApiLog::whereNotNull('customer_id')->firstOrFail()))->assertOk()->assertSee('What Was Sent')->assertSee('What Came Back')->assertSee('•••• hidden');
+        $this->get(route('sheriff.api-calls.show', ApiLog::firstOrFail()))->assertOk()->assertSee('What Came Back');
         $this->get(route('corral.records.show', ['phonecall', Phonecall::firstOrFail()->id]))->assertOk()->assertSee('Phone Call #');
         $this->get(route('corral.records.show', ['nope', 1]))->assertNotFound();
-        $this->get(route('corral.records.show', ['api_log', 999999]))->assertNotFound();
+        $this->get(route('corral.api-calls.show', 999999))->assertNotFound();
         // Passwords and secrets never show
         $this->get(route('sheriff.records.show', ['history_item', HistoryItem::firstOrFail()->id]))->assertOk()->assertSee('History Entry #');
         // The account's lists lead with IDs

@@ -168,7 +168,7 @@ class FinanceRewardsMarketingTest extends TestCase
         $this->get(route('rodeo.templates.edit', $template))->assertOk()->assertSee($page, false)->assertDontSee('Recent Tests');
         $this->get(route('rodeo.templates'))->assertOk()->assertSee($page, false);
         $this->get($page)->assertOk()->assertSee('Send Test: '.$template->name)->assertSee('An admin team')->assertSee('Customer category')
-            ->assertSee('Mail log only')->assertSee('Test History')->assertSee('Rodeo / <a', false);
+            ->assertSee('Mail log only')->assertSee('Test History')->assertSee('Rodeo</a> / <a', false);
 
         // Check Recipients and the live preview
         $sample = Customer::firstOrFail();

@@ -117,4 +117,20 @@ class FilesAndNotificationsTest extends TestCase
         $this->actingAs($this->admin());
         $this->get(route('sheriff.integrations.index'))->assertOk()->assertSee('Test All Connections')->assertSee(route('sheriff.integrations.test', 'stripe'), false);
     }
+
+    public function test_my_pages_live_in_the_account_area_with_clickable_breadcrumbs(): void
+    {
+        $admin = \App\Models\User::where('email', 'admin@example.com')->firstOrFail();
+        $this->actingAs($admin)->get(route('corral.customers.index'))->assertOk()
+            ->assertSee('<a href="'.route('corral.customers.index').'">Corral</a>', false);
+        foreach (['admin.notifications.index', 'admin.files', 'admin.settings'] as $r) {
+            $this->get(route($r))->assertOk()->assertSee('<small>Account</small>', false)
+                ->assertSee('<a href="'.route('admin.notifications.index').'">Account</a>', false)
+                ->assertSee('aria-current="page"', false);
+        }
+        // Notifications: a real dropdown, and Clear in the user menu marks them read
+        $this->get(route('admin.notifications.index'))->assertSee('<select class="pill-select" aria-label="Kind"', false)->assertSee('class="up-clear"', false);
+        $this->post(route('admin.notifications.read-all'))->assertRedirect();
+        $this->assertSame(0, $admin->adminNotifications()->whereNull('read_at')->count());
+    }
 }
