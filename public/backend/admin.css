@@ -64,13 +64,12 @@ h3 { font-size: .95rem; color: var(--navy); margin-bottom: 8px; }
 .menu a.on { background: var(--navy-2); border-left-color: var(--cyan); color: #fff; }
 .menu .count { font-size: .7rem; background: rgba(255,255,255,.15); border-radius: 999px; padding: 1px 7px; }
 .menu .count.hot { background: var(--red); }
-.side-foot { padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.1); font-size: .8rem; display: flex; justify-content: space-between; align-items: center; }
+.side-foot { padding: 12px; border-top: 1px solid rgba(255,255,255,.1); font-size: .8rem; display: flex; justify-content: space-between; align-items: center; }
 .side-foot a { color: rgba(255,255,255,.75); }
 .side-foot { background: var(--navy); }
-.side-foot .side-website { display: inline-flex; align-items: center; gap: 8px; color: #fff; font-size: .9rem; font-weight: 600; padding: 6px 10px; margin: -6px -10px; border-radius: 8px; }
-.side-foot .side-website::before { content: ""; width: 18px; height: 18px; flex: none;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300aeef' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18'/%3E%3C/svg%3E") center / contain no-repeat; }
-.side-foot .side-website:hover { background: var(--navy-2); text-decoration: none; }
+.side-foot .side-website { display: flex; align-items: center; justify-content: flex-start; width: 100%; padding: 10px 14px; border-radius: 8px; background: var(--cyan); color: #fff; font-size: 1rem; font-weight: 400; }
+.side-foot .side-website:hover { background: #0099d4; text-decoration: none; }
+.side-foot .side-website:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
 .main { margin-left: 250px; flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .topbar {
