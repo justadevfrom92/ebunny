@@ -12,7 +12,9 @@ use App\Models\EmailTemplate;
 use App\Models\Market;
 use App\Models\MarketingChannel;
 use App\Models\PromoCode;
+use App\Models\Survey;
 use App\Models\SurveyResponse;
+use App\Support\SurveyStats;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -47,6 +49,12 @@ class MarketingController extends Controller
             'byChannel' => Customer::where('created_at', '>=', today()->subDays(90))->selectRaw('msid, count(*) as n')->groupBy('msid')->orderByDesc('n')->get()
                 ->map(fn ($r) => [$r->msid, MarketingChannel::where('msid', $r->msid)->value('name') ?? 'Unknown MSID', $r->n]),
             'recent' => Campaign::latest()->limit(5)->get(),
+            // Surveys: each one's responses (last 30 days and all), its score and latest answers
+            'surveys' => Survey::with(['questions', 'responses'])->withCount(['responses', 'responses as recent_count' => fn ($q) => $q->where('created_at', '>=', now()->subDays(30))])
+                ->withMax('responses', 'created_at')->orderByDesc('responses_max_created_at')->limit(10)->get()
+                ->each(fn ($s) => $s->setAttribute('score', SurveyStats::surveyNps($s))),
+            'latestResponses' => SurveyResponse::with(['survey.questions', 'customer'])->latest('created_at')->latest('id')->limit(10)->get(),
+            'responses30' => SurveyResponse::where('created_at', '>=', now()->subDays(30))->count(),
         ]);
     }
 

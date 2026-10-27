@@ -189,8 +189,8 @@ return [
                     ['Redemptions', 'bounty.redemptions', 'redemptions_open'],
                     ['Members', 'bounty.members'],
                     ['Monthly Drawing', 'bounty.drawing'],
+                    ['Drawing Winners', 'bounty.winners'],
                 ],
-                'Data' => 'reference_tables',
             ],
         ],
         'rodeo' => [

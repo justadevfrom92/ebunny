@@ -5,7 +5,9 @@
     @include('backend.partials.page-head', ['title' => 'Monthly Drawing', 'sub' => 'Customers enter by redeeming the free "Monthly Drawing" offer. The winner is saved to Bounty → Drawing Winners.',
         'actions' => $winner && $current ? null : '<a class="btn cyan" href="'.route('bounty.drawing.draw').'">Draw a Winner</a>'])
 
-    <div class="actions" style="margin-bottom:14px">@foreach ($months as $m)<a class="btn sm {{ $m->isSameMonth($month) ? '' : 'ghost' }}" href="{{ route('bounty.drawing', $m->isSameMonth(now()) ? [] : ['month' => $m->format('Y-m')]) }}">{{ $m->format('F Y') }}</a>@endforeach</div>
+    <select class="pill-select" aria-label="Month" style="margin-bottom:18px" onchange="location.href=this.value">
+        @foreach ($months as $m)<option value="{{ route('bounty.drawing', $m->isSameMonth(now()) ? [] : ['month' => $m->format('Y-m')]) }}" @selected($m->isSameMonth($month))>{{ $m->format('F Y') }}</option>@endforeach
+    </select>
 
     <div class="grid-3 stat-row">
         <div class="stat"><span>Entries in {{ $month->format('F') }}</span><strong>{{ number_format($entries->count()) }}</strong><small>from {{ $people }} {{ Str::plural('customer', $people) }}</small></div>
@@ -21,7 +23,7 @@
         </table></div></div>
         <div class="panel"><div class="panel-head"><h2>Past Winners</h2></div><div class="table-wrap"><table>
             <thead><tr><th>ID</th><th>Month</th><th>Prize</th><th>Winner Account</th><th>Drawn On</th></tr></thead>
-            <tbody>@forelse ($past as $r)@php $u = \App\Support\Records::url('reference_row', $r->id); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $r->id }}</b></a></td><td>{{ $r->cells[0] ?? '' }}</td><td>{{ $r->cells[1] ?? '' }}</td><td>@include('backend.partials.account-link', ['c' => $winners[$r->cells[2] ?? ''] ?? null])</td><td>{{ ($r->cells[3] ?? '') ?: '—' }}</td></tr>
+            <tbody>@forelse ($past as $r)@php $u = route('bounty.winners.show', $r); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $r->id }}</b></a></td><td>{{ $r->cells[0] ?? '' }}</td><td>{{ $r->cells[1] ?? '' }}</td><td>@include('backend.partials.account-link', ['c' => $winners[$r->cells[2] ?? ''] ?? null])</td><td>{{ ($r->cells[3] ?? '') ?: '—' }}</td></tr>
             @empty <tr><td colspan="5" class="empty">None.</td></tr> @endforelse</tbody>
         </table></div></div>
     </div>

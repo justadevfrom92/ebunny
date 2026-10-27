@@ -97,8 +97,11 @@ class SystemController extends Controller
         return $t;
     }
 
-    public function table(string $table): View
+    public function table(string $table): View|RedirectResponse
     {
+        if ($table === 'monthly-drawing') {
+            return redirect()->route('bounty.winners');   // winners have their own pages now
+        }
         [$name, $columns] = self::owned($table);
 
         return view('backend.sheriff.table', [

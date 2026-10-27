@@ -63,4 +63,16 @@ class LinksAndDrawingTest extends TestCase
         $this->assertTrue(Customer::where('account', $row->cells[2])->exists());
         $this->get(route('bounty.drawing.draw'))->assertOk()->assertSee('already has a winner');
     }
+
+    public function test_drawing_winners_have_their_own_pages(): void
+    {
+        $this->actingAs(\App\Models\User::where('email', 'admin@example.com')->firstOrFail());
+        $w = \App\Models\ReferenceRow::where('table_key', 'monthly-drawing')->get()->filter(fn ($r) => filled($r->cells[2] ?? null))->sortByDesc(fn ($r) => ($r->cells[3] ?? '').str_pad((string) $r->id, 8, '0', STR_PAD_LEFT))->first();   // newest, so on page 1
+        $this->get(route('bounty.winners'))->assertOk()->assertSee('#'.$w->id)->assertDontSee('<input name="cells', false);
+        $this->get(route('bounty.winners.show', $w))->assertOk()->assertSee($w->cells[1])->assertSee('Date Won');
+        $this->get(route('bounty.drawing'))->assertOk()->assertSee('<select class="pill-select" aria-label="Month"', false)->assertSee(route('bounty.winners.show', $w), false);
+        $this->get(route('rodeo.dashboard'))->assertOk()->assertSee('Latest Survey Responses')->assertSee('Score (NPS)');
+        $this->delete(route('bounty.winners.destroy', $w))->assertRedirect(route('bounty.winners'));
+        $this->assertNull($w->fresh());
+    }
 }

@@ -431,6 +431,9 @@ Route::prefix('admin')->group(function () {
             Route::get('drawing', 'drawing')->name('drawing');
             Route::get('drawing/draw', 'drawForm')->name('drawing.draw');
             Route::post('drawing', 'draw')->name('draw');
+            Route::get('winners', 'winners')->name('winners');
+            Route::get('winners/{winner}', 'winner')->whereNumber('winner')->name('winners.show');
+            Route::delete('winners/{winner}', 'removeWinner')->whereNumber('winner')->name('winners.destroy');
         });
 
         // Rodeo — marketing

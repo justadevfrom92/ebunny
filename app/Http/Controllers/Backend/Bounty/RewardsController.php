@@ -13,6 +13,7 @@ use App\Models\RewardRule;
 use App\Models\StarEntry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -178,6 +179,41 @@ class RewardsController extends Controller
 
         return view('backend.bounty.draw', ['month' => now()->startOfMonth(), 'count' => $entries->count(),
             'people' => $entries->pluck('customer_id')->unique()->count(), 'winner' => self::winnerRow(now()->startOfMonth())]);
+    }
+
+    /** Bounty → Drawing Winners: every winner, newest first. Each row opens the winner's page. */
+    public function winners(): View
+    {
+        $rows = ReferenceRow::where('table_key', 'monthly-drawing')->get()->filter(fn ($r) => filled($r->cells[2] ?? null))
+            ->sortByDesc(fn ($r) => ($r->cells[3] ?? '').str_pad((string) $r->id, 8, '0', STR_PAD_LEFT))->values();
+        $page = max(1, (int) request()->query('page', 1));
+
+        return view('backend.bounty.winners', [
+            'rows' => new LengthAwarePaginator($rows->forPage($page, 10)->values(), $rows->count(), 10, $page, ['path' => request()->url()]),
+            'customers' => Customer::whereIn('account', $rows->pluck('cells.2')->filter())->get()->keyBy('account'),
+        ]);
+    }
+
+    /** One winner: the account, the month, the prize and when it was won, and that month's drawing. */
+    public function winner(ReferenceRow $winner): View
+    {
+        abort_unless($winner->table_key === 'monthly-drawing', 404);
+        [$month, $prize, $account, $drawn] = array_pad($winner->cells, 4, null);
+        $c = $account ? Customer::with('plan')->where('account', $account)->first() : null;
+        $m = preg_match('/^\d{4}-\d{2}$/', (string) $month) ? Carbon::parse($month.'-01') : null;
+
+        return view('backend.bounty.winner', ['w' => $winner, 'month' => $m, 'monthRaw' => $month, 'prize' => $prize, 'account' => $account, 'drawn' => $drawn ? Carbon::parse($drawn) : null, 'c' => $c,
+            'entries' => $m ? self::entries($m)->count() : null, 'theirEntries' => $m && $c ? self::entries($m)->where('customer_id', $c->id)->count() : null,
+            'note' => $c ? $c->notes()->where('body', 'like', '%'.$month.' monthly drawing%')->latest()->first() : null]);
+    }
+
+    public function removeWinner(Request $request, ReferenceRow $winner): RedirectResponse
+    {
+        abort_unless($winner->table_key === 'monthly-drawing', 404);
+        $label = ($winner->cells[0] ?? '').' winner (account '.($winner->cells[2] ?? '—').')';
+        $winner->delete();
+
+        return redirect()->route('bounty.winners')->with('status', 'Removed the '.$label.'.');
     }
 
     private static function entries(Carbon $month)
