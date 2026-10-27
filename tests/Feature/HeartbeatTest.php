@@ -63,6 +63,9 @@ class HeartbeatTest extends TestCase
                 }
             }
         }
+        // The timeline carries each 15-minute block's details for when a block is clicked
+        $this->get(route('sheriff.heartbeat'))->assertSee('class="hb-data"', false)->assertSee('data-i="95"', false)->assertSee('Click a block to see it');
+        $this->get(route('sheriff.heartbeat.show', 'queue_worker'))->assertSee('Last answered a ping 6 minutes ago')->assertSee('data-hb-mode="check"', false);
         $this->get(route('sheriff.heartbeat.show', 'nope'))->assertNotFound();
         $this->post(route('sheriff.heartbeat.control', ['cache', 'down']))->assertNotFound();   // the cache can't be taken down
         $this->get(route('sheriff.heartbeat.log'))->assertOk()->assertSee('Send Due Now');

@@ -30,9 +30,7 @@
 
         <div class="panel"><div class="panel-head"><h2>Last 24 Hours</h2><span class="muted">{{ number_format($beats24) }} checks · each block is 15 minutes, the worst result in it</span></div>
             <div class="panel-body">
-                <div class="hb-strip">@foreach ($blocks as $b)<i class="hb-{{ $b['status'] }}" tabindex="0" data-tip="{{ $b['from']->format('g:i A') }}–{{ $b['from']->copy()->addMinutes(15)->format('g:i A') }}: {{ $b['n'] ? $label[$b['status']] : 'no check ran' }}"></i>@endforeach</div>
-                <div class="hb-axis"><span>24 hours ago</span><span>12 hours ago</span><span>now</span></div>
-                <div class="hour-legend"><span><i class="hb-dot hb-ok"></i> Healthy</span><span><i class="hb-dot hb-warn"></i> Warnings</span><span><i class="hb-dot hb-bad"></i> Problems</span><span><i class="hb-dot hb-none"></i> No check ran (scheduler down)</span></div>
+                @include('backend.sheriff._hb-strip', ['blocks' => $blocks, 'mode' => 'all'])
             </div>
         </div>
 
@@ -86,7 +84,7 @@
     setInterval(function () {
         fetch(location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' }).then(function (r) { return r.ok ? r.text() : null; }).then(function (html) {
             if (!html) return; var fresh = new DOMParser().parseFromString(html, 'text/html').getElementById('hb-live'), now = document.getElementById('hb-live');
-            if (fresh && now) now.replaceWith(fresh);
+            if (fresh && now) { now.replaceWith(fresh); document.dispatchEvent(new Event('hb:refresh')); }   // the picked block stays open
         }).catch(function () {});
     }, 30000);
     </script>

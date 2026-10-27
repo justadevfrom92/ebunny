@@ -44,9 +44,7 @@
 
         <div class="panel"><div class="panel-head"><h2>Last 24 Hours</h2><span class="muted">each block is 15 minutes, the worst result in it</span></div>
             <div class="panel-body">
-                <div class="hb-strip">@foreach ($blocks as $b)<i class="hb-{{ $b['status'] }}" tabindex="0" data-tip="{{ $b['from']->format('g:i A') }}–{{ $b['from']->copy()->addMinutes(15)->format('g:i A') }}: {{ $b['n'] ? $labels[$b['status']][0] : 'no check ran' }}"></i>@endforeach</div>
-                <div class="hb-axis"><span>24 hours ago</span><span>12 hours ago</span><span>now</span></div>
-                <div class="hour-legend"><span><i class="hb-dot hb-ok"></i> Healthy</span><span><i class="hb-dot hb-warn"></i> Warning</span><span><i class="hb-dot hb-bad"></i> Problem</span><span><i class="hb-dot hb-down"></i> Taken down</span><span><i class="hb-dot hb-none"></i> No check ran</span></div>
+                @include('backend.sheriff._hb-strip', ['blocks' => $blocks, 'mode' => 'check'])
             </div>
         </div>
 

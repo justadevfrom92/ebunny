@@ -35,13 +35,24 @@ class HeartbeatController extends Controller
         $last = Heartbeat::latest('checked_at')->latest('id')->first();
         $now = Health::checks();   // always fresh on the page
         $since = now()->subDay();
-        $beats = Heartbeat::where('checked_at', '>=', $since)->orderBy('checked_at')->get(['checked_at', 'status']);
-        // 96 blocks of 15 minutes: the worst status in each (gray when no check ran)
-        $blocks = collect(range(95, 0))->map(function ($i) use ($beats) {
+        $beats = Heartbeat::where('checked_at', '>=', $since)->orderBy('checked_at')->get(['checked_at', 'status', 'results']);
+        $used = HeartbeatAction::with('user')->where('created_at', '>=', $since)->get();
+        // 96 blocks of 15 minutes: the worst status in each (gray when no check ran), and what was wrong in it (shown when a block is clicked)
+        $blocks = collect(range(95, 0))->map(function ($i) use ($beats, $used) {
             $from = now()->subMinutes(($i + 1) * 15);
-            $in = $beats->filter(fn ($b) => $b->checked_at->gt($from) && $b->checked_at->lte($from->copy()->addMinutes(15)));
+            $to = $from->copy()->addMinutes(15);
+            $in = $beats->filter(fn ($b) => $b->checked_at->gt($from) && $b->checked_at->lte($to));
+            $rows = [];
+            foreach (Health::CHECKS as $key => [$name]) {
+                $off = $in->filter(fn ($b) => ($b->results[$key][0] ?? 'ok') !== 'ok');
+                if ($off->isNotEmpty()) {
+                    $worst = collect(['bad', 'warn', 'down'])->first(fn ($st) => $off->contains(fn ($b) => $b->results[$key][0] === $st));
+                    $rows[] = [$name, $worst, $off->last(fn ($b) => $b->results[$key][0] === $worst)->results[$key][1] ?? '', $off->count(), route('sheriff.heartbeat.show', $key)];
+                }
+            }
 
-            return ['from' => $from, 'n' => $in->count(), 'status' => $in->isEmpty() ? 'none' : Health::overall($in->map(fn ($b) => [$b->status])->all())];
+            return ['from' => $from, 'n' => $in->count(), 'status' => $in->isEmpty() ? 'none' : Health::overall($in->map(fn ($b) => [$b->status])->all()),
+                'rows' => $rows, 'actions' => self::actionsIn($used, $from, $to, true)];
         });
 
         return view('backend.sheriff.heartbeat', [
@@ -62,6 +73,13 @@ class HeartbeatController extends Controller
         return back()->with('status', 'Checked: '.['ok' => 'all healthy', 'warn' => 'some warnings', 'bad' => 'problems found'][$beat->status]);
     }
 
+    /** Controls used between two times: [time, check, control, who, ok]. */
+    private static function actionsIn($used, $from, $to, bool $withCheck): array
+    {
+        return $used->filter(fn ($a) => $a->created_at->gt($from) && $a->created_at->lte($to))->sortBy('created_at')
+            ->map(fn ($a) => [$a->created_at->format('g:i A'), $withCheck ? $a->checkName() : null, $a->label(), $a->user?->name ?? 'System', $a->ok])->values()->all();
+    }
+
     /** Every check, now, with whether it's taken down. Each row opens the check's page. */
     public function checks(): View
     {
@@ -76,13 +94,27 @@ class HeartbeatController extends Controller
         $now = Health::checks()[$key];
         $since = now()->subDay();
         $beats = Heartbeat::where('checked_at', '>=', $since)->orderBy('checked_at')->get(['checked_at', 'results']);
-        $blocks = collect(range(95, 0))->map(function ($i) use ($beats, $key) {
+        $used = HeartbeatAction::with('user')->where('check_key', $key)->where('created_at', '>=', $since)->get();
+        $blocks = collect(range(95, 0))->map(function ($i) use ($beats, $key, $used) {
             $from = now()->subMinutes(($i + 1) * 15);
             $in = $beats->filter(fn ($b) => $b->checked_at->gt($from) && $b->checked_at->lte($from->copy()->addMinutes(15)));
 
             $states = $in->map(fn ($b) => $b->results[$key][0] ?? 'ok');
+            // Each run of the same result in the block: [from, to, state, detail, checks]
+            $runs = [];
+            foreach ($in as $b) {
+                [$st, $detail] = $b->results[$key] ?? ['ok', ''];
+                $last = count($runs) - 1;
+                if ($last >= 0 && $runs[$last][2] === $st && $runs[$last][3] === $detail) {
+                    $runs[$last][1] = $b->checked_at->format('g:i A');
+                    $runs[$last][4]++;
+                } else {
+                    $runs[] = [$b->checked_at->format('g:i A'), $b->checked_at->format('g:i A'), $st, $detail, 1];
+                }
+            }
 
-            return ['from' => $from, 'n' => $in->count(), 'status' => $in->isEmpty() ? 'none' : collect(['bad', 'warn', 'down', 'ok'])->first(fn ($s) => $states->contains($s))];
+            return ['from' => $from, 'n' => $in->count(), 'status' => $in->isEmpty() ? 'none' : collect(['bad', 'warn', 'down', 'ok'])->first(fn ($s) => $states->contains($s)),
+                'rows' => $runs, 'actions' => self::actionsIn($used, $from, $from->copy()->addMinutes(15), false)];
         });
         // Each time the result changed (newest first)
         $changes = [];

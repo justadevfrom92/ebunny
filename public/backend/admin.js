@@ -108,6 +108,49 @@
   document.addEventListener('DOMContentLoaded', function () {
     pillsToSelects(document);
 
+    // Heartbeat timeline: click (or Enter on) a 15-minute block to see what happened in it
+    var hbPicked = null;
+    function hbEsc(v) { return String(v == null ? '' : v).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    function hbShow(strip, i) {
+      var data = JSON.parse(strip.parentNode.querySelector('.hb-data').textContent), b = data.blocks[i], L = data.labels, box = strip.parentNode.querySelector('.hb-detail');
+      if (!b || !box) return;
+      var pill = function (st) { var l = L[st] || [st, '']; return '<span class="pill ' + l[1] + '">' + hbEsc(l[0]) + '</span>'; };
+      $$('i', strip).forEach(function (x) { x.classList.toggle('picked', +x.getAttribute('data-i') === i); x.setAttribute('aria-pressed', +x.getAttribute('data-i') === i); });
+      var h = '<div class="hb-detail-head"><div><b>' + hbEsc(b.t) + '</b><span class="help"> · ' + (b.n ? b.n + ' check' + (b.n === 1 ? '' : 's') + ' ran' : 'no check ran') + '</span></div>'
+        + (b.n ? pill(b.s) : '') + '<button type="button" class="btn sm ghost" data-hb-close>Close</button></div>';
+      if (!b.n) h += '<p class="help">No check ran in these 15 minutes: the scheduler wasn\'t running.</p>';
+      else if (strip.getAttribute('data-hb-mode') === 'all') {
+        h += b.rows.length ? '<div class="table-wrap"><table><thead><tr><th>Check</th><th>Worst</th><th>Detail</th><th class="num">Minutes</th></tr></thead><tbody>'
+          + b.rows.map(function (r) { return '<tr class="click" data-href="' + hbEsc(r[4]) + '"><td><a href="' + hbEsc(r[4]) + '"><b>' + hbEsc(r[0]) + '</b></a></td><td>' + pill(r[1]) + '</td><td class="wrap">' + hbEsc(r[2]) + '</td><td class="num">' + r[3] + '</td></tr>'; }).join('')
+          + '</tbody></table></div>' : '<p class="help">Every check was healthy.</p>';
+      } else {
+        h += '<div class="table-wrap"><table><thead><tr><th>Time</th><th>Result</th><th>Detail</th><th class="num">Checks</th></tr></thead><tbody>'
+          + b.rows.map(function (r) { return '<tr><td class="nowrap">' + hbEsc(r[0] === r[1] ? r[0] : r[0] + ' – ' + r[1]) + '</td><td>' + pill(r[2]) + '</td><td class="wrap">' + hbEsc(r[3]) + '</td><td class="num">' + r[4] + '</td></tr>'; }).join('')
+          + '</tbody></table></div>';
+      }
+      if (b.actions.length) h += '<h3 class="hb-detail-sub">Controls Used</h3><div class="table-wrap"><table><thead><tr><th>Time</th>' + (b.actions[0][1] ? '<th>Check</th>' : '') + '<th>Control</th><th>Who</th><th>Result</th></tr></thead><tbody>'
+        + b.actions.map(function (a) { return '<tr><td class="nowrap">' + hbEsc(a[0]) + '</td>' + (a[1] ? '<td>' + hbEsc(a[1]) + '</td>' : '') + '<td><b>' + hbEsc(a[2]) + '</b></td><td>' + hbEsc(a[3]) + '</td><td>' + (a[4] ? '<span class="pill ok">Done</span>' : '<span class="pill bad">Failed</span>') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+      box.innerHTML = h; box.hidden = false; hbPicked = b.t;
+    }
+    document.addEventListener('click', function (e) {
+      var blk = e.target.closest('.hb-strip i[data-i]');
+      if (blk) return hbShow(blk.parentNode, +blk.getAttribute('data-i'));
+      var close = e.target.closest('[data-hb-close]');
+      if (close) { var box = close.closest('.hb-detail'); box.hidden = true; hbPicked = null; $$('.hb-strip i.picked').forEach(function (x) { x.classList.remove('picked'); }); }
+    });
+    document.addEventListener('keydown', function (e) {
+      var blk = e.target.closest && e.target.closest('.hb-strip i[data-i]');
+      if (blk && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); hbShow(blk.parentNode, +blk.getAttribute('data-i')); }
+    });
+    // The overview reloads itself: open the same block again
+    document.addEventListener('hb:refresh', function () {
+      if (!hbPicked) return;
+      $$('.hb-strip').forEach(function (strip) {
+        var blocks = JSON.parse(strip.parentNode.querySelector('.hb-data').textContent).blocks;
+        for (var i = 0; i < blocks.length; i++) if (blocks[i].t === hbPicked) return hbShow(strip, i);
+      });
+    });
+
     // Account file PDFs: the page carries the PDF as base64; turn it into a blob for View PDF and Download PDF
     $$('.pdf-viewer[data-pdf64]').forEach(function (box) {
       var bin = atob(box.getAttribute('data-pdf64')), bytes = new Uint8Array(bin.length);

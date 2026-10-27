@@ -861,3 +861,12 @@ select.pill-select:focus { outline: none; border-color: var(--cyan); box-shadow:
 .hb-banner.hb-down { border-color: var(--cyan); }
 .hb-down .hb-heart { color: var(--cyan); }
 @media (max-width: 1180px) { .hb-controls { grid-template-columns: 1fr; } }
+/* Heartbeat timeline: a picked block and what happened in it */
+.hb-strip i { cursor: pointer; transition: transform .1s; }
+.hb-strip i:hover, .hb-strip i:focus-visible { transform: scaleY(1.15); outline: none; }
+.hb-strip i.picked { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--navy); transform: scaleY(1.15); }
+.hb-detail { margin-top: 16px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.hb-detail-head { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--row); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.hb-detail-head > div { flex: 1; min-width: 200px; }
+.hb-detail > p { padding: 12px 14px; margin: 0; }
+.hb-detail-sub { font-size: .9rem; padding: 12px 14px 6px; margin: 0; color: var(--navy); }
