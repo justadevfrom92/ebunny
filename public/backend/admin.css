@@ -34,7 +34,7 @@ h3 { font-size: .95rem; color: var(--navy); margin-bottom: 8px; }
 .sidebar {
   position: fixed; inset: 0 auto 0 0;
   width: 250px; background: var(--navy); color: #fff;
-  overflow-y: auto; z-index: 50;
+  overflow: hidden; z-index: 50;   /* only the menu links scroll; the logo, environment and Admin button stay put */
   display: flex; flex-direction: column;
 }
 .brand { display: flex; align-items: center; gap: 10px; padding: 18px 18px 14px; border-bottom: 1px solid rgba(255,255,255,.1); }
@@ -50,7 +50,11 @@ h3 { font-size: .95rem; color: var(--navy); margin-bottom: 8px; }
 .admin-home small { display: block; font-size: .72rem; opacity: .85; letter-spacing: .08em; text-transform: uppercase; }
 .admin-home:hover { background: #0099d4; text-decoration: none; }
 .admin-home:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-.menu { padding: 0 0 20px; flex: 1; }
+.brand, .env, .admin-home, .side-foot { flex: none; }
+.menu { padding: 0 0 20px; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; border-top: 1px solid rgba(255,255,255,.1); margin-top: 4px; }
+.menu { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.25) transparent; }
+.menu::-webkit-scrollbar { width: 8px; }
+.menu::-webkit-scrollbar-thumb { background: rgba(255,255,255,.25); border-radius: 8px; }
 .menu h4 { font-size: .68rem; text-transform: uppercase; letter-spacing: .14em; color: rgba(255,255,255,.45); padding: 14px 20px 6px; font-weight: 400; }
 .menu a {
   display: flex; justify-content: space-between; align-items: center;
