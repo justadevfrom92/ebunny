@@ -152,6 +152,21 @@
       });
     });
 
+    // Popups: [data-open-dialog="id"] opens <dialog id>, [data-close-dialog] closes it; a file pick enables the form's button
+    document.addEventListener('click', function (e) {
+      var o = e.target.closest('[data-open-dialog]');
+      if (o) { var d = document.getElementById(o.getAttribute('data-open-dialog')); if (d && d.showModal) d.showModal(); return; }
+      var c = e.target.closest('[data-close-dialog]');
+      if (c) { var dl = c.closest('dialog'); if (dl) dl.close(); }
+    });
+    $$('[data-file-pick]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        var form = input.closest('form'), name = form.querySelector('[data-file-name]'), btn = form.querySelector('[data-file-submit]');
+        if (name) name.textContent = input.files[0] ? input.files[0].name : 'Choose a file…';
+        if (btn) btn.disabled = !input.files[0];
+      });
+    });
+
     // Account file PDFs: the page carries the PDF as base64; turn it into a blob for View PDF and Download PDF
     $$('.pdf-viewer[data-pdf64]').forEach(function (box) {
       var bin = atob(box.getAttribute('data-pdf64')), bytes = new Uint8Array(bin.length);
@@ -352,10 +367,15 @@
       var body = $('#ref-rows');
       var cols = +addRow.dataset.addRow;
       var i = $$('tr', body).length;
-      var tr = document.createElement('tr');
-      var cells = '';
-      for (var c = 0; c < cols; c++) cells += '<td><input class="cell-input" name="rows[' + i + '][' + c + ']" aria-label="Row ' + (i + 1) + ' column ' + (c + 1) + '"></td>';
-      tr.innerHTML = cells + '<td><button type="button" class="btn sm ghost" data-remove-row>Remove</button></td>';
+      var tr, tpl = $('#ref-row-template');
+      if (tpl) {   // the table's own new row (column order, date fields)
+        var holder = document.createElement('tbody'); holder.innerHTML = tpl.innerHTML.replace(/__i__/g, i); tr = holder.firstElementChild;
+      } else {
+        tr = document.createElement('tr');
+        var cells = '';
+        for (var c = 0; c < cols; c++) cells += '<td><input class="cell-input" name="rows[' + i + '][' + c + ']" aria-label="Row ' + (i + 1) + ' column ' + (c + 1) + '"></td>';
+        tr.innerHTML = cells + '<td><button type="button" class="btn sm ghost" data-remove-row>Remove</button></td>';
+      }
       body.appendChild(tr);
       $('input', tr).focus();
     });

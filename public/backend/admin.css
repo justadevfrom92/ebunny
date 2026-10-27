@@ -896,3 +896,26 @@ html.js:not(.pills-done) .chips:not([data-keep-pills]):has(> :nth-child(4)) { vi
 /* PDF templates: pages stacked like a PDF viewer */
 .pdf-pages { display: flex; flex-direction: column; gap: 18px; }
 .pdf-pages .pdf-page { width: 100%; max-width: 640px; }
+/* Corral → Customer Search: search and bookmarks half and half on desktop, stacked on tablet and phone */
+.search-bookmarks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; margin-bottom: 20px; }
+.search-bookmarks > .panel { margin: 0; }
+@media (max-width: 1180px) { .search-bookmarks { grid-template-columns: minmax(0, 1fr); } }
+.ref-fixed { table-layout: fixed; width: 100%; }
+.ref-fixed .cell-input, .ref-fixed .dp-wrap { width: 100%; max-width: none; box-sizing: border-box; }
+/* Popups (<dialog class="modal">) */
+dialog.modal { position: fixed; inset: 0; margin: auto; height: fit-content; max-height: calc(100vh - 32px); overflow: auto; border: 0; border-radius: 14px; padding: 0; width: min(520px, calc(100vw - 32px)); box-shadow: 0 24px 60px rgba(16,34,71,.35); color: var(--ink); }
+dialog.modal::backdrop { background: rgba(16,34,71,.45); }
+.modal-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+.modal-head h2 { margin: 0; font-size: 1.15rem; color: var(--navy); }
+.modal-x { border: 0; background: none; font-size: 1.6rem; line-height: 1; color: var(--muted); cursor: pointer; padding: 0 4px; }
+.modal-body { padding: 16px 20px; }
+.modal-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--line); background: var(--row); border-radius: 0 0 14px 14px; }
+.file-pick { display: block; position: relative; border: 2px dashed var(--line); border-radius: 10px; padding: 22px; text-align: center; cursor: pointer; color: var(--navy); font-weight: 600; }
+.file-pick:hover, .file-pick:focus-within { border-color: var(--cyan); background: rgba(0,174,239,.05); }
+.file-pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+/* Desktop: a page's buttons stay top right, the title and subtitle take the rest of the width */
+@media (min-width: 861px) {
+  .page-head { flex-wrap: nowrap; align-items: flex-start; }
+  .page-head > div:first-child { flex: 1 1 auto; min-width: 0; }
+  .page-head > .actions { flex: 0 0 auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; max-width: 60%; }
+}

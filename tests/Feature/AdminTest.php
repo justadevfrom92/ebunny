@@ -69,7 +69,7 @@ class AdminTest extends TestCase
                 $urls[] = '/admin/'.$t[2].'/data/'.$table;
             }
         }
-        $this->actingAs(\App\Models\User::where('email', 'admin@example.com')->firstOrFail())->get('/admin/bounty/data/monthly-drawing')->assertRedirect(route('bounty.winners'));
+        $this->actingAs(User::where('email', 'admin@example.com')->firstOrFail())->get('/admin/bounty/data/monthly-drawing')->assertRedirect(route('bounty.winners'));
         $this->get('/admin/sheriff/data/tax-rates')->assertNotFound();
         // Fraud Indicators and CIS Note Dispositions are Finance's (Caboose), not Sheriff's
         $this->get('/admin/caboose/data/fraud-indicators')->assertOk()->assertSee('Fraud Indicators');

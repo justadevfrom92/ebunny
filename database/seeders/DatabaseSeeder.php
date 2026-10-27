@@ -41,7 +41,8 @@ class DatabaseSeeder extends Seeder
             SurveyEmailSeeder::class,
             HeartbeatSeeder::class,
             ApiExchangeSeeder::class,
-            PdfTemplateSeeder::class,   // sample letters and notices, and PDFs made from them   // what each sample API call sent and got back
+            PdfTemplateSeeder::class,
+            RateImportSeeder::class,    // sample rate uploads: live, waiting to confirm, failed   // sample letters and notices, and PDFs made from them   // what each sample API call sent and got back
             AdminNotificationSeeder::class,   // last: points at tickets, reports, files, emails and campaigns
         ]);
     }

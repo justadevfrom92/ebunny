@@ -10,7 +10,9 @@
         <div class="stat alert"><span>Exceptions</span><strong>{{ number_format($stats['exceptions']) }}</strong><small>need attention</small></div>
     </div>
 
-    <div class="panel"><div class="panel-body">
+    {{-- Search and Bookmarks side by side on desktop (50% each), full width on tablet and phone --}}
+    <div class="search-bookmarks">
+    <div class="panel"><div class="panel-head"><h2>Search</h2></div><div class="panel-body">
         <form method="get" class="form-row">
             <div class="field grow"><label for="q">Search</label><input id="q" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Name, phone, email, account #, ESIID…"></div>
             <div class="field"><label for="type">Customer Type</label>
@@ -38,6 +40,7 @@
             @include('backend.corral.customers._rows', ['customers' => $bookmarks, 'empty' => 'No bookmarks yet. Open an account and choose Bookmark.'])
         </div>
     @endunless
+    </div>
 
     <div class="panel"><div class="panel-head"><h2>{{ $searched ? 'Search Results' : 'Recent Accounts' }}</h2><span class="muted">Showing {{ $results->count() ? number_format($results->firstItem()).'–'.number_format($results->lastItem()) : 0 }} of {{ number_format($total) }}</span></div>
         @include('backend.corral.customers._rows', ['customers' => $results, 'empty' => 'No accounts match. Try fewer filters.'])

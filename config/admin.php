@@ -127,9 +127,9 @@ return [
                 ],
                 'Build Your Own' => [
                     ['Build Your Own', 'astro.products.index'],
+                    ['New Product', 'astro.products.create'],
                     ['BYOP Discounts', 'astro.byop.upload'],
                 ],
-                'Data' => 'reference_tables',
             ],
         ],
         'walker' => [
@@ -297,6 +297,7 @@ return [
     'menu_parents' => [
         'walker.runs' => 'walker.home',
         'corral.items' => 'corral.customers.index',
+        'astro.rates.imports' => 'astro.rates.edit',
         'sheriff.heartbeat' => 'sheriff.heartbeat.checks',
     ],
 
@@ -362,7 +363,8 @@ return [
         'bill-credits' => ['Bill Credits & Promos', ['Code', 'Description', 'Amount'], 'caboose'],
         'charge-codes' => ['Charge Codes', ['Code', 'Description'], 'caboose'],
         'rate-exports' => ['Rate Exports', ['Email', 'Customer Type', 'Markets', 'Frequency'], 'caboose'],
-        'blackout-days' => ['Blackout Days', ['Date', 'Reason'], 'astro'],
+        // Optional 4th: how the columns show — order, a type per column (date = calendar picker) and widths (with the Remove column's)
+        'blackout-days' => ['Blackout Days', ['Date', 'Reason'], 'caboose', ['order' => [1, 0], 'types' => [0 => 'date'], 'widths' => [1 => '66.6%', 0 => '16.7%', 'remove' => '16.7%']]],
         'ips' => ['IPs', ['IP Address', 'Action', 'Note'], 'lando'],
         'monthly-drawing' => ['Drawing Winners', ['Month', 'Prize', 'Winner Account', 'Drawn On'], 'bounty'],
         'fraud-indicators' => ['Fraud Indicators', ['Rule', 'Action'], 'caboose'],

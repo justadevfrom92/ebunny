@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Market;
 use App\Models\Plan;
 use App\Models\Rate;
+use App\Models\RateImport;
 use App\Services\Catalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -64,6 +65,7 @@ class RateController extends Controller
             'markets' => Market::orderBy('name')->get(),
             'rates' => $catalog->latestRates(),
             'pending' => Rate::whereDate('effective_on', '>', today())->count(),
+            'imports' => RateImport::with('user')->latest('id')->limit(10)->get(),
         ]);
     }
 

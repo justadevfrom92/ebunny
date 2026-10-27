@@ -96,7 +96,7 @@ class Catalog
             })->values(),
             'BYOP_PRODUCTS' => ByopProduct::orderBy('position')->get()->map(fn ($p) => [
                 'id' => $p->id, 'key' => $p->key, 'name' => $p->name, 'model' => $p->model, 'type' => $p->type,
-                'adj' => $p->rate_adj, 'monthly' => $p->monthly, 'step' => $p->step, 'active' => $p->active,
+                'adj' => $p->rate_adj, 'monthly' => $p->monthly, 'step' => $p->step, 'active' => $p->active, 'description' => $p->description,
             ])->values(),
         ];
     }

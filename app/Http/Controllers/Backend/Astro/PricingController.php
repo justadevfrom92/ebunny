@@ -10,6 +10,8 @@ use App\Models\TermEtf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /** Term discounts, ETFs and Build Your Own Plan products — all read by the website's plan builder. */
@@ -65,6 +67,39 @@ class PricingController extends Controller
     public function products(): View
     {
         return view('backend.astro.products', ['products' => ByopProduct::orderBy('position')->get()]);
+    }
+
+    /** New Product / edit one product: name, the line under it on the website, step, type and price. */
+    public function productForm(?ByopProduct $product = null): View
+    {
+        return view('backend.astro.product-form', ['product' => $product ?? new ByopProduct(['active' => true, 'type' => 'Discount', 'step' => 'Lower Your Bill', 'rate_adj' => 0, 'monthly' => 0])]);
+    }
+
+    public function saveProduct(Request $request, ?ByopProduct $product = null): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'key' => ['nullable', 'alpha_dash', 'max:40', Rule::unique('byop_products', 'key')->ignore($product)],
+            'description' => ['nullable', 'string', 'max:300'],
+            'step' => ['required', Rule::in(ByopProduct::STEPS)],
+            'type' => ['required', Rule::in(ByopProduct::TYPES)],
+            'rate_adj' => ['required', 'numeric', 'min:-10', 'max:10'],
+            'monthly' => ['required', 'numeric', 'min:0', 'max:500'],
+        ]);
+        $data['active'] = $request->boolean('active');
+        if ($product) {
+            unset($data['key']);   // the key can't change once the product exists
+        } else {
+            $data['key'] = strtolower(($data['key'] ?? null) ?: Str::slug($data['name'], ''));
+            if (ByopProduct::where('key', $data['key'])->exists()) {
+                return back()->withInput()->withErrors(['key' => 'A product already has the key "'.$data['key'].'". Pick another.']);
+            }
+            $data['model'] = 'ItemProduct'.Str::studly($data['key']).'_model';
+            $data['position'] = (int) ByopProduct::max('position') + 1;
+        }
+        $product = $product ? tap($product)->update($data) : ByopProduct::create($data);
+
+        return redirect()->route('astro.products.index')->with('status', $product->name.' saved.'.($product->active ? ' It shows on the website\'s Build Your Own Plan page now.' : ''));
     }
 
     public function updateProducts(Request $request): RedirectResponse

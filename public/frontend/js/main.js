@@ -336,6 +336,19 @@
     var products = {};
     ET.data('BYOP_PRODUCTS').forEach(function (p) { products[p.key] = p; });
 
+    // Products added in Astro → Build Your Own → New Product get a card on their step's tab
+    var STEPS = ['Get Started', 'Lower Your Bill', 'Using Less', 'Save More', "Protectin'"], tabs = root.querySelectorAll('.byop-tab');
+    ET.data('BYOP_PRODUCTS').forEach(function (p) {
+      if (!p.active || root.querySelector('input[data-product="' + p.key + '"]')) return;
+      var tab = tabs[Math.max(0, STEPS.indexOf(p.step))];
+      if (!tab) return;
+      var label = document.createElement('label'), esc = function (t) { var d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; };
+      label.className = 'opt';
+      label.innerHTML = '<input type="checkbox" data-product="' + esc(p.key) + '"><span><strong>' + esc(p.name) + '</strong>' + (p.description ? '<small>' + esc(p.description) + '</small>' : '') + '</span><span class="price"></span>';
+      var opts = tab.querySelectorAll('label.opt');
+      opts.length ? opts[opts.length - 1].after(label) : tab.appendChild(label);
+    });
+
     // Show each add-on's price from the catalog and hide ones switched off in Astro
     root.querySelectorAll('input[data-product]').forEach(function (i) {
       var p = products[i.getAttribute('data-product')];

@@ -105,7 +105,7 @@ class SystemController extends Controller
         [$name, $columns] = self::owned($table);
 
         return view('backend.sheriff.table', [
-            'key' => $table, 'name' => $name, 'columns' => $columns,
+            'key' => $table, 'name' => $name, 'columns' => $columns, 'options' => config('admin.reference_tables.'.$table)[3] ?? [],
             'rows' => ReferenceRow::where('table_key', $table)->orderBy('position')->get(),
         ]);
     }
@@ -114,7 +114,13 @@ class SystemController extends Controller
     public function updateTable(Request $request, string $table): RedirectResponse
     {
         [$name, $columns] = self::owned($table);
-        $data = $request->validate(['rows' => ['array'], 'rows.*' => ['array'], 'rows.*.*' => ['nullable', 'string', 'max:500']]);
+        $rules = ['rows' => ['array'], 'rows.*' => ['array'], 'rows.*.*' => ['nullable', 'string', 'max:500']];
+        foreach (config('admin.reference_tables.'.$table)[3]['types'] ?? [] as $c => $type) {
+            if ($type === 'date') {
+                $rules['rows.*.'.$c] = ['nullable', 'date_format:Y-m-d'];
+            }
+        }
+        $data = $request->validate($rules);
 
         DB::transaction(function () use ($table, $columns, $data) {
             ReferenceRow::where('table_key', $table)->delete();

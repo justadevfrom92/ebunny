@@ -332,6 +332,11 @@ Route::prefix('admin')->group(function () {
             Route::get('rates', [Backend\Lando\RateController::class, 'index'])->name('rates.index');
             Route::get('rates/edit', [Backend\Lando\RateController::class, 'edit'])->name('rates.edit');
             Route::put('rates', [Backend\Lando\RateController::class, 'update'])->name('rates.update');
+            Route::post('rates/imports', [Backend\Astro\RateImportController::class, 'store'])->middleware('throttle:20,1')->name('rates.imports.store');
+            Route::get('rates/imports/template', [Backend\Astro\RateImportController::class, 'template'])->name('rates.imports.template');
+            Route::get('rates/imports/{import}', [Backend\Astro\RateImportController::class, 'show'])->name('rates.imports.show');
+            Route::post('rates/imports/{import}/confirm', [Backend\Astro\RateImportController::class, 'confirm'])->name('rates.imports.confirm');
+            Route::post('rates/imports/{import}/discard', [Backend\Astro\RateImportController::class, 'discard'])->name('rates.imports.discard');
             Route::get('fees', [Backend\Lando\FeeController::class, 'index'])->name('fees.index');
             Route::put('fees', [Backend\Lando\FeeController::class, 'update'])->name('fees.update');
             $dataTables();
@@ -341,6 +346,10 @@ Route::prefix('admin')->group(function () {
             Route::put('etfs', [Backend\Astro\PricingController::class, 'updateEtfs'])->name('etfs.update');
             Route::get('products', [Backend\Astro\PricingController::class, 'products'])->name('products.index');
             Route::put('products', [Backend\Astro\PricingController::class, 'updateProducts'])->name('products.update');
+            Route::get('products/new', [Backend\Astro\PricingController::class, 'productForm'])->name('products.create');
+            Route::post('products', [Backend\Astro\PricingController::class, 'saveProduct'])->name('products.store');
+            Route::get('products/{product}/edit', [Backend\Astro\PricingController::class, 'productForm'])->name('products.edit');
+            Route::put('products/{product}', [Backend\Astro\PricingController::class, 'saveProduct'])->name('products.save');
             Route::get('modifiers/products', [Backend\Astro\PricingController::class, 'modifierProducts'])->name('modifiers.products');
             Route::put('modifiers/products', [Backend\Astro\PricingController::class, 'updateModifierProducts'])->name('modifiers.products.update');
             $websiteScreens(); // Website → Pages, Groups and Plans → Plans, New Plan, at /admin/astro/…
