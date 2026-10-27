@@ -45,7 +45,7 @@
         </div>
         <div class="panel"><div class="panel-head"><h2>Latest Conversations</h2><a class="btn sm ghost" href="{{ route('deputy.conversations') }}">All</a></div>
             <div class="table-wrap"><table><tbody>@forelse ($recent as $c)
-                <tr class="click" data-href="{{ route('deputy.conversations.show', $c) }}"><td class="nowrap"><a href="{{ route('deputy.conversations.show', $c) }}">{{ $c->started_at->format('n/j g:i A') }}</a><div class="help">{{ config('deputy.channels.'.$c->channel) }}</div></td>
+                <tr class="click" data-href="{{ route('deputy.conversations.show', $c) }}"><td class="nowrap"><a href="{{ route('deputy.conversations.show', $c) }}"><b>#{{ $c->id }}</b></a></td><td class="nowrap">{{ $c->started_at->format('n/j g:i A') }}<div class="help">{{ config('deputy.channels.'.$c->channel) }}</div></td>
                     <td>{{ $c->topic }}<div class="help">{{ $c->agent?->name }}</div></td><td>@include('backend.deputy._outcome', ['c' => $c])</td></tr>
             @empty <tr><td class="empty">No conversations yet.</td></tr> @endforelse</tbody></table></div>
         </div>

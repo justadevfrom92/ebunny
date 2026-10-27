@@ -66,7 +66,15 @@ class SystemController extends Controller
             'last' => JobRun::where('command', $command)->latest('started_at')->first(),
         ]);
 
-        return view('backend.sheriff.jobs', ['jobs' => $jobs, 'history' => JobRun::latest('started_at')->limit(15)->get()]);
+        return view('backend.sheriff.jobs', ['jobs' => $jobs, 'history' => JobRun::with('triggeredBy')->latest('started_at')->latest('id')->paginate(10)->withQueryString()]);
+    }
+
+    /** One run of a cron: when, how long, who started it, what it said, and the job's other runs. */
+    public function jobRun(JobRun $run): View
+    {
+        return view('backend.sheriff.job-run', ['run' => $run->load('triggeredBy'), 'job' => config('admin.jobs.'.$run->command),
+            'others' => JobRun::where('command', $run->command)->whereKeyNot($run->id)->latest('started_at')->latest('id')->paginate(10)->withQueryString(),
+            'stats' => JobRun::where('command', $run->command)->where('started_at', '>=', now()->subDays(7))->selectRaw('count(*) as n, sum(status = \'Failed\') as failed, avg(duration_ms) as avg_ms')->first()]);
     }
 
     public function runJob(Request $request): RedirectResponse

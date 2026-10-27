@@ -63,11 +63,11 @@
 
     <div class="grid-2" style="align-items:start">
         <div class="panel"><div class="panel-head"><h2>Their Other Choices</h2><span class="muted">{{ $others->count() }}</span></div><div class="table-wrap"><table data-page="10">
-            <thead><tr><th>When</th><th>Choice</th><th>Policy</th></tr></thead>
+            <thead><tr><th>ID</th><th>When</th><th>Choice</th><th>Policy</th></tr></thead>
             <tbody>@forelse ($others as $o)
-                <tr class="click" data-href="{{ route('lando.consents.show', $o) }}"><td class="nowrap"><a href="{{ route('lando.consents.show', $o) }}">{{ $o->created_at->format('n/j/Y g:i A') }}</a></td>
+                <tr class="click" data-href="{{ route('lando.consents.show', $o) }}"><td class="nowrap"><a href="{{ route('lando.consents.show', $o) }}"><b>#{{ $o->id }}</b></a></td><td class="nowrap">{{ $o->created_at->format('n/j/Y g:i A') }}</td>
                     <td>@include('backend.partials.pill', ['text' => $o->label(), 'tone' => ['all' => 'ok', 'necessary' => 'warn', 'custom' => 'info'][$o->choice] ?? ''])</td><td class="mono">{{ $o->policy_version }}</td></tr>
-            @empty <tr><td colspan="3" class="empty">This is the only choice from this browser{{ $k->customer ? ' or customer' : '' }}.</td></tr> @endforelse</tbody>
+            @empty <tr><td colspan="4" class="empty">This is the only choice from this browser{{ $k->customer ? ' or customer' : '' }}.</td></tr> @endforelse</tbody>
         </table></div></div>
         <div class="panel"><div class="panel-head"><h2>Pages Visited</h2><span class="muted">from this browser</span></div><div class="table-wrap"><table data-page="10">
             <thead><tr><th>When</th><th>Page</th><th>IP</th></tr></thead>

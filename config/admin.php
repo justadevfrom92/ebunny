@@ -24,7 +24,7 @@ return [
     'apps' => [
         'corral' => [
             'name' => 'Corral',
-            'desc' => 'Customer service and CRM: search accounts, create orders, work exception queues, and the sales pipeline of leads, follow-ups and partners.',
+            'desc' => 'Customer service and CRM: search accounts, create orders, work exception queues, the sales pipeline of leads, follow-ups and partners, and customer PDFs (EFLs, welcome packets, invoices, YRAC and TOS: view, download, regenerate, email).',
             'icon' => 'users',
             'home' => 'corral.customers.index',
             // Same order as the original Corral menu. Unnamed (numbered) groups have no heading.
@@ -47,6 +47,9 @@ return [
                     ['Orders', 'corral.reports.orders'],
                     ['Notes', 'corral.reports.notes'],
                     ['Phonecalls', 'corral.reports.phonecalls'],
+                ],
+                'Files' => [
+                    ['Customer PDFs', 'corral.files.index'],
                 ],
                 'Website' => [
                     ['Web Messages', 'corral.messages.index', 'messages'], // contact form inbox (not in the original menu)

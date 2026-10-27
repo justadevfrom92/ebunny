@@ -44,4 +44,12 @@ class CustomerFilePdfTest extends TestCase
         $this->post(route('corral.files.send', $f), ['lang' => 'en', 'email' => 'someone@example.com'])->assertRedirect();
         $this->get(route('corral.files.pdf', $f))->assertOk();
     }
+
+    public function test_corral_lists_every_customer_pdf(): void
+    {
+        $this->actingAs(User::where('email', 'admin@example.com')->firstOrFail());
+        $f = CustomerFile::whereNull('path')->where('kind', 'invoice')->latest('created_at')->latest('id')->firstOrFail();
+        $this->get(route('corral.files.index', ['kind' => 'invoice']))->assertOk()->assertSee('Customer PDFs')->assertSee('#'.$f->id)->assertSee(route('corral.files.show', $f), false);
+        $this->get(route('admin.launcher'))->assertSee('customer PDFs');
+    }
 }

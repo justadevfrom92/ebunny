@@ -210,6 +210,7 @@ Route::prefix('admin')->group(function () {
             Route::post('payment-methods/{method}/autopay', [Backend\Corral\AccountController::class, 'setAutopay'])->name('methods.autopay');
             Route::delete('payment-methods/{method}', [Backend\Corral\AccountController::class, 'removeMethod'])->name('methods.remove');
             Route::post('customers/{customer}/files', [Backend\Corral\AccountController::class, 'uploadFile'])->name('customers.files.upload');
+            Route::get('files', [Backend\Corral\CustomerFileController::class, 'index'])->name('files.index');
             Route::get('files/{file}', [Backend\Corral\AccountController::class, 'downloadFile'])->name('files.download');
             Route::get('files/{file}/page', [Backend\Corral\CustomerFileController::class, 'show'])->name('files.show');
             Route::get('files/{file}/pdf', [Backend\Corral\CustomerFileController::class, 'pdf'])->name('files.pdf');
@@ -591,6 +592,7 @@ Route::prefix('admin')->group(function () {
             Route::resource('markets', Backend\Lando\MarketController::class)->except(['show', 'destroy']);
             Route::get('jobs', [Backend\Sheriff\SystemController::class, 'jobs'])->name('jobs.index');
             Route::post('jobs/run', [Backend\Sheriff\SystemController::class, 'runJob'])->name('jobs.run');
+            Route::get('jobs/runs/{run}', [Backend\Sheriff\SystemController::class, 'jobRun'])->name('jobs.show');
         });
 
         // A custom app's home page, e.g. /admin/marketing (built-in app routes above take priority)

@@ -50,9 +50,9 @@
     </div>
 
     @if ($others->isNotEmpty())<div class="panel"><div class="panel-head"><h2>Other Credits &amp; Debits on This Account</h2><span class="muted">{{ $others->count() }}</span></div><div class="table-wrap"><table>
-        <thead><tr><th>Added</th><th>Kind</th><th class="num">Amount</th><th>Description</th><th>By</th><th>Status</th></tr></thead>
-        <tbody>@forelse ($others as $o)<tr class="click" data-href="{{ route('caboose.ledger.show', $o) }}"><td><a href="{{ route('caboose.ledger.show', $o) }}">{{ $o->created_at->format('n/j/Y') }}</a></td><td>{{ ucfirst($o->kind) }}</td><td class="num">${{ number_format($o->amount, 2) }}</td><td>{{ $o->description }}</td><td>{{ $o->user?->name ?? 'System' }}</td><td>@include('backend.partials.pill', ['text' => $o->status === 'deleted' ? 'Rejected' : ucfirst($o->status), 'tone' => ['pending' => 'info', 'applied' => 'ok'][$o->status] ?? ''])</td></tr>
-        @empty <tr><td colspan="6" class="empty">This is the only one.</td></tr> @endforelse</tbody>
+        <thead><tr><th>ID</th><th>Added</th><th>Kind</th><th class="num">Amount</th><th>Description</th><th>By</th><th>Status</th></tr></thead>
+        <tbody>@forelse ($others as $o)<tr class="click" data-href="{{ route('caboose.ledger.show', $o) }}"><td class="nowrap"><a href="{{ route('caboose.ledger.show', $o) }}"><b>#{{ $o->id }}</b></a></td><td>{{ $o->created_at->format('n/j/Y') }}</td><td>{{ ucfirst($o->kind) }}</td><td class="num">${{ number_format($o->amount, 2) }}</td><td>{{ $o->description }}</td><td>{{ $o->user?->name ?? 'System' }}</td><td>@include('backend.partials.pill', ['text' => $o->status === 'deleted' ? 'Rejected' : ucfirst($o->status), 'tone' => ['pending' => 'info', 'applied' => 'ok'][$o->status] ?? ''])</td></tr>
+        @empty <tr><td colspan="7" class="empty">This is the only one.</td></tr> @endforelse</tbody>
     </table></div></div>@endif
 
     <div class="grid-2">

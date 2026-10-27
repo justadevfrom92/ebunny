@@ -39,17 +39,17 @@
         </aside>
         <div class="search-main">
             <div class="panel"><div class="table-wrap"><table class="table">
-                <thead><tr><th>Started</th><th>Account</th><th>Issue</th><th class="num">Length</th><th>Agent &amp; Model</th><th>Outcome</th><th>Resolution</th></tr></thead>
+                <thead><tr><th>ID</th><th>Started</th><th>Account</th><th>Issue</th><th class="num">Length</th><th>Agent &amp; Model</th><th>Outcome</th><th>Resolution</th></tr></thead>
                 <tbody>@forelse ($conversations as $c)
                     <tr class="click" data-href="{{ route('deputy.conversations.show', $c) }}">
-                        <td class="nowrap"><a href="{{ route('deputy.conversations.show', $c) }}">{{ $c->started_at->format('n/j/Y g:i A') }}</a><br><span class="help">{{ config('deputy.channels.'.$c->channel) }}</span></td>
+                        <td class="nowrap"><a href="{{ route('deputy.conversations.show', $c) }}"><b>#{{ $c->id }}</b></a></td><td class="nowrap">{{ $c->started_at->format('n/j/Y g:i A') }}<br><span class="help">{{ config('deputy.channels.'.$c->channel) }}</span></td>
                         <td>@if ($c->customer)@include('backend.partials.account-link', ['c' => $c->customer])<br><span class="help">{{ $c->customer->name }}</span>@elseif ($c->user)<span class="help">Test by {{ $c->user->name }}</span>@else<span class="muted">—</span>@endif</td>
                         <td>{{ $c->topic }}</td>
                         <td class="num">{{ intdiv($c->duration_sec, 60) }}:{{ str_pad((string) ($c->duration_sec % 60), 2, '0', STR_PAD_LEFT) }}</td>
                         <td>{{ $c->agent?->name }}<br><span class="help">{{ $c->model?->name ?? 'No model answered' }}</span></td>
                         <td>@if ($c->isLive())@include('backend.partials.pill', ['text' => config('deputy.statuses.'.$c->status), 'tone' => 'warn'])@else @include('backend.deputy._outcome', ['c' => $c])@endif @if ($c->handedTo)<br><span class="help">to {{ $c->handedTo->name }}</span>@endif</td>
                         <td>@include('backend.partials.resolution-pill', ['value' => $c->resolution])</td></tr>
-                @empty <tr><td colspan="7" class="empty">No conversations match.</td></tr> @endforelse</tbody>
+                @empty <tr><td colspan="8" class="empty">No conversations match.</td></tr> @endforelse</tbody>
             </table></div>
             @include('backend.partials.pager', ['p' => $conversations])</div>
         </div>

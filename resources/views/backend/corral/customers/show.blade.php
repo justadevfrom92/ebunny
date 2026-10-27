@@ -228,21 +228,21 @@
     <div class="grid-2" id="calls" style="align-items:start">
         <div class="panel"><div class="panel-head"><h2>Phone Calls ({{ $calls->count() }})</h2><span class="actions"><a class="btn sm ghost" href="{{ route('corral.calls', ['account' => $c->account]) }}">All Calls</a><a class="btn sm cyan" href="{{ route('corral.contacts.create', ['account' => $c->account]) }}">New Contact</a></span></div>
             <div class="table-wrap"><table data-page="10">
-                <thead><tr><th>Called</th><th>Issue</th><th class="num">Duration</th><th>Answered By</th><th>Resolution</th></tr></thead>
+                <thead><tr><th>ID</th><th>Called</th><th>Issue</th><th class="num">Duration</th><th>Answered By</th><th>Resolution</th></tr></thead>
                 <tbody>@forelse ($calls as $p)
-                    <tr class="click" data-href="{{ route('corral.calls.transcript', $p) }}"><td class="nowrap"><a href="{{ route('corral.calls.transcript', $p) }}">{{ $p->started_at->format('n/j/Y g:i A') }}</a><br><span class="help">{{ ucfirst($p->direction) }}</span></td><td>{{ $p->disposition ?? '—' }}</td>
+                    <tr class="click" data-href="{{ route('corral.calls.transcript', $p) }}"><td class="nowrap"><a href="{{ route('corral.calls.transcript', $p) }}"><b>#{{ $p->id }}</b></a></td><td class="nowrap">{{ $p->started_at->format('n/j/Y g:i A') }}<br><span class="help">{{ ucfirst($p->direction) }}</span></td><td>{{ $p->disposition ?? '—' }}</td>
                         <td class="num">{{ intdiv($p->duration_sec, 60) }}:{{ str_pad((string) ($p->duration_sec % 60), 2, '0', STR_PAD_LEFT) }}</td>
                         <td>{{ $p->user?->name ?? '—' }}@if ($p->agent_id)<br><span class="help mono">{{ $p->agent_id }}</span>@endif</td>
                         <td>@include('backend.partials.resolution-pill', ['value' => $p->resolution])</td></tr>
-                @empty <tr><td colspan="5" class="empty">No calls yet.</td></tr> @endforelse</tbody>
+                @empty <tr><td colspan="6" class="empty">No calls yet.</td></tr> @endforelse</tbody>
             </table></div>
         </div>
         <div class="panel"><div class="panel-head"><h2>Texts ({{ $texts->count() }})</h2><span class="actions"><a class="btn sm ghost" href="{{ route('corral.sms', ['account' => $c->account]) }}">All Texts</a>@if ($c->phone)<a class="btn sm cyan" href="{{ route('corral.sms.create', ['account' => $c->account]) }}">Send a Text</a>@endif</span></div>
             <div class="table-wrap"><table data-page="10">
-                <thead><tr><th>Sent</th><th>Direction</th><th>Message</th><th>Resolution</th></tr></thead>
+                <thead><tr><th>ID</th><th>Sent</th><th>Direction</th><th>Message</th><th>Resolution</th></tr></thead>
                 <tbody>@forelse ($texts as $m)
-                    <tr class="click" data-href="{{ route('corral.sms.show', $m) }}"><td class="nowrap"><a href="{{ route('corral.sms.show', $m) }}">{{ $m->created_at->format('n/j/Y g:i A') }}</a></td><td>{{ $m->direction === 'in' ? 'From customer' : 'To customer' }}</td><td class="wrap">{{ $m->body }}</td><td>@include('backend.partials.resolution-pill', ['value' => $m->resolution])</td></tr>
-                @empty <tr><td colspan="4" class="empty">No texts yet.</td></tr> @endforelse</tbody>
+                    <tr class="click" data-href="{{ route('corral.sms.show', $m) }}"><td class="nowrap"><a href="{{ route('corral.sms.show', $m) }}"><b>#{{ $m->id }}</b></a></td><td class="nowrap">{{ $m->created_at->format('n/j/Y g:i A') }}</td><td>{{ $m->direction === 'in' ? 'From customer' : 'To customer' }}</td><td class="wrap">{{ $m->body }}</td><td>@include('backend.partials.resolution-pill', ['value' => $m->resolution])</td></tr>
+                @empty <tr><td colspan="5" class="empty">No texts yet.</td></tr> @endforelse</tbody>
             </table></div>
         </div>
     </div>

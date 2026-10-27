@@ -11,11 +11,11 @@
     <div class="chips small" style="margin-bottom:12px"><a class="chip-link {{ empty($f['kind']) ? 'on' : '' }}" href="{{ route('admin.notifications.index') }}">All</a>@foreach (\App\Models\AdminNotification::KINDS as $k => [$l])<a class="chip-link {{ ($f['kind'] ?? '') === $k ? 'on' : '' }}" href="{{ route('admin.notifications.index', ['kind' => $k]) }}">{{ $l }}</a>@endforeach</div>
 
     <div class="panel"><div class="table-wrap"><table>
-        <thead><tr><th>When</th><th>What</th><th>Kind</th></tr></thead>
+        <thead><tr><th>ID</th><th>When</th><th>What</th><th>Kind</th></tr></thead>
         <tbody>@forelse ($items as $n)
-            <tr class="click {{ $n->read_at ? '' : 'row-unread' }}" data-href="{{ route('admin.notifications.open', $n) }}"><td class="nowrap"><a href="{{ route('admin.notifications.open', $n) }}">{{ $n->created_at->format('n/j/Y g:i A') }}</a><div class="help">{{ $n->created_at->diffForHumans() }}</div></td>
+            <tr class="click {{ $n->read_at ? '' : 'row-unread' }}" data-href="{{ route('admin.notifications.open', $n) }}"><td class="nowrap"><a href="{{ route('admin.notifications.open', $n) }}"><b>#{{ $n->id }}</b></a></td><td class="nowrap">{{ $n->created_at->format('n/j/Y g:i A') }}<div class="help">{{ $n->created_at->diffForHumans() }}</div></td>
                 <td class="wrap"><b>{{ $n->icon() }} {{ $n->title }}</b>@if ($n->body)<div class="help">{{ $n->body }}</div>@endif</td>
                 <td>@include('backend.partials.pill', ['text' => \App\Models\AdminNotification::KINDS[$n->kind][0] ?? $n->kind, 'tone' => $n->read_at ? '' : 'info'])</td></tr>
-        @empty <tr><td colspan="3" class="empty">No notifications.</td></tr> @endforelse</tbody>
+        @empty <tr><td colspan="4" class="empty">No notifications.</td></tr> @endforelse</tbody>
     </table></div>@include('backend.partials.pager', ['p' => $items])</div>
 @endsection

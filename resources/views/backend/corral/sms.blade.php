@@ -24,16 +24,16 @@
         <div class="search-main">
             <div class="panel"><div class="panel-head"><h2>Recent Messages</h2><span class="muted">{{ number_format($messages->total()) }}</span></div>
                 <div class="table-wrap"><table>
-                    <thead><tr><th>Sent</th><th>Account</th><th>Message</th><th>Status</th><th>Resolution</th></tr></thead>
+                    <thead><tr><th>ID</th><th>Sent</th><th>Account</th><th>Message</th><th>Status</th><th>Resolution</th></tr></thead>
                     <tbody>@forelse ($messages as $m)
                         <tr @class(['click', 'row-alert' => $m->direction === 'in' && $waiting->contains($m->customer_id)]) data-href="{{ route('corral.sms.show', $m) }}">
-                            <td class="nowrap"><a href="{{ route('corral.sms.show', $m) }}">{{ $m->created_at->format('n/j/Y g:i A') }}</a><br><span class="help">{{ $m->direction === 'in' ? 'From customer' : 'To customer' }}</span></td>
+                            <td class="nowrap"><a href="{{ route('corral.sms.show', $m) }}"><b>#{{ $m->id }}</b></a></td><td class="nowrap">{{ $m->created_at->format('n/j/Y g:i A') }}<br><span class="help">{{ $m->direction === 'in' ? 'From customer' : 'To customer' }}</span></td>
                             <td>@if ($m->customer)<a href="{{ route('corral.customers.show', $m->customer) }}">{{ $m->customer->account }}</a><br><span class="help">{{ $m->customer->name }}</span><br>@endif<span class="help mono">{{ $m->phone ?? $m->customer?->phone }}</span></td>
                             <td class="wrap">{{ $m->body }}</td>
                             <td>{{ $m->status }}@if ($m->direction !== 'in')<br><span class="help">by {{ $m->user?->name ?? 'System' }}</span>@endif</td>
                             <td>@include('backend.partials.resolution-pill', ['value' => $m->resolution])</td>
                             </tr>
-                    @empty <tr><td colspan="5" class="empty">No messages match.</td></tr> @endforelse</tbody>
+                    @empty <tr><td colspan="6" class="empty">No messages match.</td></tr> @endforelse</tbody>
                 </table></div>
                 @include('backend.partials.pager', ['p' => $messages])
             </div>

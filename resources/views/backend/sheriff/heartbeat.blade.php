@@ -72,10 +72,10 @@
         </table></div></div>
 
         <div class="panel"><div class="panel-head"><h2>Latest Actions</h2><a class="btn sm ghost" href="{{ route('sheriff.timeline') }}">Timeline</a></div><div class="table-wrap"><table>
-            <thead><tr><th>When</th><th>Who</th><th>What</th></tr></thead>
+            <thead><tr><th>ID</th><th>When</th><th>Who</th><th>What</th></tr></thead>
             <tbody>@forelse ($actions as $h)
-                <tr class="click" data-href="{{ route('sheriff.history.show', $h) }}"><td class="nowrap"><a href="{{ route('sheriff.history.show', $h) }}">{{ $h->created_at->format('n/j g:i A') }}</a></td><td>{{ $h->actor() }}</td><td class="wrap">{{ $h->summary }}</td></tr>
-            @empty <tr><td colspan="3" class="empty">No actions recorded.</td></tr> @endforelse</tbody>
+                <tr class="click" data-href="{{ route('sheriff.history.show', $h) }}"><td class="nowrap"><a href="{{ route('sheriff.history.show', $h) }}"><b>#{{ $h->id }}</b></a></td><td class="nowrap">{{ $h->created_at->format('n/j g:i A') }}</td><td>{{ $h->actor() }}</td><td class="wrap">{{ $h->summary }}</td></tr>
+            @empty <tr><td colspan="4" class="empty">No actions recorded.</td></tr> @endforelse</tbody>
         </table></div></div>
     </div>
 

@@ -130,14 +130,14 @@
                     </script>
                 @endif
                 <div class="table-wrap"><table data-page="10">
-                    <thead><tr><th>Added</th><th>By</th><th>Category / Action</th><th>Priority</th><th>Note</th></tr></thead>
+                    <thead><tr><th>ID</th><th>Added</th><th>By</th><th>Category / Action</th><th>Priority</th><th>Note</th></tr></thead>
                     <tbody>@forelse ($t->notes->sortByDesc('created_at') as $n)
                         @php $nUrl = route('corral.items.show', ['id' => $n->id, 'model' => 'ItemNote_model']); @endphp
-                        <tr class="click" data-href="{{ $nUrl }}"><td class="nowrap"><a href="{{ $nUrl }}">{{ $n->created_at->format('n/j/Y g:i A') }}</a></td><td>{{ $n->user?->name ?? $n->author }}</td>
+                        <tr class="click" data-href="{{ $nUrl }}"><td class="nowrap"><a href="{{ $nUrl }}"><b>#{{ $n->id }}</b></a></td><td class="nowrap">{{ $n->created_at->format('n/j/Y g:i A') }}</td><td>{{ $n->user?->name ?? $n->author }}</td>
                             <td>{{ $n->category ?? '—' }}@if ($n->action)<div class="help">{{ $n->action }}</div>@endif</td>
                             <td>@if ($n->priority)@include('backend.partials.pill', ['text' => $n->priority, 'tone' => ['High' => 'bad', 'Medium' => 'warn'][$n->priority] ?? ''])@else — @endif</td>
                             <td class="wrap" style="min-width:160px">{{ \Illuminate\Support\Str::limit($n->body, 200) }}</td></tr>
-                    @empty <tr><td colspan="5" class="empty">No notes yet.</td></tr> @endforelse</tbody>
+                    @empty <tr><td colspan="6" class="empty">No notes yet.</td></tr> @endforelse</tbody>
                 </table></div>
             </div>
         </div>

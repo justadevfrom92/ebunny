@@ -67,7 +67,7 @@
     </div>
 
     <div class="panel"><div class="panel-head"><h2>Recent Activity</h2><a class="btn sm ghost" href="{{ route('sheriff.users.history', $u) }}">All History</a></div><div class="table-wrap"><table>
-        <tbody>@forelse ($activity as $h)<tr class="click" data-href="{{ route('sheriff.history.show', $h) }}"><td class="nowrap" style="width:180px"><a href="{{ route('sheriff.history.show', $h) }}">{{ $h->created_at->format('n/j/Y g:i A') }}</a></td><td class="wrap">{{ $h->summary }}</td></tr>
+        <tbody>@forelse ($activity as $h)<tr class="click" data-href="{{ route('sheriff.history.show', $h) }}"><td class="nowrap"><a href="{{ route('sheriff.history.show', $h) }}"><b>#{{ $h->id }}</b></a></td><td class="nowrap" style="width:180px">{{ $h->created_at->format('n/j/Y g:i A') }}</td><td class="wrap">{{ $h->summary }}</td></tr>
         @empty <tr><td class="empty">No activity recorded.</td></tr> @endforelse</tbody>
     </table></div></div>
 @endsection

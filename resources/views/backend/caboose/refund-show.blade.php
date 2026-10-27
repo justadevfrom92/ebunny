@@ -61,9 +61,9 @@
 
     <div @class(['grid-2' => $others->isNotEmpty()])>
         @if ($others->isNotEmpty())<div class="panel"><div class="panel-head"><h2>Other Refunds on This Account</h2></div><div class="table-wrap"><table>
-            <thead><tr><th>Requested</th><th>Kind</th><th class="num">Amount</th><th>Status</th></tr></thead>
-            <tbody>@forelse ($others as $o)<tr class="click" data-href="{{ route('caboose.refunds.show', $o) }}"><td><a href="{{ route('caboose.refunds.show', $o) }}">{{ $o->created_at->format('n/j/Y') }}</a></td><td>{{ ucfirst($o->kind) }}</td><td class="num">${{ number_format($o->amount, 2) }}</td><td>{{ ucfirst($o->status) }}</td></tr>
-            @empty <tr><td colspan="4" class="empty">This is the first refund for this account.</td></tr> @endforelse</tbody>
+            <thead><tr><th>ID</th><th>Requested</th><th>Kind</th><th class="num">Amount</th><th>Status</th></tr></thead>
+            <tbody>@forelse ($others as $o)<tr class="click" data-href="{{ route('caboose.refunds.show', $o) }}"><td class="nowrap"><a href="{{ route('caboose.refunds.show', $o) }}"><b>#{{ $o->id }}</b></a></td><td>{{ $o->created_at->format('n/j/Y') }}</td><td>{{ ucfirst($o->kind) }}</td><td class="num">${{ number_format($o->amount, 2) }}</td><td>{{ ucfirst($o->status) }}</td></tr>
+            @empty <tr><td colspan="5" class="empty">This is the first refund for this account.</td></tr> @endforelse</tbody>
         </table></div></div>@endif
         <div class="panel"><div class="panel-head"><h2>Recent Payments</h2></div><div class="table-wrap"><table>
             <thead><tr><th>Paid</th><th>Method</th><th class="num">Amount</th><th>Status</th></tr></thead>

@@ -46,7 +46,7 @@
             </div></div>
             @if ($others->isNotEmpty())
                 <div class="panel"><div class="panel-head"><h2>Other messages from them</h2></div><div class="table-wrap"><table><tbody>@foreach ($others as $o)
-                    <tr class="click" data-href="{{ route('corral.messages.show', $o) }}"><td class="nowrap"><a href="{{ route('corral.messages.show', $o) }}">{{ $o->created_at->format('n/j/Y') }}</a></td><td>{{ $o->topicLabel() }}</td><td>{{ $o->handled_at ? 'Handled' : 'Open' }}</td></tr>
+                    <tr class="click" data-href="{{ route('corral.messages.show', $o) }}"><td class="nowrap"><a href="{{ route('corral.messages.show', $o) }}"><b>#{{ $o->id }}</b></a></td><td class="nowrap">{{ $o->created_at->format('n/j/Y') }}</td><td>{{ $o->topicLabel() }}</td><td>{{ $o->handled_at ? 'Handled' : 'Open' }}</td></tr>
                 @endforeach</tbody></table></div></div>
             @endif
         </div>

@@ -49,6 +49,11 @@ class AccountSeeder extends Seeder
             $c->forceFill(['referral_code' => strtoupper(substr(preg_replace('/[^A-Za-z]/', '', (string) $c->first_name), 0, 4)).substr($c->account, -4)])->saveQuietly();
         }
         Customer::orderBy('id')->first()?->forceFill(['username' => 'demo.customer', 'password' => 'password'])->saveQuietly();
+
+        // A few PDFs were regenerated after an address or plan change
+        foreach (CustomerFile::whereNull('path')->whereRaw('id % 9 = 0')->get() as $f) {
+            $f->forceFill(['generated_at' => $f->created_at->copy()->addDays(2), 'regenerated' => 1 + $f->id % 2])->saveQuietly();
+        }
     }
 
     private function account(Customer $c, ?User $csr, $rolloffs): void

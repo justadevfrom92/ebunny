@@ -28,13 +28,13 @@
     <div class="panel">
         <div class="panel-head"><h2>Latest Runs</h2><span class="muted">all automations</span></div>
         <div class="table-wrap"><table class="table">
-            <thead><tr><th>Started</th><th>Automation</th><th>What It Did</th><th class="num">Checked</th><th class="num">Fixed</th><th class="num">For a Person</th><th>Status</th></tr></thead>
+            <thead><tr><th>ID</th><th>Started</th><th>Automation</th><th>What It Did</th><th class="num">Checked</th><th class="num">Fixed</th><th class="num">For a Person</th><th>Status</th></tr></thead>
             <tbody>@forelse ($runs as $r)
-                <tr class="click" data-href="{{ route('sheriff.automations.show', $r->ai_agent_id) }}"><td class="nowrap"><a href="{{ route('sheriff.automations.show', $r->ai_agent_id) }}">{{ $r->started_at->format('n/j/Y g:i A') }}</a></td>
+                <tr class="click" data-href="{{ route('sheriff.automations.show', $r->ai_agent_id) }}"><td class="nowrap"><a href="{{ route('sheriff.automations.show', $r->ai_agent_id) }}"><b>#{{ $r->id }}</b></a></td><td class="nowrap">{{ $r->started_at->format('n/j/Y g:i A') }}</td>
                     <td>{{ $r->agent?->name }}</td><td style="white-space:normal">{{ $r->summary }}</td>
                     <td class="num">{{ number_format($r->checked) }}</td><td class="num">{{ number_format($r->fixed) }}</td><td class="num">{{ number_format($r->flagged) }}</td>
                     <td>@include('backend.partials.pill', $r->status === 'ok' ? ['text' => 'OK', 'tone' => 'ok'] : ['text' => 'Failed', 'tone' => 'bad'])</td></tr>
-            @empty <tr><td colspan="7" class="empty">No runs yet.</td></tr> @endforelse</tbody>
+            @empty <tr><td colspan="8" class="empty">No runs yet.</td></tr> @endforelse</tbody>
         </table></div>
     </div>
 @endsection

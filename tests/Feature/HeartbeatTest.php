@@ -115,4 +115,12 @@ class HeartbeatTest extends TestCase
         $this->actingAs(User::where('email', 'csr@example.com')->firstOrFail(), 'web')->post(route('sheriff.heartbeat.control', ['cache', 'clear']))->assertRedirect();
         $this->assertSame(5, HeartbeatAction::where('created_at', '>', now()->subMinute())->count());
     }
+
+    public function test_each_cron_run_has_its_own_page(): void
+    {
+        $this->actingAs(User::where('email', 'admin@example.com')->firstOrFail(), 'web');
+        $run = JobRun::latest('started_at')->latest('id')->firstOrFail();
+        $this->get(route('sheriff.jobs.index'))->assertOk()->assertSee('#'.$run->id)->assertSee(route('sheriff.jobs.show', $run), false);
+        $this->get(route('sheriff.jobs.show', $run))->assertOk()->assertSee('Run #'.$run->id)->assertSee('Run Details')->assertSee('Other Runs of This Job');
+    }
 }

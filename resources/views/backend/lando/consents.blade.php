@@ -43,14 +43,14 @@
         </form>
         <div id="consent-results">
             <div class="table-wrap"><table class="table">
-                <thead><tr><th>When</th><th>Who</th><th>Choice</th><th>Cookies Allowed</th><th>Page</th><th>IP</th><th>Visitor</th></tr></thead>
+                <thead><tr><th>ID</th><th>When</th><th>Who</th><th>Choice</th><th>Cookies Allowed</th><th>Page</th><th>IP</th><th>Visitor</th></tr></thead>
                 <tbody>@forelse ($consents as $k)
-                    <tr class="click" data-href="{{ route('lando.consents.show', $k) }}"><td class="nowrap"><a href="{{ route('lando.consents.show', $k) }}">{{ $k->created_at->format('n/j/Y g:i A') }}</a></td>
+                    <tr class="click" data-href="{{ route('lando.consents.show', $k) }}"><td class="nowrap"><a href="{{ route('lando.consents.show', $k) }}"><b>#{{ $k->id }}</b></a></td><td class="nowrap">{{ $k->created_at->format('n/j/Y g:i A') }}</td>
                         <td>@if ($k->customer)@include('backend.partials.account-link', ['c' => $k->customer])<br><span class="help">{{ $k->customer->name }}</span>@elseif ($k->user){{ $k->user->name }}<br><span class="help">Employee</span>@else<span class="muted">Anonymous</span>@endif</td>
                         <td>@include('backend.partials.pill', ['text' => $k->label(), 'tone' => ['all' => 'ok', 'necessary' => 'warn', 'custom' => 'info'][$k->choice] ?? ''])</td>
                         <td class="wrap" style="min-width:220px"><span class="cookie-list">@foreach ($k->cookies() as $ck)<span class="mono cookie-{{ \App\Models\CookieConsent::COOKIES[$ck][0] }}">{{ $ck }}</span>@endforeach</span></td>
                         <td class="mono">{{ $k->page ?? '—' }}</td><td class="mono">{{ $k->ip }}</td><td class="mono help">{{ \Illuminate\Support\Str::limit($k->visitor, 10, '…') }}</td></tr>
-                @empty <tr><td colspan="7" class="empty">No choices match.</td></tr> @endforelse</tbody>
+                @empty <tr><td colspan="8" class="empty">No choices match.</td></tr> @endforelse</tbody>
             </table></div>
             @include('backend.partials.pager', ['p' => $consents])
         </div>
