@@ -70,10 +70,10 @@
             @empty <tr><td colspan="4" class="empty">This is the only choice from this browser{{ $k->customer ? ' or customer' : '' }}.</td></tr> @endforelse</tbody>
         </table></div></div>
         <div class="panel"><div class="panel-head"><h2>Pages Visited</h2><span class="muted">from this browser</span></div><div class="table-wrap"><table data-page="10">
-            <thead><tr><th>When</th><th>Page</th><th>IP</th></tr></thead>
+            <thead><tr><th>ID</th><th>When</th><th>Page</th><th>IP</th></tr></thead>
             <tbody>@forelse ($visits as $v)
-                <tr><td class="nowrap">{{ $v->created_at->format('n/j/Y g:i A') }}</td><td class="mono">/{{ ltrim($v->path === '/' ? '' : $v->path, '/') }}</td><td class="mono">{{ $v->ip }}</td></tr>
-            @empty <tr><td colspan="3" class="empty">No visits recorded from this browser.</td></tr> @endforelse</tbody>
+                @php $u = \App\Support\Records::url('site_visit', $v->id); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $v->id }}</b></a></td><td class="nowrap">{{ $v->created_at->format('n/j/Y g:i A') }}</td><td class="mono">/{{ ltrim($v->path === '/' ? '' : $v->path, '/') }}</td><td class="mono">{{ $v->ip }}</td></tr>
+            @empty <tr><td colspan="4" class="empty">No visits recorded from this browser.</td></tr> @endforelse</tbody>
         </table></div></div>
     </div>
 @endsection

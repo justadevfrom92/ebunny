@@ -19,9 +19,9 @@
     @if ($member)
         <div class="grid-2" style="grid-template-columns:1fr 340px;align-items:start">
             <div class="panel"><div class="panel-head"><h2>{{ $member->name }} · @include('backend.partials.account-link', ['c' => $member])</h2><span><b>{{ number_format($member->stars) }}</b> stars</span></div><div class="table-wrap"><table>
-                <thead><tr><th>Date</th><th>Reason</th><th class="num">Stars</th></tr></thead>
-                <tbody>@forelse ($history as $s)<tr @class(['drawing-row' => $s->drawing])><td>{{ $s->at->format('n/j/Y') }}</td><td>{{ $s->reason }}@if ($s->drawing) <span class="pill info">Drawing</span>@endif</td><td class="num">@if ($s->drawing)—@else{{ $s->stars >= 0 ? '+' : '' }}{{ $s->stars }}@endif</td></tr>
-                @empty <tr><td colspan="3" class="empty">No stars yet.</td></tr> @endforelse</tbody>
+                <thead><tr><th>ID</th><th>Date</th><th>Reason</th><th class="num">Stars</th></tr></thead>
+                <tbody>@forelse ($history as $s)@php $u = \App\Support\Records::url($s->record, $s->id); @endphp<tr @class(['click', 'drawing-row' => $s->drawing]) data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $s->id }}</b></a></td><td>{{ $s->at->format('n/j/Y') }}</td><td>{{ $s->reason }}@if ($s->drawing) <span class="pill info">Drawing</span>@endif</td><td class="num">@if ($s->drawing)—@else{{ $s->stars >= 0 ? '+' : '' }}{{ $s->stars }}@endif</td></tr>
+                @empty <tr><td colspan="4" class="empty">No stars yet.</td></tr> @endforelse</tbody>
             </table></div></div>
             <form method="post" action="{{ route('bounty.adjust', $member) }}" class="panel">@csrf
                 <div class="panel-head"><h2>Adjust Stars</h2></div>

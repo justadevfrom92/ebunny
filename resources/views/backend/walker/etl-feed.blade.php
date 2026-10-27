@@ -29,12 +29,12 @@
             @foreach (['OK', 'Warning', 'Failed'] as $s)<a class="chip-link {{ ($f['status'] ?? null) === $s ? 'on' : '' }}" href="{{ route('walker.etl.show', [$key, 'status' => $s]) }}">{{ $s }} <span class="help">{{ $counts[$s] ?? 0 }}</span></a>@endforeach
         </div></div>
         <div class="table-wrap"><table>
-            <thead><tr><th>Started</th><th>Status</th><th>Result</th><th class="num">Duration</th></tr></thead>
+            <thead><tr><th>ID</th><th>Started</th><th>Status</th><th>Result</th><th class="num">Duration</th></tr></thead>
             <tbody>@forelse ($runs as $r)
-                <tr><td class="nowrap">{{ $r->started_at->format('n/j/Y g:i A') }}</td>
+                @php $u = \App\Support\Records::url('job_run', $r->id); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $r->id }}</b></a></td><td class="nowrap">{{ $r->started_at->format('n/j/Y g:i A') }}</td>
                     <td>@include('backend.partials.pill', ['text' => $r->status, 'tone' => ['OK' => 'ok', 'Warning' => 'warn', 'Failed' => 'bad'][$r->status] ?? ''])</td>
                     <td>{{ $r->message }}</td><td class="num nowrap">{{ $r->duration_ms !== null ? number_format($r->duration_ms / 1000, 1).'s' : '—' }}</td></tr>
-            @empty <tr><td colspan="4" class="empty">No runs{{ ! empty($f['status']) ? ' with status '.$f['status'] : '' }}.</td></tr> @endforelse</tbody>
+            @empty <tr><td colspan="5" class="empty">No runs{{ ! empty($f['status']) ? ' with status '.$f['status'] : '' }}.</td></tr> @endforelse</tbody>
         </table></div>
         @include('backend.partials.pager', ['p' => $runs])
     </div>

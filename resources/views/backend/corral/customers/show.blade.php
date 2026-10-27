@@ -140,10 +140,10 @@
                 <a class="btn sm" href="{{ route('corral.customers.stars', $c) }}">Spend Stars</a>
             </div>
             <h3>Rewards History</h3>
-            <div class="table-wrap"><table><thead><tr><th>Date</th><th>Reward</th><th class="num">Stars</th><th class="num">Net</th></tr></thead><tbody>
+            <div class="table-wrap"><table><thead><tr><th>ID</th><th>Date</th><th>Reward</th><th class="num">Stars</th><th class="num">Net</th></tr></thead><tbody>
                 @forelse ($rewards->take(12) as $r)
-                    <tr><td>{{ $r['date']->format('n/j/Y') }}</td><td>{{ $r['reason'] }}</td><td class="num">{{ $r['stars'] >= 0 ? '+' : '' }}{{ rtrim(rtrim(number_format($r['stars'], 1), '0'), '.') }}</td><td class="num">{{ number_format($r['net'], 1) }}</td></tr>
-                @empty <tr><td colspan="4" class="empty">No stars yet.</td></tr> @endforelse
+                    @php $u = \App\Support\Records::url('star_entry', $r['id']); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $r['id'] }}</b></a></td><td>{{ $r['date']->format('n/j/Y') }}</td><td>{{ $r['reason'] }}</td><td class="num">{{ $r['stars'] >= 0 ? '+' : '' }}{{ rtrim(rtrim(number_format($r['stars'], 1), '0'), '.') }}</td><td class="num">{{ number_format($r['net'], 1) }}</td></tr>
+                @empty <tr><td colspan="5" class="empty">No stars yet.</td></tr> @endforelse
             </tbody></table></div>
         </div></div>
     </div>
@@ -214,13 +214,13 @@
         </form>
     </div>
         <div class="table-wrap"><table data-page="10">
-            <thead><tr><th>Date</th><th>By</th><th>Category / Action</th><th>Priority</th><th>Note</th></tr></thead>
+            <thead><tr><th>ID</th><th>Date</th><th>By</th><th>Category / Action</th><th>Priority</th><th>Note</th></tr></thead>
             <tbody>@forelse ($c->notes as $n)
-                <tr><td class="nowrap">{{ $n->created_at->format('n/j/Y g:i A') }}</td><td>{{ $n->author ?? 'System' }}</td>
+                @php $u = route('corral.items.show', ['id' => $n->id, 'model' => 'ItemNote_model']); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $n->id }}</b></a></td><td class="nowrap">{{ $n->created_at->format('n/j/Y g:i A') }}</td><td>{{ $n->author ?? 'System' }}</td>
                     <td>{{ $n->category ?? '—' }}@if ($n->action)<div class="help">{{ $n->action }}</div>@endif</td>
                     <td>@if ($n->priority)@include('backend.partials.pill', ['text' => $n->priority, 'tone' => ['High' => 'bad', 'Medium' => 'warn'][$n->priority] ?? ''])@else — @endif</td>
                     <td class="wrap" style="min-width:280px">{{ $n->body }}</td></tr>
-            @empty <tr><td colspan="5" class="empty">No notes yet.</td></tr> @endforelse</tbody>
+            @empty <tr><td colspan="6" class="empty">No notes yet.</td></tr> @endforelse</tbody>
         </table></div>
     </div>
 
@@ -251,9 +251,9 @@
     <div id="bills" style="display:flex;flex-direction:column;gap:20px">
         <div class="grid-2">
             <div class="panel"><div class="panel-head"><h2>Billing Summary</h2></div><div class="table-wrap"><table data-page="10">
-                <thead><tr><th>Date</th><th class="num">Billed</th><th class="num">Paid</th><th>Notes</th></tr></thead>
-                <tbody>@forelse ($summary as $s)<tr><td>{{ $s['date']->format('n/j/Y') }}</td><td class="num">{{ $s['billed'] !== null ? $money($s['billed']) : '-' }}</td><td class="num">{{ $s['paid'] !== null ? $money($s['paid']) : '-' }}</td><td class="mono">{{ $s['note'] }}</td></tr>
-                @empty <tr><td colspan="4" class="empty">No billing yet{{ $c->bills->isEmpty() ? ': service hasn\'t started, the first bill comes about 30 days after the switch' : '' }}.</td></tr> @endforelse</tbody>
+                <thead><tr><th>ID</th><th>Date</th><th class="num">Billed</th><th class="num">Paid</th><th>Notes</th></tr></thead>
+                <tbody>@forelse ($summary as $s)@php $u = \App\Support\Records::url($s['type'], $s['id']); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $s['id'] }}</b></a><div class="help">{{ $s['type'] === 'bill' ? 'Bill' : 'Payment' }}</div></td><td>{{ $s['date']->format('n/j/Y') }}</td><td class="num">{{ $s['billed'] !== null ? $money($s['billed']) : '-' }}</td><td class="num">{{ $s['paid'] !== null ? $money($s['paid']) : '-' }}</td><td class="mono">{{ $s['note'] }}</td></tr>
+                @empty <tr><td colspan="5" class="empty">No billing yet{{ $c->bills->isEmpty() ? ': service hasn\'t started, the first bill comes about 30 days after the switch' : '' }}.</td></tr> @endforelse</tbody>
             </table></div></div>
             <div class="panel"><div class="panel-head"><h2>Usage History</h2><span class="muted">kWh</span></div><div class="table-wrap"><table>
                 <thead><tr><th>Year</th>@foreach (range(1, 12) as $m)<th class="num">{{ date('M', mktime(0, 0, 0, $m, 1)) }}</th>@endforeach</tr></thead>
@@ -307,9 +307,9 @@
 
     {{-- Plans & Addresses --}}
     <div class="panel" id="plans"><div class="panel-head"><h2>Plan Change Log</h2></div><div class="table-wrap"><table data-page="10">
-        <thead><tr><th>Date Ordered</th><th>Contract Start</th><th>Contract End</th><th>Actual Term</th><th>Rate</th><th>Energy Charge</th><th>Plan</th><th></th></tr></thead>
+        <thead><tr><th>ID</th><th>Date Ordered</th><th>Contract Start</th><th>Contract End</th><th>Actual Term</th><th>Rate</th><th>Energy Charge</th><th>Plan</th><th></th></tr></thead>
         <tbody>@forelse ($c->planTerms as $t)
-            <tr><td>{{ $t->ordered_at->format('Y-m-d H:i:s') }}</td><td>{{ $t->contract_start?->format('n/j/Y') ?? '—' }}</td><td>{{ $t->contract_end?->format('n/j/Y') ?? '—' }}</td>
+            @php $u = \App\Support\Records::url('plan_term', $t->id); @endphp<tr><td class="nowrap"><a href="{{ $u }}"><b>#{{ $t->id }}</b></a></td><td>{{ $t->ordered_at->format('Y-m-d H:i:s') }}</td><td>{{ $t->contract_start?->format('n/j/Y') ?? '—' }}</td><td>{{ $t->contract_end?->format('n/j/Y') ?? '—' }}</td>
                 <td>@include('backend.partials.pill', ['text' => $t->status === 'current' && $t->contract_start ? 'current - '.(int) $t->contract_start->diffInMonths(today()).' months in' : $t->status, 'tone' => ['current' => 'ok', 'ended' => ''][$t->status] ?? 'info'])</td>
                 <td>{{ number_format($t->rate_2000, 1) }} ¢ @ 2,000</td><td class="mono">{{ number_format($t->energy_charge, 8) }}</td>
                 <td>{{ $t->plan?->name }}<br><span class="mono help">{{ $t->rate_class }}</span></td>
@@ -317,17 +317,17 @@
                     <select name="do" aria-label="Plan action" data-reveal-when="edit-rate"><option value="welcome">Send Welcome Packet</option><option value="new-welcome">Send New Welcome Packet</option>@if ($t->status !== 'current')<option value="activate">Activate</option>@endif<option value="edit-rate">Edit Rate</option></select>
                     <input name="energy_charge" type="number" step="0.00000001" min="0" value="{{ $t->energy_charge }}" aria-label="Energy charge" style="width:12ch" hidden>
                     <button class="btn sm">Go</button></form></td></tr>
-        @empty <tr><td colspan="8" class="empty">No plans.</td></tr> @endforelse</tbody>
+        @empty <tr><td colspan="9" class="empty">No plans.</td></tr> @endforelse</tbody>
     </table></div></div>
 
     <div class="panel"><div class="panel-head"><h2>Address Change Log</h2></div><div class="table-wrap"><table data-page="10">
-        <thead><tr><th>Date Ordered</th><th>Service Start</th><th>Service End</th><th>Service Length</th><th>ESIID</th><th>Address</th><th><span class="sr-only">Change dates</span></th></tr></thead>
+        <thead><tr><th>ID</th><th>Date Ordered</th><th>Service Start</th><th>Service End</th><th>Service Length</th><th>ESIID</th><th>Address</th><th><span class="sr-only">Change dates</span></th></tr></thead>
         <tbody>@foreach ($c->addresses as $a)
-            <tr><td class="nowrap">{{ $a->ordered_at->format('n/j/Y g:i A') }}</td><td>{{ $a->service_start?->format('n/j/Y') ?? '—' }}</td><td>{{ $a->service_end?->format('n/j/Y') ?? '—' }}</td>
+            @php $u = \App\Support\Records::url('service_address', $a->id); @endphp<tr><td class="nowrap"><a href="{{ $u }}"><b>#{{ $a->id }}</b></a></td><td class="nowrap">{{ $a->ordered_at->format('n/j/Y g:i A') }}</td><td>{{ $a->service_start?->format('n/j/Y') ?? '—' }}</td><td>{{ $a->service_end?->format('n/j/Y') ?? '—' }}</td>
                 <td>{{ $a->service_start ? ($a->service_end ? (int) $a->service_start->diffInMonths($a->service_end).' months' : 'current - '.(int) $a->service_start->diffInMonths(today()).' months in') : 'not started' }}</td>
                 <td class="mono">{{ $a->esiid }}</td><td>{{ strtoupper($a->street) }}<br>{{ $a->city }}, TX {{ $a->zip }}</td>
                 <td class="actions"><button type="button" class="btn sm ghost" data-toggle-row aria-expanded="false">Change Dates</button></td></tr>
-            <tr class="edit-row" data-attached hidden><td colspan="7">
+            <tr class="edit-row" data-attached hidden><td colspan="8">
                 <form method="post" action="{{ route('corral.addresses.update', $a) }}" class="date-edit">@csrf @method('patch')
                     <div class="field"><label for="ms{{ $a->id }}">Service start (move-in)</label><input id="ms{{ $a->id }}" type="date" name="service_start" value="{{ $a->service_start?->toDateString() }}"></div>
                     <div class="field"><label for="me{{ $a->id }}">Service end (move-out)</label><input id="me{{ $a->id }}" type="date" name="service_end" value="{{ $a->service_end?->toDateString() }}"></div>
@@ -338,13 +338,13 @@
 
     {{-- ERCOT --}}
     <div class="panel" id="ercot"><div class="panel-head"><h2>ERCOT Transactions</h2><span class="mono muted">{{ strtoupper($c->address) }}, {{ strtoupper($c->city) }} {{ $c->zip }} · {{ $c->esiid }}</span></div><div class="table-wrap"><table data-page="10">
-        <thead><tr><th>Date Saved</th><th>Trans Date</th><th>Purpose</th><th>Scheduled</th><th>Trans Type</th><th>Tracking</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>ID</th><th>Date Saved</th><th>Trans Date</th><th>Purpose</th><th>Scheduled</th><th>Trans Type</th><th>Tracking</th><th>Status</th><th></th></tr></thead>
         <tbody>@forelse ($c->ercotTransactions as $t)
-            <tr><td>{{ $t->created_at->format('Y-m-d H:i:s') }}</td><td>{{ $t->trans_date->format('n/j/Y') }}</td><td>{{ $t->purpose }}</td><td>{{ $t->scheduled_on?->format('n/j/Y') ?? '—' }}</td>
+            @php $u = \App\Support\Records::url('ercot_transaction', $t->id); @endphp<tr><td class="nowrap"><a href="{{ $u }}"><b>#{{ $t->id }}</b></a></td><td>{{ $t->created_at->format('Y-m-d H:i:s') }}</td><td>{{ $t->trans_date->format('n/j/Y') }}</td><td>{{ $t->purpose }}</td><td>{{ $t->scheduled_on?->format('n/j/Y') ?? '—' }}</td>
                 <td><span class="mono">{{ $t->trans_type }}</span> {{ $t->label }}</td><td class="mono">{{ $t->tracking ?? '—' }}</td><td>{{ $t->status }}</td>
                 <td>@if ($t->status === 'linked')<form method="post" action="{{ route('corral.ercot.action', $t) }}" class="form-row">@csrf
                     <select name="do" aria-label="Transaction action"><option value="unlink">Unlink</option>@if ($t->purpose === 'request')<option value="cancel">Cancel</option>@endif</select><button class="btn sm">Go</button></form>@endif</td></tr>
-        @empty <tr><td colspan="8" class="empty">No ERCOT transactions.</td></tr> @endforelse</tbody>
+        @empty <tr><td colspan="9" class="empty">No ERCOT transactions.</td></tr> @endforelse</tbody>
     </table></div></div>
 
     {{-- TECH --}}

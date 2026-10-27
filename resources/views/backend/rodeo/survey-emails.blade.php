@@ -26,14 +26,14 @@
     </div>
 
     <div class="panel"><div class="panel-head"><h2>Sent</h2><span class="muted">newest first</span></div><div class="table-wrap"><table>
-        <thead><tr><th>Sent</th><th>Customer</th><th>Email</th><th>Status</th><th>Answered</th></tr></thead>
+        <thead><tr><th>ID</th><th>Sent</th><th>Customer</th><th>Email</th><th>Status</th><th>Answered</th></tr></thead>
         <tbody>@forelse ($sent as $l)
             @php $done = isset($answered[$l->customer_id.'|'.($slugs[$l->template] ?? '')]); @endphp
-            <tr><td class="nowrap">{{ ($l->sent_at ?? $l->created_at)->format('n/j/Y g:i A') }}</td>
+            @php $u = route('rodeo.emails.sent.show', $l); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $l->id }}</b></a></td><td class="nowrap">{{ ($l->sent_at ?? $l->created_at)->format('n/j/Y g:i A') }}</td>
                 <td>@if ($l->customer)@include('backend.partials.account-link', ['c' => $l->customer]) {{ $l->customer->name }}<div class="help">{{ $l->customer->email }} · {{ $l->customer->status }}</div>@else — @endif</td>
                 <td>{{ $l->template === 'Survey - Farewell' ? 'Farewell Survey' : '90-Day Check-In' }}</td>
                 <td>@include('backend.partials.pill', ['text' => ucfirst($l->status), 'tone' => ['sent' => 'ok', 'queued' => 'info', 'not sent' => 'warn'][$l->status] ?? ''])@if ($l->opened_at)<div class="help">opened {{ $l->opened_at->diffForHumans() }}</div>@endif</td>
                 <td>{{ $done ? '✓ Yes' : '—' }}</td></tr>
-        @empty <tr><td colspan="5" class="empty">None sent yet.</td></tr> @endforelse</tbody>
+        @empty <tr><td colspan="6" class="empty">None sent yet.</td></tr> @endforelse</tbody>
     </table></div>@include('backend.partials.pager', ['p' => $sent])</div>
 @endsection

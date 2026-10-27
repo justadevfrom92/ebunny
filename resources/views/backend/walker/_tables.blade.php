@@ -5,10 +5,10 @@
             @if ($k === 'running' && $t['runs']->total())<span class="muted">updating live</span>@endif</div>
         <div class="table-wrap"><table style="table-layout:fixed;min-width:1100px">
             <colgroup><col style="width:60px"><col style="width:20%"><col><col style="width:120px"><col style="width:72px"><col style="width:150px"><col style="width:80px"><col style="width:62px"><col style="width:112px"><col style="width:92px"></colgroup>
-            <thead><tr><th class="num">Run</th><th>Report</th><th>Model</th><th>Requested By</th><th>From</th><th>{{ $k === 'done' ? 'Finished' : 'Started' }}</th><th class="num">Duration</th><th class="num">Rows</th><th>Status</th><th><span class="sr-only">Download or rerun</span></th></tr></thead>
+            <thead><tr><th>ID</th><th>Report</th><th>Model</th><th>Requested By</th><th>From</th><th>{{ $k === 'done' ? 'Finished' : 'Started' }}</th><th class="num">Duration</th><th class="num">Rows</th><th>Status</th><th><span class="sr-only">Download or rerun</span></th></tr></thead>
             <tbody>@forelse ($t['runs'] as $run)
                 <tr class="click" data-href="{{ route('walker.runs.show', $run) }}">
-                    <td class="num"><a href="{{ route('walker.runs.show', $run) }}">#{{ $run->id }}</a></td>
+                    <td class="nowrap"><a href="{{ route('walker.runs.show', $run) }}"><b>#{{ $run->id }}</b></a></td>
                     <td style="white-space:normal;overflow-wrap:anywhere"><b>{{ $run->title ?? \Illuminate\Support\Str::headline($run->report) }}</b>@if ($k === 'problem' && $run->error)<div class="help">{{ \Illuminate\Support\Str::limit($run->error, 90) }}</div>@endif</td>
                     <td class="mono" style="white-space:normal;overflow-wrap:anywhere">{{ $run->model ?? '—' }}</td>
                     <td>{{ $run->user?->name ?? 'System' }}</td>

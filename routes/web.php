@@ -600,6 +600,15 @@ Route::prefix('admin')->group(function () {
     });
 });
 
+// Record pages for table rows without a page of their own (config/records.php), inside each app
+Route::prefix('admin')->middleware(['auth:web', CacheAdminTables::class])->group(function () {
+    foreach (array_keys(config('admin.apps')) as $app) {
+        Route::prefix($app)->name($app.'.')->middleware('app:'.$app)->group(function () {
+            Route::get('records/{type}/{id}', [Backend\RecordController::class, 'show'])->where(['type' => '[a-z_]+', 'id' => '[0-9]+'])->name('records.show');
+        });
+    }
+});
+
 /*
 |--------------------------------------------------------------------------
 | Website pages built in Lando

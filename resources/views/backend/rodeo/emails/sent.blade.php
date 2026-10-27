@@ -19,14 +19,15 @@
         </aside>
         <div class="search-main">
             <div class="panel"><div class="table-wrap"><table class="table">
-                <thead><tr><th>Sent</th><th>Account</th><th>Template</th><th>Status</th></tr></thead>
+                <thead><tr><th>ID</th><th>Sent</th><th>Account</th><th>Template</th><th>Status</th></tr></thead>
                 <tbody>@forelse ($emails as $e)
                     <tr class="click" data-href="{{ route('rodeo.emails.sent.show', $e) }}">
+                        <td class="nowrap"><a href="{{ route('rodeo.emails.sent.show', $e) }}"><b>#{{ $e->id }}</b></a></td>
                         <td class="nowrap">{{ ($e->sent_at ?? $e->created_at)->format('n/j/Y g:i A') }}</td>
                         <td>@if ($e->customer)<a class="mono" href="{{ route('rodeo.emails.sent', ['account' => $e->customer->account]) }}" title="Every email to this account">{{ $e->customer->account }}</a><div class="muted">{{ $e->customer->name }}</div><div class="muted" style="font-size:.78rem">{{ $e->customer->email }}</div>@endif</td>
                         <td class="wrap"><a href="{{ route('rodeo.emails.sent.show', $e) }}">{{ $e->template }}</a><div class="muted">{{ $e->campaign ? 'Campaign: '.$e->campaign->name : ($e->user?->name ?? 'System') }}</div></td>
                         <td>@include('backend.rodeo.emails._stage', ['e' => $e])@if ($e->opened_at)<div class="muted" style="font-size:.78rem">opened {{ $e->opened_at->format('n/j g:i A') }}</div>@endif @if ($e->clicked_at)<div class="muted" style="font-size:.78rem">clicked {{ $e->clicked_at->format('n/j g:i A') }}</div>@endif</td></tr>
-                @empty <tr><td colspan="4" class="empty">No emails match.</td></tr> @endforelse</tbody>
+                @empty <tr><td colspan="5" class="empty">No emails match.</td></tr> @endforelse</tbody>
             </table></div>
             @include('backend.partials.pager', ['p' => $emails])</div>
         </div>

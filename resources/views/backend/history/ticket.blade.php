@@ -70,11 +70,11 @@
 
     <div class="panel"><div class="panel-head"><h2>Process Logs</h2></div>
         <div class="table-wrap"><table class="hist">
-            <thead><tr><th>Entered</th><th>Queue</th><th>Left</th><th>Note</th></tr></thead>
+            <thead><tr><th>ID</th><th>Entered</th><th>Queue</th><th>Left</th><th>Note</th></tr></thead>
             <tbody>@forelse ($processLogs as $p)
-                <tr><td>{{ $p->entered_at->format('n/j/Y h:i:s A') }}</td><td class="mono">queuelog_{{ \Illuminate\Support\Str::snake(\Illuminate\Support\Str::after($p->queue, 'Queue')) }}s</td>
+                @php $u = \App\Support\Records::url('queue_log', $p->id); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $p->id }}</b></a></td><td>{{ $p->entered_at->format('n/j/Y h:i:s A') }}</td><td class="mono">queuelog_{{ \Illuminate\Support\Str::snake(\Illuminate\Support\Str::after($p->queue, 'Queue')) }}s</td>
                     <td>{{ $p->exited_at?->format('n/j/Y h:i:s A') ?? 'current' }}</td><td>{{ $p->note }}</td></tr>
-            @empty <tr><td colspan="4" class="empty">No process logs.</td></tr> @endforelse</tbody>
+            @empty <tr><td colspan="5" class="empty">No process logs.</td></tr> @endforelse</tbody>
         </table></div>
     </div>
 

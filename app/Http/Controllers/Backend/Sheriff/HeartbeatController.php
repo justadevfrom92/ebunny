@@ -93,7 +93,7 @@ class HeartbeatController extends Controller
         abort_unless(isset(Health::CHECKS[$key]), 404);
         $now = Health::checks()[$key];
         $since = now()->subDay();
-        $beats = Heartbeat::where('checked_at', '>=', $since)->orderBy('checked_at')->get(['checked_at', 'results']);
+        $beats = Heartbeat::where('checked_at', '>=', $since)->orderBy('checked_at')->get(['id', 'checked_at', 'results']);
         $used = HeartbeatAction::with('user')->where('check_key', $key)->where('created_at', '>=', $since)->get();
         $blocks = collect(range(95, 0))->map(function ($i) use ($beats, $key, $used) {
             $from = now()->subMinutes(($i + 1) * 15);
@@ -122,7 +122,7 @@ class HeartbeatController extends Controller
         foreach ($beats as $b) {
             $r = $b->results[$key] ?? ['ok', ''];
             if ($prev === null || $r[0] !== $prev) {
-                $changes[] = ['at' => $b->checked_at, 'from' => $prev, 'to' => $r[0], 'detail' => $r[1] ?? ''];
+                $changes[] = ['id' => $b->id, 'at' => $b->checked_at, 'from' => $prev, 'to' => $r[0], 'detail' => $r[1] ?? ''];
             }
             $prev = $r[0];
         }

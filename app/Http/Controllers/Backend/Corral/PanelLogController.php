@@ -22,9 +22,9 @@ class PanelLogController extends Controller
     /** Credits, debits and payments on the account, newest first: [at, type, amount, description, status, by]. */
     public static function balanceRows(Customer $c): Collection
     {
-        $ledger = $c->ledgerEntries()->with('user')->get()->map(fn ($e) => ['at' => $e->created_at, 'type' => ucfirst($e->kind), 'amount' => $e->kind === 'credit' ? -abs($e->amount) : abs($e->amount),
+        $ledger = $c->ledgerEntries()->with('user')->get()->map(fn ($e) => ['record' => 'ledger_entry', 'id' => $e->id, 'at' => $e->created_at, 'type' => ucfirst($e->kind), 'amount' => $e->kind === 'credit' ? -abs($e->amount) : abs($e->amount),
             'description' => $e->description, 'status' => ucfirst($e->status), 'by' => $e->user?->name]);
-        $payments = $c->payments()->get()->map(fn ($p) => ['at' => $p->paid_on?->copy()->setTimeFromTimeString($p->paid_time ?? '00:00') ?? $p->created_at, 'type' => 'Payment',
+        $payments = $c->payments()->get()->map(fn ($p) => ['record' => 'payment', 'id' => $p->id, 'at' => $p->paid_on?->copy()->setTimeFromTimeString($p->paid_time ?? '00:00') ?? $p->created_at, 'type' => 'Payment',
             'amount' => -abs($p->amount), 'description' => trim(($p->method ?? '').' '.($p->reference ? '· '.$p->reference : '')), 'status' => $p->status, 'by' => $p->source]);
 
         return $ledger->concat($payments)->sortByDesc('at')->values();

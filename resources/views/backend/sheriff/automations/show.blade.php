@@ -34,14 +34,14 @@
     <div class="panel">
         <div class="panel-head"><h2>Runs</h2><span class="muted">{{ number_format($runs->total()) }}</span></div>
         <div class="table-wrap"><table class="table">
-            <thead><tr><th>Started</th><th>What It Did</th><th class="num">Checked</th><th class="num">Fixed</th><th class="num">For a Person</th><th class="num">Length</th><th>Status</th></tr></thead>
+            <thead><tr><th>ID</th><th>Started</th><th>What It Did</th><th class="num">Checked</th><th class="num">Fixed</th><th class="num">For a Person</th><th class="num">Length</th><th>Status</th></tr></thead>
             <tbody>@forelse ($runs as $r)
-                <tr><td class="nowrap">{{ $r->started_at->format('n/j/Y g:i A') }}@if ($r->model && $r->ai_model_id !== $agent->ai_model_id)<div class="help">on {{ $r->model->name }}</div>@endif</td>
+                @php $u = \App\Support\Records::url('automation_run', $r->id); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $r->id }}</b></a></td><td class="nowrap">{{ $r->started_at->format('n/j/Y g:i A') }}@if ($r->model && $r->ai_model_id !== $agent->ai_model_id)<div class="help">on {{ $r->model->name }}</div>@endif</td>
                     <td style="white-space:normal">{{ $r->summary }}</td>
                     <td class="num">{{ number_format($r->checked) }}</td><td class="num">{{ number_format($r->fixed) }}</td><td class="num">{{ number_format($r->flagged) }}</td>
                     <td class="num">{{ $r->duration_sec }}s</td>
                     <td>@include('backend.partials.pill', $r->status === 'ok' ? ['text' => 'OK', 'tone' => 'ok'] : ['text' => 'Failed', 'tone' => 'bad'])</td></tr>
-            @empty <tr><td colspan="7" class="empty">Hasn't run yet. It runs on its schedule once it's on.</td></tr> @endforelse</tbody>
+            @empty <tr><td colspan="8" class="empty">Hasn't run yet. It runs on its schedule once it's on.</td></tr> @endforelse</tbody>
         </table></div>
         @include('backend.partials.pager', ['p' => $runs])
     </div>

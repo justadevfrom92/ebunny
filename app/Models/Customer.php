@@ -130,9 +130,9 @@ class Customer extends Authenticatable
     public function starHistory(?int $limit = null): Collection
     {
         $stars = $this->starEntries()->when($limit, fn ($q) => $q->limit($limit))->get()
-            ->map(fn ($s) => (object) ['at' => $s->created_at, 'reason' => $s->reason, 'stars' => $s->stars, 'drawing' => false]);
+            ->map(fn ($s) => (object) ['record' => 'star_entry', 'id' => $s->id, 'at' => $s->created_at, 'reason' => $s->reason, 'stars' => $s->stars, 'drawing' => false]);
         $entries = HistoryItem::where('customer_id', $this->id)->where('model', 'ItemDrawingEntry_model')->latest()->when($limit, fn ($q) => $q->limit($limit))->get()
-            ->map(fn ($h) => (object) ['at' => $h->created_at, 'reason' => 'Monthly drawing entry — '.$h->created_at->format('F Y'), 'stars' => null, 'drawing' => true]);
+            ->map(fn ($h) => (object) ['record' => 'history_item', 'id' => $h->id, 'at' => $h->created_at, 'reason' => 'Monthly drawing entry — '.$h->created_at->format('F Y'), 'stars' => null, 'drawing' => true]);
 
         return $stars->concat($entries)->sortByDesc(fn ($r) => $r->at->timestamp)->values()->when($limit, fn ($c) => $c->take($limit));
     }

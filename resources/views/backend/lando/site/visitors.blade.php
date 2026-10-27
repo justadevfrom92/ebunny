@@ -18,15 +18,15 @@
         </aside>
         <div class="search-main">
             <div class="panel"><div class="table-wrap"><table class="table">
-                <thead><tr><th>When</th><th>Page</th><th>Visitor</th><th>Status</th><th></th></tr></thead>
+                <thead><tr><th>ID</th><th>When</th><th>Page</th><th>Visitor</th><th>Status</th><th></th></tr></thead>
                 <tbody>@forelse ($visits as $v)
                     @php $isBlocked = $blocked->first(fn ($b) => $b->matchesIp($v->ip)); $on = $v->seen_at >= now()->subMinutes(\App\Models\SiteVisit::ONLINE_MINUTES); @endphp
-                    <tr><td class="nowrap">{{ $v->created_at->format('n/j/Y g:i A') }}@if ($v->seen_at->gt($v->created_at->copy()->addMinute()))<div class="muted" style="font-size:.78rem">stayed {{ $v->created_at->diffForHumans($v->seen_at, true) }}</div>@endif</td>
+                    @php $u = \App\Support\Records::url('site_visit', $v->id); @endphp<tr><td class="nowrap"><a href="{{ $u }}"><b>#{{ $v->id }}</b></a></td><td class="nowrap">{{ $v->created_at->format('n/j/Y g:i A') }}@if ($v->seen_at->gt($v->created_at->copy()->addMinute()))<div class="muted" style="font-size:.78rem">stayed {{ $v->created_at->diffForHumans($v->seen_at, true) }}</div>@endif</td>
                         <td>@if ($v->page_id)<a href="{{ route('lando.pages.activity', $v->page_id) }}">{{ $v->path }}</a>@else{{ $v->path }}@endif @if ($v->referrer)<div class="muted" style="font-size:.78rem">from {{ parse_url($v->referrer, PHP_URL_HOST) ?: $v->referrer }}</div>@endif</td>
                         <td><span class="mono">{{ $v->ip }}</span>@if ($v->customer)<div>{{ $v->customer->name }} @include('backend.partials.account-link', ['c' => $v->customer])</div>@endif<div><a class="muted" style="font-size:.78rem" href="{{ route('lando.visitors', ['visitor' => $v->visitor]) }}">all pages this visitor saw</a></div></td>
                         <td>@if ($v->blocked)@include('backend.partials.pill', ['text' => 'Turned away', 'tone' => 'bad'])@elseif ($on)@include('backend.partials.pill', ['text' => 'On now', 'tone' => 'ok'])@else<span class="muted">—</span>@endif</td>
                         <td class="actions">@if ($isBlocked)<a class="btn sm ghost" href="{{ route('lando.blocked.ips.edit', $isBlocked) }}">Blocked</a>@else<a class="btn sm ghost" href="{{ route('lando.blocked.ips.create', ['value' => $v->ip]) }}">Block IP</a>@endif</td></tr>
-                @empty <tr><td colspan="5" class="empty">No visits match.</td></tr> @endforelse</tbody>
+                @empty <tr><td colspan="6" class="empty">No visits match.</td></tr> @endforelse</tbody>
             </table></div>
             @include('backend.partials.pager', ['p' => $visits])</div>
         </div>

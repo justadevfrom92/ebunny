@@ -28,9 +28,9 @@
     </div></div>
 
     <div class="panel"><div class="panel-head"><h2>Star History</h2></div><div class="table-wrap"><table>
-        <thead><tr><th>Date</th><th>Reason</th><th class="num">Stars</th></tr></thead>
+        <thead><tr><th>ID</th><th>Date</th><th>Reason</th><th class="num">Stars</th></tr></thead>
         <tbody>@forelse ($c->starHistory() as $s)
-            <tr @class(['drawing-row' => $s->drawing])><td>{{ $s->at->format('n/j/Y g:i A') }}</td><td>{{ $s->reason }}@if ($s->drawing) <span class="pill info">Drawing</span>@endif</td><td class="num">@if ($s->drawing)—@else{{ $s->stars >= 0 ? '+' : '' }}{{ $s->stars }}@endif</td></tr>
-        @empty <tr><td colspan="3" class="empty">No stars earned yet.</td></tr> @endforelse</tbody>
+            @php $u = \App\Support\Records::url($s->record, $s->id); @endphp<tr @class(['click', 'drawing-row' => $s->drawing]) data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $s->id }}</b></a></td><td>{{ $s->at->format('n/j/Y g:i A') }}</td><td>{{ $s->reason }}@if ($s->drawing) <span class="pill info">Drawing</span>@endif</td><td class="num">@if ($s->drawing)—@else{{ $s->stars >= 0 ? '+' : '' }}{{ $s->stars }}@endif</td></tr>
+        @empty <tr><td colspan="4" class="empty">No stars earned yet.</td></tr> @endforelse</tbody>
     </table></div></div>
 @endsection

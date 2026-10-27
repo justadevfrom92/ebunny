@@ -55,26 +55,26 @@ class TimelineController extends Controller
         return view('backend.sheriff.timeline', compact('f', 'page', 'counts', 'person', 'users', 'jobs', 'feeds', 'agents', 'days'));
     }
 
-    /** Every source as the same columns: at, kind, status (ok | warn | bad | running), title, detail, user_id, ref, seq. */
+    /** Every source as the same columns: at, kind, status (ok | warn | bad | running), title, detail, user_id, ref, seq (the row's ID), src (its table). */
     private function union(): Builder
     {
         $jobs = DB::table('job_runs')->selectRaw("started_at as at, case when command like 'etl:%' then 'etl' else 'job' end as kind,
             case status when 'OK' then 'ok' when 'Warning' then 'warn' when 'Skipped' then 'warn' when 'Running' then 'running' else 'bad' end as status,
-            command as title, message as detail, triggered_by as user_id, command as ref, id as seq");
+            command as title, message as detail, triggered_by as user_id, command as ref, id as seq, 'job_run' as src");
         $automations = DB::table('ai_automation_runs')->selectRaw("started_at as at, 'automation' as kind,
             case status when 'ok' then 'ok' when 'running' then 'running' when 'warning' then 'warn' else 'bad' end as status,
-            ai_agent_id as title, summary as detail, null as user_id, ai_agent_id as ref, id as seq");
+            ai_agent_id as title, summary as detail, null as user_id, ai_agent_id as ref, id as seq, 'automation_run' as src");
         $reports = DB::table('report_runs')->selectRaw("coalesce(finished_at, started_at, created_at) as at, 'report' as kind,
             case when status = 'done' then 'ok' when status = 'failed' then 'bad' else 'running' end as status,
             coalesce(title, report) as title, case when status = 'failed' then error when status = 'done' then rows || ' rows · ' || coalesce(format, 'xlsx') else status end as detail,
-            user_id, id as ref, id as seq");
+            user_id, id as ref, id as seq, 'report_run' as src");
         $api = DB::table('api_logs')->selectRaw("created_at as at, 'api' as kind,
             case when status >= 500 then 'bad' when status >= 400 then 'warn' else 'ok' end as status,
-            api || ' ' || action as title, 'HTTP ' || status || ' in ' || response_ms || ' ms' as detail, null as user_id, customer_id as ref, id as seq");
+            api || ' ' || action as title, 'HTTP ' || status || ' in ' || response_ms || ' ms' as detail, null as user_id, customer_id as ref, id as seq, 'api_log' as src");
         $tests = DB::table('integration_tests')->selectRaw("created_at as at, 'api' as kind, case when ok then 'ok' else 'bad' end as status,
-            'Test Connection: ' || integration as title, message as detail, user_id, integration as ref, id as seq");
+            'Test Connection: ' || integration as title, message as detail, user_id, integration as ref, id as seq, 'integration_test' as src");
         $people = DB::table('history_items')->whereNotNull('user_id')->selectRaw("created_at as at, 'user' as kind, 'ok' as status,
-            summary as title, \"group\" || ' · ' || action as detail, user_id, id as ref, id as seq");
+            summary as title, \"group\" || ' · ' || action as detail, user_id, id as ref, id as seq, 'history_item' as src");
 
         return $jobs->unionAll($automations)->unionAll($reports)->unionAll($api)->unionAll($tests)->unionAll($people);
     }

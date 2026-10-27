@@ -45,7 +45,7 @@
             @foreach ($statuses as $s => $l)<a class="chip-link {{ ($f['status'] ?? null) === $s ? 'on' : '' }}" href="{{ $url(['status' => $s]) }}">{{ $l }} · {{ number_format($counts[$s] ?? 0) }}</a>@endforeach
         </div></div>
         <div class="table-wrap"><table class="tl-table">
-            <thead><tr><th>When</th><th>What</th><th>Status</th><th>Event</th><th>Who</th></tr></thead>
+            <thead><tr><th>ID</th><th>When</th><th>What</th><th>Status</th><th>Event</th><th>Who</th></tr></thead>
             <tbody>@forelse ($page as $e)
                 @php
                     $title = match ($e->kind) {
@@ -54,8 +54,14 @@
                         'automation' => $agents[$e->title] ?? 'Automation #'.$e->title,
                         default => $e->title,
                     };
+                    $idUrl = match ($e->src) {
+                        'job_run' => route('sheriff.jobs.show', $e->seq),
+                        'report_run' => route('admin.files.show', $e->seq),
+                        'history_item' => route('sheriff.history.show', $e->seq),
+                        default => \App\Support\Records::url($e->src, $e->seq),
+                    };
                     $link = match ($e->kind) {
-                        'job' => route('sheriff.jobs.index'),
+                        'job', 'etl' => $idUrl,
                         'automation' => $e->ref ? route('sheriff.automations.show', $e->ref) : null,
                         'report' => route('admin.files.show', $e->ref),
                         'user' => route('sheriff.history.show', $e->ref),
@@ -63,14 +69,15 @@
                         default => null,
                     };
                 @endphp
-                <tr @if ($link) class="click" data-href="{{ $link }}" @endif>
+                <tr class="click" data-href="{{ $link ?? $idUrl }}">
+                    <td class="nowrap"><a href="{{ $idUrl }}"><b>#{{ $e->seq }}</b></a></td>
                     <td class="nowrap">{{ \Illuminate\Support\Carbon::parse($e->at)->format('n/j/Y g:i:s A') }}</td>
                     <td class="nowrap">{{ $kindLabel[$e->kind] ?? $e->kind }}</td>
                     <td>@include('backend.partials.pill', ['text' => ['ok' => 'Worked', 'warn' => 'Warning', 'bad' => 'Error', 'running' => 'Running'][$e->status] ?? $e->status, 'tone' => $tone[$e->status] ?? ''])</td>
                     <td class="wrap">@if ($link)<a href="{{ $link }}"><b>{{ $title }}</b></a>@else<b>{{ $title }}</b>@endif @if ($e->detail)<div class="help">{{ \Illuminate\Support\Str::limit($e->detail, 160) }}</div>@endif</td>
                     <td class="nowrap">@if ($e->user_id && isset($users[$e->user_id]))<a href="{{ route('sheriff.timeline', ['user' => $e->user_id]) }}">{{ $users[$e->user_id] }}</a>@else<span class="help">System</span>@endif</td>
                 </tr>
-            @empty <tr><td colspan="5" class="empty">Nothing matches. Try fewer filters.</td></tr> @endforelse</tbody>
+            @empty <tr><td colspan="6" class="empty">Nothing matches. Try fewer filters.</td></tr> @endforelse</tbody>
         </table></div>
         @include('backend.partials.pager', ['p' => $page])
     </div>

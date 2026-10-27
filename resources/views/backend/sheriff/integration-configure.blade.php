@@ -42,12 +42,12 @@
         </div>
 
         <div class="panel"><div class="panel-head"><h2>Recent Tests</h2></div><div class="table-wrap"><table>
-            <thead><tr><th>When</th><th>By</th><th>Result</th><th>Details</th><th class="num">Time</th></tr></thead>
+            <thead><tr><th>ID</th><th>When</th><th>By</th><th>Result</th><th>Details</th><th class="num">Time</th></tr></thead>
             <tbody>@forelse ($tests as $t)
-                <tr><td class="nowrap">{{ $t->created_at->format('n/j/Y g:i A') }}</td><td>{{ $t->user?->name ?? 'System' }}</td>
+                @php $u = \App\Support\Records::url('integration_test', $t->id); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $t->id }}</b></a></td><td class="nowrap">{{ $t->created_at->format('n/j/Y g:i A') }}</td><td>{{ $t->user?->name ?? 'System' }}</td>
                     <td>@include('backend.partials.pill', $t->ok ? ['text' => 'Connected', 'tone' => 'ok'] : ['text' => 'Failed', 'tone' => 'bad'])</td>
                     <td class="wrap">{{ $t->message }}</td><td class="num">{{ $t->response_ms !== null ? number_format($t->response_ms).' ms' : '—' }}</td></tr>
-            @empty <tr><td colspan="5" class="empty">Not tested yet.</td></tr> @endforelse</tbody>
+            @empty <tr><td colspan="6" class="empty">Not tested yet.</td></tr> @endforelse</tbody>
         </table></div></div>
     </div>
 @endsection

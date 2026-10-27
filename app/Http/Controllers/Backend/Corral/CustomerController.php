@@ -89,8 +89,8 @@ class CustomerController extends Controller
 
         // Billing summary: bills and payments together, newest first
         $summary = collect()
-            ->concat($customer->bills->map(fn ($b) => ['date' => $b->billed_on, 'billed' => $b->amount, 'paid' => null, 'note' => $b->invoice]))
-            ->concat($customer->payments->where('status', 'Success')->map(fn ($p) => ['date' => $p->paid_on, 'billed' => null, 'paid' => $p->amount, 'note' => $p->confirmation]))
+            ->concat($customer->bills->map(fn ($b) => ['type' => 'bill', 'id' => $b->id, 'date' => $b->billed_on, 'billed' => $b->amount, 'paid' => null, 'note' => $b->invoice]))
+            ->concat($customer->payments->where('status', 'Success')->map(fn ($p) => ['type' => 'payment', 'id' => $p->id, 'date' => $p->paid_on, 'billed' => null, 'paid' => $p->amount, 'note' => $p->confirmation]))
             ->sortByDesc(fn ($r) => $r['date']->format('Y-m-d').($r['paid'] === null ? '0' : '1'))->values();
 
         $usage = $customer->bills->groupBy(fn ($b) => $b->billed_on->copy()->subMonth()->year)
@@ -101,7 +101,7 @@ class CustomerController extends Controller
             ->map(function ($e) use (&$net) {
                 $net += $e->stars;
 
-                return ['date' => $e->created_at, 'reason' => $e->reason, 'stars' => $e->stars, 'net' => $net];
+                return ['id' => $e->id, 'date' => $e->created_at, 'reason' => $e->reason, 'stars' => $e->stars, 'net' => $net];
             })->reverse()->values();
 
         $banners = $customer->flags->map(fn ($f) => config('corral.flag_banners.'.$f->flag))->filter()->unique()->values();

@@ -36,11 +36,11 @@
 
     <div class="panel" style="margin-bottom:20px">
         <div class="panel-head"><h2>History</h2><span class="muted">changes to the page and its components</span></div>
-        <div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>User</th><th>What</th><th>Changes</th></tr></thead><tbody>
+        <div class="table-wrap"><table class="table"><thead><tr><th>ID</th><th>Date</th><th>User</th><th>What</th><th>Changes</th></tr></thead><tbody>
             @forelse ($history as $h)
-                <tr><td class="nowrap">{{ $h->created_at->format('n/j/Y g:i A') }}</td><td>{{ $h->actor() }}</td><td class="wrap">{{ $h->summary }}</td>
+                @php $u = \App\Support\Records::url('history_item', $h->id); @endphp<tr><td class="nowrap"><a href="{{ $u }}"><b>#{{ $h->id }}</b></a></td><td class="nowrap">{{ $h->created_at->format('n/j/Y g:i A') }}</td><td>{{ $h->actor() }}</td><td class="wrap">{{ $h->summary }}</td>
                     <td class="wrap">@if ($h->changes)<details><summary>{{ count($h->changes) }} {{ Str::plural('field', count($h->changes)) }}</summary><ul style="margin:6px 0 0 16px;font-size:.82rem">@foreach ($h->changes as $field => [$old, $new])<li><b>{{ str_replace('_', ' ', $field) }}</b>: {{ Str::limit((string) $old, 60) ?: '(empty)' }} → {{ Str::limit((string) $new, 60) ?: '(empty)' }}</li>@endforeach</ul></details>@else<span class="muted">—</span>@endif</td></tr>
-            @empty <tr><td colspan="4" class="empty">No changes recorded.</td></tr> @endforelse
+            @empty <tr><td colspan="5" class="empty">No changes recorded.</td></tr> @endforelse
         </tbody></table></div>
         @include('backend.partials.pager', ['p' => $history])
     </div>

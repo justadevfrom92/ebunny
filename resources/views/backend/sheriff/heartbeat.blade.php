@@ -63,12 +63,12 @@
         </table></div></div>
 
         <div class="panel"><div class="panel-head"><h2>Failed Jobs</h2><span class="muted">latest 10</span></div><div class="table-wrap"><table>
-            <thead><tr><th>Failed</th><th>Job</th><th>Error</th></tr></thead>
+            <thead><tr><th>ID</th><th>Failed</th><th>Job</th><th>Error</th></tr></thead>
             <tbody>@forelse ($failed as $j)
                 @php $p = json_decode($j->payload, true); @endphp
-                <tr><td class="nowrap">{{ \Illuminate\Support\Carbon::parse($j->failed_at)->format('n/j/Y g:i A') }}</td><td><b>{{ class_basename($p['displayName'] ?? 'Job') }}</b><div class="help mono">{{ $j->queue }}</div></td>
+                @php $u = \App\Support\Records::url('failed_job', $j->id); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $j->id }}</b></a></td><td class="nowrap">{{ \Illuminate\Support\Carbon::parse($j->failed_at)->format('n/j/Y g:i A') }}</td><td><b>{{ class_basename($p['displayName'] ?? 'Job') }}</b><div class="help mono">{{ $j->queue }}</div></td>
                     <td class="wrap help">{{ \Illuminate\Support\Str::limit(strtok((string) $j->exception, "\n"), 200) }}</td></tr>
-            @empty <tr><td colspan="3" class="empty">No failed jobs.</td></tr> @endforelse</tbody>
+            @empty <tr><td colspan="4" class="empty">No failed jobs.</td></tr> @endforelse</tbody>
         </table></div></div>
 
         <div class="panel"><div class="panel-head"><h2>Latest Actions</h2><a class="btn sm ghost" href="{{ route('sheriff.timeline') }}">Timeline</a></div><div class="table-wrap"><table>

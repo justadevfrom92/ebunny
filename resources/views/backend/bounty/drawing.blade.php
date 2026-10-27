@@ -15,14 +15,14 @@
 
     <div class="stack">
         <div class="panel"><div class="panel-head"><h2>Entries for {{ $month->format('F Y') }}</h2><span class="muted">{{ $entries->count() }}</span></div><div class="table-wrap"><table>
-            <thead><tr><th>Entered</th><th>Account</th><th>Name</th></tr></thead>
-            <tbody>@forelse ($entries as $e)<tr><td class="nowrap">{{ $e->created_at->format('n/j/Y g:i A') }}</td><td>@include('backend.partials.account-link', ['c' => $e->customer])</td><td>{{ $e->customer?->name }}</td></tr>
-            @empty <tr><td colspan="3" class="empty">No entries in {{ $month->format('F Y') }}.</td></tr> @endforelse</tbody>
+            <thead><tr><th>ID</th><th>Entered</th><th>Account</th><th>Name</th></tr></thead>
+            <tbody>@forelse ($entries as $e)@php $u = \App\Support\Records::url('history_item', $e->id); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $e->id }}</b></a></td><td class="nowrap">{{ $e->created_at->format('n/j/Y g:i A') }}</td><td>@include('backend.partials.account-link', ['c' => $e->customer])</td><td>{{ $e->customer?->name }}</td></tr>
+            @empty <tr><td colspan="4" class="empty">No entries in {{ $month->format('F Y') }}.</td></tr> @endforelse</tbody>
         </table></div></div>
         <div class="panel"><div class="panel-head"><h2>Past Winners</h2></div><div class="table-wrap"><table>
-            <thead><tr><th>Month</th><th>Prize</th><th>Winner Account</th><th>Drawn On</th></tr></thead>
-            <tbody>@forelse ($past as $r)<tr><td>{{ $r->cells[0] ?? '' }}</td><td>{{ $r->cells[1] ?? '' }}</td><td>@include('backend.partials.account-link', ['c' => $winners[$r->cells[2] ?? ''] ?? null])</td><td>{{ ($r->cells[3] ?? '') ?: '—' }}</td></tr>
-            @empty <tr><td colspan="4" class="empty">None.</td></tr> @endforelse</tbody>
+            <thead><tr><th>ID</th><th>Month</th><th>Prize</th><th>Winner Account</th><th>Drawn On</th></tr></thead>
+            <tbody>@forelse ($past as $r)@php $u = \App\Support\Records::url('reference_row', $r->id); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $r->id }}</b></a></td><td>{{ $r->cells[0] ?? '' }}</td><td>{{ $r->cells[1] ?? '' }}</td><td>@include('backend.partials.account-link', ['c' => $winners[$r->cells[2] ?? ''] ?? null])</td><td>{{ ($r->cells[3] ?? '') ?: '—' }}</td></tr>
+            @empty <tr><td colspan="5" class="empty">None.</td></tr> @endforelse</tbody>
         </table></div></div>
     </div>
 @endsection

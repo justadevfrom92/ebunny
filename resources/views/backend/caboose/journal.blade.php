@@ -12,8 +12,8 @@
     </div></form>
     <div class="panel"><div class="panel-head"><h2>Entries</h2><span @class(['muted' => $debits === $credits])>Debits ${{ number_format($debits, 2) }} · Credits ${{ number_format($credits, 2) }}{{ $debits === $credits ? ' · balanced' : ' · NOT BALANCED' }}</span></div>
         <div class="table-wrap"><table>
-            <thead><tr><th>Date</th><th>Account</th><th class="num">Debit</th><th class="num">Credit</th><th>Memo</th></tr></thead>
-            <tbody>@forelse ($lines as $l)<tr><td>{{ $l['date'] }}</td><td>{{ $l['account'] }}</td><td class="num">{{ $l['debit'] ? number_format($l['debit'], 2) : '' }}</td><td class="num">{{ $l['credit'] ? number_format($l['credit'], 2) : '' }}</td><td class="help">{{ $l['memo'] }}</td></tr>
-            @empty <tr><td colspan="5" class="empty">No activity in this range.</td></tr> @endforelse</tbody>
+            <thead><tr><th>Entry</th><th>Date</th><th>Account</th><th class="num">Debit</th><th class="num">Credit</th><th>Memo</th></tr></thead>
+            <tbody>@forelse ($lines as $l)@php $u = route('caboose.journal', ['start' => $l['date'], 'end' => $l['date']]); $je = 'JE-'.str_replace('-', '', $l['date']).'-'.(intdiv($loop->iteration - 1, 2) + 1); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>{{ $je }}</b></a></td><td>{{ $l['date'] }}</td><td>{{ $l['account'] }}</td><td class="num">{{ $l['debit'] ? number_format($l['debit'], 2) : '' }}</td><td class="num">{{ $l['credit'] ? number_format($l['credit'], 2) : '' }}</td><td class="help">{{ $l['memo'] }}</td></tr>
+            @empty <tr><td colspan="6" class="empty">No activity in this range.</td></tr> @endforelse</tbody>
         </table></div></div>
 @endsection

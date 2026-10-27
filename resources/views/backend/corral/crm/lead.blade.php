@@ -70,8 +70,8 @@
     </form>
 
     <div class="panel"><div class="panel-head"><h2>Timeline</h2><span class="muted">{{ $lead->activities->count() }}</span></div><div class="table-wrap"><table>
-        <thead><tr><th>When</th><th>Type</th><th>What</th><th>By</th></tr></thead>
-        <tbody>@foreach ($lead->activities as $a)<tr><td class="nowrap">{{ $a->created_at->format('n/j/Y g:i A') }}</td><td>@include('backend.partials.pill', ['text' => $a->typeLabel(), 'tone' => $a->type === 'stage' ? 'info' : ''])</td>
+        <thead><tr><th>ID</th><th>When</th><th>Type</th><th>What</th><th>By</th></tr></thead>
+        <tbody>@foreach ($lead->activities as $a)<tr class="click" data-href="{{ \App\Support\Records::url('crm_activity', $a->id) }}"><td class="nowrap"><a href="{{ \App\Support\Records::url('crm_activity', $a->id) }}"><b>#{{ $a->id }}</b></a></td><td class="nowrap">{{ $a->created_at->format('n/j/Y g:i A') }}</td><td>@include('backend.partials.pill', ['text' => $a->typeLabel(), 'tone' => $a->type === 'stage' ? 'info' : ''])</td>
             <td class="wrap"><b>{{ $a->subject }}</b>@if ($a->body)<div class="help">{{ $a->body }}</div>@endif @if ($a->due_on)<div class="help">Due {{ $a->due_on->format('n/j/Y') }}{{ $a->done_at ? ' · done '.$a->done_at->format('n/j/Y') : '' }}</div>@endif</td><td>{{ $a->user?->name ?? 'System' }}</td></tr>@endforeach</tbody>
     </table></div></div>
 

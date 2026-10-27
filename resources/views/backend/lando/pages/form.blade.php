@@ -140,10 +140,10 @@
         </div>
 
         <div class="panel" id="edits"><div class="panel-head"><h2>Edits</h2></div>
-            <div class="table-wrap"><table><thead><tr><th>Date</th><th>User</th><th>Change</th></tr></thead><tbody>
+            <div class="table-wrap"><table><thead><tr><th>ID</th><th>Date</th><th>User</th><th>Change</th></tr></thead><tbody>
                 @forelse ($edits as $e)
-                    <tr><td>{{ $e->created_at->format('n/j/Y g:i A') }}</td><td>{{ $e->user?->name ?? 'System' }}</td><td>{{ $e->summary }}</td></tr>
-                @empty <tr><td colspan="3" class="empty">No edits recorded.</td></tr> @endforelse
+                    @php $u = \App\Support\Records::url('history_item', $e->id); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $e->id }}</b></a></td><td>{{ $e->created_at->format('n/j/Y g:i A') }}</td><td>{{ $e->user?->name ?? 'System' }}</td><td>{{ $e->summary }}</td></tr>
+                @empty <tr><td colspan="4" class="empty">No edits recorded.</td></tr> @endforelse
             </tbody></table></div></div>
 
         @can('delete')

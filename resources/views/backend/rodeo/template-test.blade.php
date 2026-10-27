@@ -140,9 +140,9 @@
         <div class="panel-head"><h2>Test History</h2>
             <div class="actions">@foreach (['' => 'All', 'sent' => 'Sent', 'logged' => 'Logged only', 'failed' => 'Failed', 'partial' => 'Partly sent'] as $v => $l)<a class="btn sm {{ (string) $statusFilter === $v ? '' : 'ghost' }}" href="{{ route('rodeo.templates.test', [$template, 'result' => $v ?: null]) }}#history">{{ $l }}</a>@endforeach</div></div>
         <div class="table-wrap"><table class="table">
-            <thead><tr><th>When</th><th>By</th><th>Sent To</th><th>Subject &amp; Note</th><th>Recipients</th><th>Result</th><th></th></tr></thead>
+            <thead><tr><th>ID</th><th>When</th><th>By</th><th>Sent To</th><th>Subject &amp; Note</th><th>Recipients</th><th>Result</th><th></th></tr></thead>
             <tbody>@forelse ($tests as $t)
-                <tr><td class="nowrap">{{ $t->created_at->format('n/j/Y g:i A') }}</td><td>{{ $t->user?->name }}</td>
+                @php $u = \App\Support\Records::url('email_test', $t->id); @endphp<tr><td class="nowrap"><a href="{{ $u }}"><b>#{{ $t->id }}</b></a></td><td class="nowrap">{{ $t->created_at->format('n/j/Y g:i A') }}</td><td>{{ $t->user?->name }}</td>
                     <td>{{ \App\Http\Controllers\Backend\Rodeo\TemplateTestController::MODES[$t->mode] ?? $t->mode }}@if ($t->target)<div class="muted">{{ Str::limit($t->target, 70) }}</div>@endif</td>
                     <td>{{ $t->subject ?? '—' }}@if ($t->note)<div class="muted">“{{ Str::limit($t->note, 80) }}”</div>@endif</td>
                     <td><details><summary>{{ count($t->recipients) }} {{ Str::plural('person', count($t->recipients)) }}</summary><ul class="tt-recips" style="margin-top:6px">@foreach ($t->recipients as $r)
@@ -152,7 +152,7 @@
                     @endforeach</ul></details></td>
                     <td>@include('backend.partials.pill', ['text' => ['sent' => 'Sent', 'logged' => 'Logged only', 'failed' => 'Failed', 'partial' => 'Partly sent', 'suppressed' => 'Suppressed'][$t->status] ?? $t->status, 'tone' => ['sent' => 'ok', 'failed' => 'bad', 'partial' => 'warn'][$t->status] ?? ''])</td>
                     <td class="actions">@if ($t->params)<form method="post" action="{{ route('rodeo.templates.test.again', [$template, $t]) }}" class="inline" data-confirm="Send this test again?|Same people, same options.|Send Again">@csrf<button class="btn sm ghost">Send Again</button></form>@endif</td></tr>
-            @empty <tr><td colspan="7" class="empty">No tests {{ $statusFilter ? 'with that result' : 'yet' }}.</td></tr> @endforelse</tbody>
+            @empty <tr><td colspan="8" class="empty">No tests {{ $statusFilter ? 'with that result' : 'yet' }}.</td></tr> @endforelse</tbody>
         </table></div>
         @include('backend.partials.pager', ['p' => $tests])
     </div>

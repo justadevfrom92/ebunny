@@ -22,10 +22,11 @@
     <div class="panel">
         <div class="panel-head"><h2>{{ number_format($total) }} {{ Str::plural('Response', $total) }}</h2>@if ($f['survey'] ?? null)<a class="btn sm ghost" href="{{ route('rodeo.surveys.results', $f['survey']) }}">Results for this survey</a>@endif</div>
         <div class="table-wrap"><table class="table">
-            <thead><tr><th>Date</th><th>Survey</th><th>Customer</th><th class="num">Score</th><th>Written Answer</th><th>Came From</th></tr></thead>
+            <thead><tr><th>ID</th><th>Date</th><th>Survey</th><th>Customer</th><th class="num">Score</th><th>Written Answer</th><th>Came From</th></tr></thead>
             <tbody>@forelse ($rows as $r)
                 @php $n = $r->nps(); $c = $comment($r); @endphp
                 <tr class="click" data-href="{{ route('rodeo.surveys.responses.show', $r) }}">
+                    <td class="nowrap"><a href="{{ route('rodeo.surveys.responses.show', $r) }}"><b>#{{ $r->id }}</b></a></td>
                     <td class="nowrap">{{ $r->created_at->format('n/j/Y g:i A') }}</td>
                     <td>{{ $r->survey->title }}</td>
                     <td>@if ($r->customer){{ $r->customer->name }}<div class="help">@include('backend.partials.account-link', ['c' => $r->customer])</div>@else<span class="muted">Anonymous</span>@endif</td>
@@ -33,7 +34,7 @@
                     <td class="wrap">{{ $c ? Str::limit($c, 90) : '' }}</td>
                     <td>{{ \App\Models\SurveyResponse::SOURCES[$r->source] ?? '—' }}</td>
                     </tr>
-            @empty <tr><td colspan="6" class="empty">No responses match.</td></tr> @endforelse</tbody>
+            @empty <tr><td colspan="7" class="empty">No responses match.</td></tr> @endforelse</tbody>
         </table></div>
         @include('backend.partials.pager', ['p' => $rows])
     </div>

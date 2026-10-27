@@ -57,14 +57,14 @@
 
     <div class="grid-2">
         <div class="panel"><div class="panel-head"><h2>Recent Bills</h2></div><div class="table-wrap"><table>
-            <thead><tr><th>Billed</th><th>Invoice</th><th class="num">Amount</th><th class="num">Balance After</th></tr></thead>
-            <tbody>@forelse ($bills as $b)<tr><td>{{ $b->billed_on?->format('n/j/Y') }}</td><td class="mono">{{ $b->invoice ?? $b->reference }}</td><td class="num">${{ number_format($b->amount, 2) }}</td><td class="num">${{ number_format($b->balance_after, 2) }}</td></tr>
-            @empty <tr><td colspan="4" class="empty">No bills yet.</td></tr> @endforelse</tbody>
+            <thead><tr><th>ID</th><th>Billed</th><th>Invoice</th><th class="num">Amount</th><th class="num">Balance After</th></tr></thead>
+            <tbody>@forelse ($bills as $b)@php $u = \App\Support\Records::url('bill', $b->id); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $b->id }}</b></a></td><td>{{ $b->billed_on?->format('n/j/Y') }}</td><td class="mono">{{ $b->invoice ?? $b->reference }}</td><td class="num">${{ number_format($b->amount, 2) }}</td><td class="num">${{ number_format($b->balance_after, 2) }}</td></tr>
+            @empty <tr><td colspan="5" class="empty">No bills yet.</td></tr> @endforelse</tbody>
         </table></div></div>
         <div class="panel"><div class="panel-head"><h2>Recent Payments</h2></div><div class="table-wrap"><table>
-            <thead><tr><th>Paid</th><th>Method</th><th class="num">Amount</th><th>Status</th></tr></thead>
-            <tbody>@forelse ($payments as $p)<tr><td>{{ $p->paid_on?->format('n/j/Y') }}</td><td>{{ $p->method }} · {{ $p->source }}</td><td class="num">${{ number_format($p->amount, 2) }}</td><td>@include('backend.partials.pill', ['text' => $p->status, 'tone' => $p->status === 'Success' ? 'ok' : 'bad'])</td></tr>
-            @empty <tr><td colspan="4" class="empty">No payments yet.</td></tr> @endforelse</tbody>
+            <thead><tr><th>ID</th><th>Paid</th><th>Method</th><th class="num">Amount</th><th>Status</th></tr></thead>
+            <tbody>@forelse ($payments as $p)@php $u = \App\Support\Records::url('payment', $p->id); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $p->id }}</b></a></td><td>{{ $p->paid_on?->format('n/j/Y') }}</td><td>{{ $p->method }} · {{ $p->source }}</td><td class="num">${{ number_format($p->amount, 2) }}</td><td>@include('backend.partials.pill', ['text' => $p->status, 'tone' => $p->status === 'Success' ? 'ok' : 'bad'])</td></tr>
+            @empty <tr><td colspan="5" class="empty">No payments yet.</td></tr> @endforelse</tbody>
         </table></div></div>
     </div>
 

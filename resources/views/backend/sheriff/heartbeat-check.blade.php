@@ -56,20 +56,20 @@
         </table></div></div>
 
         <div class="panel"><div class="panel-head"><h2>Changes</h2><span class="muted">each time the result changed, last 24 hours</span></div><div class="table-wrap"><table>
-            <thead><tr><th>When</th><th>Changed To</th><th>From</th><th>Detail</th></tr></thead>
+            <thead><tr><th>ID</th><th>When</th><th>Changed To</th><th>From</th><th>Detail</th></tr></thead>
             <tbody>@forelse ($changes as $c)
-                <tr @class(['row-warn' => in_array($c['to'], ['warn', 'bad'], true)])><td class="nowrap">{{ $c['at']->format('n/j g:i A') }}</td>
+                @php $u = \App\Support\Records::url('heartbeat', $c['id']); @endphp<tr @class(['click', 'row-warn' => in_array($c['to'], ['warn', 'bad'], true)]) data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $c['id'] }}</b></a></td><td class="nowrap">{{ $c['at']->format('n/j g:i A') }}</td>
                     <td>@include('backend.partials.pill', ['text' => $labels[$c['to']][0] ?? $c['to'], 'tone' => $labels[$c['to']][1] ?? ''])</td>
                     <td>{{ $c['from'] ? ($labels[$c['from']][0] ?? $c['from']) : 'First check' }}</td><td class="wrap">{{ $c['detail'] }}</td></tr>
-            @empty <tr><td colspan="4" class="empty">No checks in the last 24 hours.</td></tr> @endforelse</tbody>
+            @empty <tr><td colspan="5" class="empty">No checks in the last 24 hours.</td></tr> @endforelse</tbody>
         </table></div>@include('backend.partials.pager', ['p' => $changes])</div>
 
         <div class="panel"><div class="panel-head"><h2>Control Log</h2><span class="muted">controls used on this check</span></div><div class="table-wrap"><table>
-            <thead><tr><th>When</th><th>Control</th><th>Who</th><th>Result</th></tr></thead>
+            <thead><tr><th>ID</th><th>When</th><th>Control</th><th>Who</th><th>Result</th></tr></thead>
             <tbody>@forelse ($log as $a)
-                <tr><td class="nowrap">{{ $a->created_at->format('n/j/Y g:i A') }}</td><td><b>{{ $a->label() }}</b></td><td>{{ $a->user?->name ?? 'System' }}</td>
+                @php $u = \App\Support\Records::url('heartbeat_action', $a->id); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $a->id }}</b></a></td><td class="nowrap">{{ $a->created_at->format('n/j/Y g:i A') }}</td><td><b>{{ $a->label() }}</b></td><td>{{ $a->user?->name ?? 'System' }}</td>
                     <td class="wrap">@include('backend.partials.pill', ['text' => $a->ok ? 'Done' : 'Failed', 'tone' => $a->ok ? 'ok' : 'bad'])<div class="help mono" style="white-space:pre-wrap">{{ \Illuminate\Support\Str::limit($a->output, 300) }}</div></td></tr>
-            @empty <tr><td colspan="4" class="empty">No controls used yet.</td></tr> @endforelse</tbody>
+            @empty <tr><td colspan="5" class="empty">No controls used yet.</td></tr> @endforelse</tbody>
         </table></div>@include('backend.partials.pager', ['p' => $log])</div>
     </div>
 @endsection

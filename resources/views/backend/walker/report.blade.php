@@ -41,9 +41,9 @@
         <div class="search-main">
             @include('backend.walker._export-columns')
             <div class="panel"><div class="panel-head"><h2>Recent Runs</h2></div><div class="table-wrap"><table>
-                <thead><tr><th>Run</th><th>Requested</th><th>By</th><th class="num">Rows</th><th>Status</th><th><span class="sr-only">Download or rerun</span></th></tr></thead>
+                <thead><tr><th>ID</th><th>Requested</th><th>By</th><th class="num">Rows</th><th>Status</th><th><span class="sr-only">Download or rerun</span></th></tr></thead>
                 <tbody>@forelse ($runs as $run)
-                    <tr class="click" data-href="{{ route('walker.runs.show', $run) }}"><td><a href="{{ route('walker.runs.show', $run) }}">#{{ $run->id }}</a></td><td>{{ $run->created_at->format('n/j/Y g:i A') }}</td>
+                    <tr class="click" data-href="{{ route('walker.runs.show', $run) }}"><td class="nowrap"><a href="{{ route('walker.runs.show', $run) }}"><b>#{{ $run->id }}</b></a></td><td>{{ $run->created_at->format('n/j/Y g:i A') }}</td>
                         <td>{{ $run->user?->name ?? 'System' }}</td><td class="num">{{ $run->status === 'done' ? number_format($run->rows) : '—' }}</td><td>@include('backend.walker._state')</td><td class="actions">@include('backend.walker._row-actions')</td></tr>
                 @empty <tr><td colspan="6" class="empty">Not run yet.</td></tr> @endforelse</tbody>
             </table></div></div>

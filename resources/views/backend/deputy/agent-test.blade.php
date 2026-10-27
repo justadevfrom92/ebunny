@@ -27,9 +27,9 @@
     </form>
 
     <div class="panel"><div class="panel-head"><h2>Recent Tests</h2></div><div class="table-wrap"><table>
-        <thead><tr><th>When</th><th>By</th><th>Model</th><th>Outcome</th><th></th></tr></thead>
+        <thead><tr><th>ID</th><th>When</th><th>By</th><th>Model</th><th>Outcome</th></tr></thead>
         <tbody>@forelse ($tests as $t)
-            <tr><td class="nowrap">{{ $t->started_at->format('n/j/Y g:i A') }}</td><td>{{ $t->user?->name }}</td><td>{{ $t->model?->name ?? '—' }}</td><td>@include('backend.deputy._outcome', ['c' => $t])</td><td><a href="{{ route('deputy.conversations.show', $t) }}">View</a></td></tr>
+            @php $u = route('deputy.conversations.show', $t); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $t->id }}</b></a></td><td class="nowrap">{{ $t->started_at->format('n/j/Y g:i A') }}</td><td>{{ $t->user?->name }}</td><td>{{ $t->model?->name ?? '—' }}</td><td>@include('backend.deputy._outcome', ['c' => $t])</td></tr>
         @empty <tr><td colspan="5" class="empty">Not tested yet.</td></tr> @endforelse</tbody>
     </table></div></div>
 @endsection

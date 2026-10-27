@@ -48,8 +48,8 @@
     </form>
 
     <div class="panel"><div class="panel-head"><h2>Activity</h2></div><div class="table-wrap"><table>
-        <thead><tr><th>When</th><th>Type</th><th>What</th><th>By</th></tr></thead>
-        <tbody>@forelse ($p->activities as $a)<tr><td class="nowrap">{{ $a->created_at->format('n/j/Y g:i A') }}</td><td>{{ $a->typeLabel() }}</td><td class="wrap"><b>{{ $a->subject }}</b>@if ($a->body)<div class="help">{{ $a->body }}</div>@endif @if ($a->due_on)<div class="help">Due {{ $a->due_on->format('n/j/Y') }}{{ $a->done_at ? ' · done' : '' }}</div>@endif</td><td>{{ $a->user?->name }}</td></tr>
-        @empty <tr><td colspan="4" class="empty">No activity yet.</td></tr> @endforelse</tbody>
+        <thead><tr><th>ID</th><th>When</th><th>Type</th><th>What</th><th>By</th></tr></thead>
+        <tbody>@forelse ($p->activities as $a)<tr class="click" data-href="{{ \App\Support\Records::url('crm_activity', $a->id) }}"><td class="nowrap"><a href="{{ \App\Support\Records::url('crm_activity', $a->id) }}"><b>#{{ $a->id }}</b></a></td><td class="nowrap">{{ $a->created_at->format('n/j/Y g:i A') }}</td><td>{{ $a->typeLabel() }}</td><td class="wrap"><b>{{ $a->subject }}</b>@if ($a->body)<div class="help">{{ $a->body }}</div>@endif @if ($a->due_on)<div class="help">Due {{ $a->due_on->format('n/j/Y') }}{{ $a->done_at ? ' · done' : '' }}</div>@endif</td><td>{{ $a->user?->name }}</td></tr>
+        @empty <tr><td colspan="5" class="empty">No activity yet.</td></tr> @endforelse</tbody>
     </table></div></div>
 @endsection

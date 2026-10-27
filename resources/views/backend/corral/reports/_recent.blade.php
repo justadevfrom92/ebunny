@@ -2,7 +2,7 @@
 <div class="panel" id="report-runs">
     <div class="panel-head"><h2>{{ $def['title'] ?? 'Report' }} — Your Runs</h2><a class="btn sm ghost" href="{{ route('admin.files') }}">All My Files</a></div>
     <div class="table-wrap"><table>
-        <thead><tr><th>Run</th><th>Requested</th><th>Settings</th><th>Format</th><th class="num">Rows</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>ID</th><th>Requested</th><th>Settings</th><th>Format</th><th class="num">Rows</th><th>Status</th><th></th></tr></thead>
         <tbody>@forelse ($recent as $r)
             <tr class="click" data-href="{{ route('admin.files.show', $r) }}">
                 <td style="white-space:nowrap"><a href="{{ route('admin.files.show', $r) }}"><b>#{{ $r->id }}</b></a><div class="help">{{ $r->summary ? 'Summary' : 'Every row' }}</div></td>
