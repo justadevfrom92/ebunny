@@ -116,6 +116,19 @@
                 </select><button class="btn sm">Add</button>
             </form>
         </div></div>
+
+        {{-- Shop orders: from My Account, or placed here by phone --}}
+        @php $shopOrders = \App\Models\ShopOrder::with('placedBy')->where('customer_id', $c->id)->latest('id')->limit(5)->get(); @endphp
+        <div class="panel" id="shop"><div class="panel-head"><h2>Shop Orders</h2><a class="btn sm cyan" href="{{ route('corral.customers.shop', $c) }}">Order Products</a></div><div class="table-wrap"><table>
+            <thead><tr><th>ID</th><th>Placed</th><th>Items</th><th class="num">Total</th><th>Status</th></tr></thead>
+            <tbody>@forelse ($shopOrders as $o)
+                @php $u = route('corral.shop.orders.show', $o); @endphp
+                <tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $o->id }}</b></a><div class="help mono">{{ $o->number }}</div></td><td class="nowrap">{{ $o->created_at->format('n/j/Y') }}<div class="help">{{ $o->placedBy ? 'by '.$o->placedBy->name : 'My Account' }}</div></td>
+                    <td class="wrap">{{ \Illuminate\Support\Str::limit(collect($o->items)->map(fn ($i) => $i['qty'].'× '.$i['name'])->implode(', '), 60) }}</td>
+                    <td class="num">${{ number_format($o->total, 2) }}@if ($o->monthly > 0)<div class="help">+${{ number_format($o->monthly, 2) }}/mo</div>@endif</td>
+                    <td>@include('backend.partials.pill', ['text' => $o->status, 'tone' => ['Delivered' => 'ok', 'Canceled' => 'bad', 'Shipped' => 'info'][$o->status] ?? 'warn'])</td></tr>
+            @empty <tr><td colspan="5" class="empty">No shop orders yet.</td></tr> @endforelse</tbody>
+        </table></div></div>
     </div>
 
     {{-- Service address · Billing address · Stars --}}

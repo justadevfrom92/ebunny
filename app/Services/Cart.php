@@ -52,8 +52,14 @@ class Cart
     /** Cart lines with product details, and the totals: due today (goods + tax) and added to the monthly bill (protection plans). */
     public function summary(): array
     {
+        return self::summarize($this->items());
+    }
+
+    /** The same summary for any [sku => qty] list (Corral places orders for a customer without a cart). */
+    public static function summarize(array $items): array
+    {
         $products = ShopController::products()->keyBy('sku');
-        $lines = collect($this->items())->map(function ($qty, $sku) use ($products) {
+        $lines = collect($items)->map(function ($qty, $sku) use ($products) {
             $p = $products->get($sku);
             if (! $p) {
                 return null;

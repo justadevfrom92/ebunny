@@ -43,6 +43,11 @@ return [
                     ['Follow-ups', 'corral.crm.tasks', 'crm_due'],
                     ['Partners & Brokers', 'corral.crm.partners'],
                 ],
+                'Products' => [
+                    ['Products', 'corral.shop.index'],
+                    ['New Product', 'corral.shop.create'],
+                    ['Product Orders', 'corral.shop.orders'],
+                ],
                 'Reports' => [
                     ['Orders', 'corral.reports.orders'],
                     ['Notes', 'corral.reports.notes'],

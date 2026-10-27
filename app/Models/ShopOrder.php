@@ -25,6 +25,12 @@ class ShopOrder extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    /** The employee who placed it by phone (none when the customer checked out in My Account). */
+    public function placedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'placed_by');
+    }
+
     public function method(): BelongsTo
     {
         return $this->belongsTo(PaymentMethod::class, 'payment_method_id');

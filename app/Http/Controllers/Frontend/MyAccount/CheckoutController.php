@@ -6,12 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\PaymentMethod;
 use App\Models\ShopOrder;
-use App\Models\StarEntry;
 use App\Services\Cart;
-use App\Services\Products;
+use App\Services\ShopCheckout;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -64,32 +62,7 @@ class CheckoutController extends Controller
             'agree' => ['accepted'],
         ], ['agree.accepted' => 'Please agree to the order terms.', 'method.required_if' => 'Pick the card to pay with.']);
 
-        $shipTo = $data['ship'] === 'other'
-            ? ['name' => $c->name, 'street' => $data['street'], 'city' => $data['city'], 'state' => 'TX', 'zip' => $data['zip']]
-            : ['name' => $c->name, 'street' => trim($c->address.($c->unit ? ' #'.$c->unit : '')), 'city' => $c->city, 'state' => 'TX', 'zip' => $c->zip];
-
-        $order = DB::transaction(function () use ($c, $data, $summary, $shipTo) {
-            $order = ShopOrder::create([
-                'number' => 'SO-'.(100000 + (int) ShopOrder::max('id') + 1),
-                'customer_id' => $c->id,
-                'items' => $summary['lines']->map(fn ($l) => ['sku' => $l['sku'], 'name' => $l['name'], 'qty' => $l['qty'], 'price' => $l['price'], 'line' => $l['line'], 'monthly' => $l['monthly'], 'stars' => $l['stars_total']])->all(),
-                'subtotal' => $summary['subtotal'], 'tax' => $summary['tax'], 'shipping' => $summary['shipping'], 'total' => $summary['total'], 'monthly' => $summary['monthly'],
-                'stars' => $summary['stars'], 'pay_with' => $data['pay_with'], 'payment_method_id' => $data['pay_with'] === 'card' ? $data['method'] : null,
-                'ship_to' => $shipTo, 'payment_status' => $data['pay_with'] === 'bill' ? 'On next bill' : 'Pending',
-            ]);
-            // Protection plans go on the account like any product; stars are credited now
-            foreach ($summary['lines']->where('monthly', true) as $l) {
-                Products::add($c, Cart::PROTECTION[$l['sku']]);
-            }
-            if ($summary['stars'] > 0) {
-                StarEntry::create(['customer_id' => $c->id, 'reason' => 'Shop order '.$order->number, 'stars' => $summary['stars']]);
-                $c->syncStars();
-            }
-            $c->notes()->create(['author' => 'Customer (MyAccount)', 'category' => 'Shop', 'action' => 'Shop Order', 'priority' => 'Low',
-                'body' => 'Placed shop order '.$order->number.' for $'.number_format($order->total, 2).($order->monthly > 0 ? ' plus $'.number_format($order->monthly, 2).'/mo in protection plans' : '').'.']);
-
-            return $order;
-        });
+        $order = ShopCheckout::place($c, $summary, ['pay_with' => $data['pay_with'], 'method' => $data['method'] ?? null, 'ship_to' => ShopCheckout::shipTo($c, $data)]);
         $cart->clear();
 
         return redirect()->route('myaccount.order', $order)->with('status', 'Thanks! Order '.$order->number.' is placed.');

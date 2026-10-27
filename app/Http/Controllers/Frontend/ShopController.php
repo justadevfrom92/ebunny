@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Models\ShopProduct;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -16,8 +17,8 @@ class ShopController extends Controller
     /** Every product, keyed by its page address (/shop/th-100). */
     public static function products(): Collection
     {
-        return collect(config('shop.products'))->map(fn ($p, $i) => array_combine(['sku', 'name', 'cat', 'price', 'was', 'rating', 'reviews', 'stars', 'stock', 'badge', 'icon', 'blurb'], $p)
-            + ['order' => $i, 'slug' => strtolower($p[0])])->keyBy('slug');
+        // Products are kept in the database (Corral → Products); only active ones are in the shop
+        return ShopProduct::where('active', true)->orderBy('position')->orderBy('id')->get()->map->toShop()->keyBy('slug');
     }
 
     /** One product's own page: photo area, price, what's included, specs, ratings and related products. */

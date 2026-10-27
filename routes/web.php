@@ -228,6 +228,20 @@ Route::prefix('admin')->group(function () {
             Route::get('customers/{customer}/contact-log', [Backend\Corral\AccountController::class, 'contactLog'])->name('customers.contact-log');
             Route::post('customers/{customer}/contact-log/marketing', [Backend\Corral\AccountController::class, 'toggleMarketing'])->name('customers.marketing-toggle');
             Route::get('customers/{customer}/api-log', [Backend\Corral\AccountController::class, 'apiLog'])->name('customers.api-log');
+            // Products: the website Shop's products, its orders, and ordering for a customer by phone
+            Route::controller(Backend\Corral\ShopController::class)->group(function () {
+                Route::get('products', 'index')->name('shop.index');
+                Route::get('products/new', 'form')->name('shop.create');
+                Route::post('products', 'save')->name('shop.store');
+                Route::get('products/orders', 'orders')->name('shop.orders');
+                Route::get('products/orders/{order}', 'order')->name('shop.orders.show');
+                Route::patch('products/orders/{order}', 'updateOrder')->name('shop.orders.update');
+                Route::get('products/{product}', 'show')->whereNumber('product')->name('shop.show');
+                Route::get('products/{product}/edit', 'form')->whereNumber('product')->name('shop.edit');
+                Route::put('products/{product}', 'save')->whereNumber('product')->name('shop.update');
+                Route::get('customers/{customer}/order-products', 'orderForm')->name('customers.shop');
+                Route::post('customers/{customer}/order-products', 'placeOrder')->middleware('throttle:20,1')->name('customers.shop.place');
+            });
             Route::get('api-calls/{call}', [Backend\ApiCallController::class, 'show'])->name('api-calls.show');
             // CRM: pipeline, leads, follow-ups, brokers and partners
             Route::controller(Backend\Corral\CrmController::class)->prefix('crm')->name('crm.')->group(function () {
