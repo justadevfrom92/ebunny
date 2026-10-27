@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Heartbeat;
+use App\Models\HeartbeatAction;
+use App\Models\User;
 use App\Support\Health;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -34,6 +36,9 @@ class HeartbeatSeeder extends Seeder
             if ($m >= 60 && $m < 75) {
                 $r['failed_jobs'] = ['warn', '2 failed in 24 hours'];
             }
+            if ($m >= 840 && $m < 880) {
+                $r['campaigns'] = ['down', 'Taken down by Admin Demo: holding the fall promo until pricing is approved'];
+            }
             $rows[] = ['checked_at' => now()->subMinutes($m)->startOfMinute(), 'status' => Health::overall($r), 'results' => json_encode($r), 'duration_ms' => mt_rand(18, 90)];
         }
         foreach (array_chunk($rows, 300) as $chunk) {
@@ -45,6 +50,17 @@ class HeartbeatSeeder extends Seeder
             DB::table('failed_jobs')->insert(['uuid' => (string) Str::uuid(), 'connection' => 'database', 'queue' => 'default',
                 'payload' => json_encode(['displayName' => $job, 'job' => 'Illuminate\\Queue\\CallQueuedHandler@call']), 'exception' => $error."\n#0 {main}", 'failed_at' => now()->subMinutes($mins)]);
         }
+        // Controls people used (fictional): the queue worker restarted during its outage, campaigns held and released, failed jobs retried
+        $admin = User::where('email', 'admin@example.com')->value('id');
+        foreach ([['campaigns', 'down', 880, 'Campaigns taken down. Scheduled campaigns are held instead of sent.'], ['campaigns', 'up', 840, 'Campaigns is back up.'],
+            ['campaigns', 'send', 838, 'OK: 1 campaign sent, 412 messages.'], ['queue_worker', 'restart', 184, 'Broadcasting queue restart signal.'],
+            ['queue_worker', 'ping', 183, 'Ping queued. The worker answers when it picks it up.'], ['failed_jobs', 'retry', 64, '2 failed jobs put back in the queue.'],
+            ['scheduler', 'run', 498, 'Running [et:heartbeat] ... DONE'], ['cache', 'clear', 1300, 'Application cache cleared successfully.'],
+            ['database', 'optimize', 1250, 'PRAGMA optimize ran.'], ['errors', 'archive', 1200, 'Archived to storage/logs/laravel-sample.log.'],
+            ['website', 'check', 30, 'Healthy: All set'], ['tickets', 'notify', 20, '3 managers notified about 2 tickets.']] as [$key, $action, $mins, $out]) {
+            HeartbeatAction::create(['check_key' => $key, 'action' => $action, 'user_id' => $admin, 'ok' => true, 'output' => $out, 'duration_ms' => mt_rand(4, 900), 'created_at' => now()->subMinutes($mins)]);
+        }
+
         Health::pulse('scheduler');
         Health::pulse('queue', ['waited_s' => 2]);
         Health::run();

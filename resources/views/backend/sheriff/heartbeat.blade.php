@@ -5,10 +5,11 @@
 {{-- The heartbeat: everything the admin runs on its own, checked every minute, with the last 24 hours. Refreshes itself. --}}
 @section('content')
     @php
-        $label = ['ok' => 'Healthy', 'warn' => 'Warnings', 'bad' => 'Problems'];
-        $tone = ['ok' => 'ok', 'warn' => 'warn', 'bad' => 'bad'];
+        $label = ['ok' => 'Healthy', 'warn' => 'Warnings', 'bad' => 'Problems', 'down' => 'Taken Down'];
+        $tone = ['ok' => 'ok', 'warn' => 'warn', 'bad' => 'bad', 'down' => 'info'];
         $bad = collect($checks)->where(0, 'bad')->count();
         $warn = collect($checks)->where(0, 'warn')->count();
+        $down = collect($checks)->where(0, 'down')->count();
     @endphp
     @include('backend.partials.page-head', ['title' => 'Heartbeat', 'sub' => 'Checked every minute by the scheduler (php artisan et:heartbeat). '.($last ? 'Last check '.$last->checked_at->diffForHumans().' in '.$last->duration_ms.' ms.' : 'No check has run yet.').' This page refreshes every 30 seconds.',
         'actions' => '<form method="post" action="'.route('sheriff.heartbeat.check').'" class="inline">'.csrf_field().'<button class="btn cyan">Check Now</button></form>'])
@@ -16,7 +17,7 @@
     <div id="hb-live" style="display:flex;flex-direction:column;gap:20px">
         <div class="hb-banner hb-{{ $status }}">
             <span class="hb-heart" aria-hidden="true">❤</span>
-            <div><b>{{ $label[$status] }}</b><span>{{ $status === 'ok' ? 'Everything is running.' : ($bad ? $bad.' '.Str::plural('problem', $bad) : '').($bad && $warn ? ' and ' : '').($warn ? $warn.' '.Str::plural('warning', $warn) : '').' below.' }}</span></div>
+            <div><b>{{ $label[$status] }}</b><span>{{ $status === 'ok' ? 'Everything is running.' : ($bad ? $bad.' '.Str::plural('problem', $bad) : '').($bad && $warn ? ' and ' : '').($warn ? $warn.' '.Str::plural('warning', $warn) : '').($down ? (($bad || $warn) ? ', ' : '').$down.' taken down' : '').' below.' }}</span></div>
             @if ($uptime !== null)<div class="hb-uptime"><strong>{{ rtrim(rtrim(number_format($uptime, 1), '0'), '.') }}%</strong><small>healthy, last 24 hours</small></div>@endif
         </div>
 
@@ -35,13 +36,13 @@
             </div>
         </div>
 
-        <div class="panel"><div class="panel-head"><h2>Checks</h2><span class="muted">right now · problems first</span></div><div class="table-wrap"><table>
+        <div class="panel"><div class="panel-head"><h2>Checks</h2><a class="btn sm ghost" href="{{ route('sheriff.heartbeat.checks') }}">All Checks</a></div><div class="table-wrap"><table>
             <thead><tr><th>Status</th><th>Check</th><th>Now</th><th>What to Do</th></tr></thead>
-            <tbody>@foreach (collect(\App\Support\Health::CHECKS)->sortBy(fn ($c, $k) => ['bad' => 0, 'warn' => 1, 'ok' => 2][$checks[$k][0]]) as $k => [$name, $group, $what, $route])
-                @php [$st, $detail, $fix] = $checks[$k]; $url = $route && Route::has($route) ? route($route) : null; @endphp
-                <tr @class(['click' => $url, 'row-warn' => $st !== 'ok']) @if ($url) data-href="{{ $url }}" @endif>
+            <tbody>@foreach (collect(\App\Support\Health::CHECKS)->sortBy(fn ($c, $k) => ['bad' => 0, 'warn' => 1, 'down' => 2, 'ok' => 3][$checks[$k][0]]) as $k => [$name, $group, $what, $route])
+                @php [$st, $detail, $fix] = $checks[$k]; $url = route('sheriff.heartbeat.show', $k); @endphp
+                <tr @class(['click', 'row-warn' => $st !== 'ok']) data-href="{{ $url }}">
                     <td>@include('backend.partials.pill', ['text' => $label[$st], 'tone' => $tone[$st]])</td>
-                    <td>@if ($url)<a href="{{ $url }}"><b>{{ $name }}</b></a>@else<b>{{ $name }}</b>@endif<div class="help">{{ $group }} · {{ $what }}</div></td>
+                    <td><a href="{{ $url }}"><b>{{ $name }}</b></a><div class="help">{{ $group }} · {{ $what }}</div></td>
                     <td class="wrap">{{ $detail }}</td><td class="wrap help">{{ $fix ?? '—' }}</td></tr>
             @endforeach</tbody>
         </table></div></div>

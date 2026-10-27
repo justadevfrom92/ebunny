@@ -6,6 +6,7 @@ use App\Models\AdminNotification;
 use App\Models\ReportRun;
 use App\Reports\Report;
 use App\Support\Export;
+use App\Support\HeartbeatControl;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Storage;
@@ -27,6 +28,11 @@ class RunReport implements ShouldQueue
 
     public function handle(): void
     {
+        if (HeartbeatControl::isDown('reports')) {
+            self::dispatch($this->runId)->delay(now()->addMinutes(5));   // reports are taken down in Heartbeat: try again later
+
+            return;
+        }
         $run = ReportRun::findOrFail($this->runId);
         $run->update(['status' => 'running', 'started_at' => now(), 'error' => null]);
         $started = microtime(true);

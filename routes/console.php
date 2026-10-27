@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\HeartbeatControl;
 use Illuminate\Support\Facades\Schedule;
 
 /*
@@ -8,7 +9,9 @@ use Illuminate\Support\Facades\Schedule;
 |   * * * * * cd /path/to/app && php artisan schedule:run >> /dev/null 2>&1
 */
 foreach (config('admin.jobs') as $command => [$name, $cron]) {
-    Schedule::command($command)->cron($cron)->withoutOverlapping()->description($name);
+    // Skipped while the scheduler or the crons are taken down in Sheriff → Heartbeat
+    Schedule::command($command)->cron($cron)->withoutOverlapping()->description($name)
+        ->skip(fn () => HeartbeatControl::isDown('scheduler') || HeartbeatControl::isDown('crons'));
 }
 
 // The heartbeat: every minute it checks the scheduler, queue worker, jobs, crons, reports and server (Sheriff → Heartbeat)

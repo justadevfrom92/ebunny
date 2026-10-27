@@ -553,6 +553,10 @@ Route::prefix('admin')->group(function () {
             Route::get('/', fn () => redirect()->route('sheriff.users.index'));
             Route::get('heartbeat', [Backend\Sheriff\HeartbeatController::class, 'index'])->name('heartbeat');
             Route::post('heartbeat/check', [Backend\Sheriff\HeartbeatController::class, 'check'])->middleware('throttle:10,1')->name('heartbeat.check');
+            Route::get('heartbeat/checks', [Backend\Sheriff\HeartbeatController::class, 'checks'])->name('heartbeat.checks');
+            Route::get('heartbeat/log', [Backend\Sheriff\HeartbeatController::class, 'log'])->name('heartbeat.log');
+            Route::get('heartbeat/checks/{key}', [Backend\Sheriff\HeartbeatController::class, 'show'])->where('key', '[a-z_]+')->name('heartbeat.show');
+            Route::post('heartbeat/checks/{key}/{action}', [Backend\Sheriff\HeartbeatController::class, 'control'])->where(['key' => '[a-z_]+', 'action' => '[a-z_]+'])->middleware('throttle:30,1')->name('heartbeat.control');
             Route::get('users', [Backend\Sheriff\UserController::class, 'index'])->name('users.index');
             Route::post('users', [Backend\Sheriff\UserController::class, 'store'])->name('users.store');
             Route::get('users/new', [Backend\Sheriff\UserController::class, 'create'])->name('users.create');

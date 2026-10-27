@@ -849,3 +849,15 @@ select.pill-select:focus { outline: none; border-color: var(--cyan); box-shadow:
 .pdf-page { max-width: 640px; margin: 0 auto; box-shadow: 0 4px 18px rgba(0,0,0,.35); background: #fff; }
 .pdf-page svg { display: block; width: 100%; height: auto; }
 @media (max-width: 700px) { .pdf-viewer { padding: 10px; } }
+/* Heartbeat check controls */
+.hb-controls { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.hb-control { display: flex; flex-direction: column; justify-content: space-between; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.hb-control.danger { border-color: rgba(220,38,38,.35); background: var(--bad-bg); }
+.hb-control p { margin: 4px 0 0; }
+.hb-control input { width: 100%; margin-top: 8px; }
+.hb-control .btn { align-self: flex-start; }
+.btn.danger { background: var(--bad); color: #fff; border-color: var(--bad); }
+.hb-strip i.hb-down, .hb-dot.hb-down { background: var(--cyan); }
+.hb-banner.hb-down { border-color: var(--cyan); }
+.hb-down .hb-heart { color: var(--cyan); }
+@media (max-width: 1180px) { .hb-controls { grid-template-columns: 1fr; } }

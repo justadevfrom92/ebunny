@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Campaign;
+use App\Support\HeartbeatControl;
 
 /** Sends Rodeo campaigns whose scheduled time has come. */
 class SendCampaigns extends TrackedCommand
@@ -13,6 +14,9 @@ class SendCampaigns extends TrackedCommand
 
     protected function work(): array
     {
+        if (HeartbeatControl::isDown('campaigns')) {
+            return ['Warning', 'Campaign sending is taken down in Heartbeat: nothing sent.'];
+        }
         $due = Campaign::where('status', 'scheduled')->where('scheduled_at', '<=', now())->orderBy('scheduled_at')->get();
         $sent = 0;
         foreach ($due as $c) {

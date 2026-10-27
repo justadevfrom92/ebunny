@@ -9,6 +9,7 @@ use App\Models\Heartbeat;
 use App\Models\JobRun;
 use App\Models\ReportRun;
 use App\Models\SupportTicket;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -115,14 +116,25 @@ class Health
         $bad = $settings->where('state', '!=', 'ok');
         $r['website'] = [$settings->contains('state', 'bad') ? 'bad' : ($bad->isNotEmpty() ? 'warn' : 'ok'), $bad->isEmpty() ? 'All set' : $bad->pluck('name')->implode(', ').' need a look', $bad->pluck('fix')->filter()->first()];
 
+        // Taken down on purpose: shown as such, not as a problem
+        foreach (HeartbeatControl::states() as $key => $c) {
+            if (($c['state'] ?? 'up') === 'down' && isset($r[$key])) {
+                $by = $c['user_id'] ? User::whereKey($c['user_id'])->value('name') : null;
+                $r[$key] = ['down', 'Taken down'.($by ? ' by '.$by : '').($c['changed_at'] ? ' '.Carbon::parse($c['changed_at'])->diffForHumans() : '').($c['reason'] ? ': '.$c['reason'] : ''), 'Bring it up on its page when it should run again.'];
+            }
+        }
+
         return $r;
     }
+
+    /** ok | warn | bad | down → label and pill tone. */
+    public const LABELS = ['ok' => ['Healthy', 'ok'], 'warn' => ['Warning', 'warn'], 'bad' => ['Problem', 'bad'], 'down' => ['Taken Down', 'info']];
 
     public static function overall(array $results): string
     {
         $states = array_column($results, 0);
 
-        return in_array('bad', $states, true) ? 'bad' : (in_array('warn', $states, true) ? 'warn' : 'ok');
+        return in_array('bad', $states, true) ? 'bad' : (array_intersect(['warn', 'down'], $states) ? 'warn' : 'ok');
     }
 
     /** Run every check, keep the result, and tell Sheriff users when something goes bad or comes back. */

@@ -9,6 +9,7 @@ use App\Models\CookieConsent;
 use App\Models\SiteVisit;
 use App\Services\Cart;
 use App\Services\Catalog;
+use App\Support\HeartbeatControl;
 use App\Support\SiteTraffic;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -57,7 +58,8 @@ class SiteController extends Controller
             'cart' => app(Cart::class)->count(),
             'visit' => $visit && ! $block ? $visit->id : null,
             // The static pages hide themselves when the visitor is blocked
-            'blocked' => $block ? ['message' => $block->message ?: 'This page isn\'t available.'] : null,
+            'blocked' => $block ? ['message' => $block->message ?: 'This page isn\'t available.']
+                : (HeartbeatControl::isDown('website') && ! $user?->active ? ['message' => HeartbeatControl::MAINTENANCE] : null),
             // The cookie banner shows until this browser (or this signed-in customer) has chosen
             'consent' => ($k = CookieConsent::current($request, $visit?->visitor ?? self::visitor($request))) ? ['analytics' => $k->analytics, 'marketing' => $k->marketing, 'choice' => $k->choice] : null,
         ])->header('Cache-Control', 'no-store');

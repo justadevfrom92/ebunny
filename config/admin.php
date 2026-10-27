@@ -250,12 +250,16 @@ return [
             'icon' => 'star',
             'home' => 'sheriff.users.index',
             'menu' => [
+                'Heartbeat' => [
+                    ['Overview', 'sheriff.heartbeat', 'health_problems'],
+                    ['Checks', 'sheriff.heartbeat.checks'],
+                    ['Control Log', 'sheriff.heartbeat.log'],
+                ],
                 'Access' => [
                     ['Staff Directory', 'sheriff.users.index'],
                     ['Roles', 'sheriff.roles.index'],
                 ],
                 'Config' => [
-                    ['Heartbeat', 'sheriff.heartbeat', 'health_problems'],
                     ['Timeline', 'sheriff.timeline'],
                     ['Crons', 'sheriff.jobs.index', 'failed_jobs'],
                     ['Cron Automations', 'sheriff.automations'],
@@ -275,6 +279,7 @@ return [
     'menu_parents' => [
         'walker.runs' => 'walker.home',
         'corral.items' => 'corral.customers.index',
+        'sheriff.heartbeat' => 'sheriff.heartbeat.checks',
     ],
 
     // Sample sign-ins: the login page lists every sample admin for one-click sign-in, and the
