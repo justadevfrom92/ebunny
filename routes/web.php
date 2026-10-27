@@ -478,6 +478,8 @@ Route::prefix('admin')->group(function () {
                 Route::post('suppressions', 'saveSuppression')->name('.suppressions.store');
                 Route::delete('suppressions/{suppression}', 'deleteSuppression')->name('.suppressions.destroy');
             });
+            Route::get('survey-emails', [Backend\Rodeo\SurveyEmailController::class, 'index'])->name('survey-emails');
+            Route::post('survey-emails/send', [Backend\Rodeo\SurveyEmailController::class, 'send'])->middleware('throttle:5,1')->name('survey-emails.send');
             Route::controller(Backend\Rodeo\SurveyController::class)->prefix('surveys')->name('surveys')->group(function () {
                 Route::get('/', 'index');
                 Route::get('new', 'create')->name('.create');

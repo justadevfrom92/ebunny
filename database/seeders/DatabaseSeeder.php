@@ -38,6 +38,7 @@ class DatabaseSeeder extends Seeder
             RangerSeeder::class,
             FillTablesSeeder::class, // rows for every admin table that would otherwise be empty
             CampaignSeeder::class,   // after the account data (phone types, AutoPay) it targets
+            SurveyEmailSeeder::class,
             HeartbeatSeeder::class,
             AdminNotificationSeeder::class,   // last: points at tickets, reports, files, emails and campaigns
         ]);

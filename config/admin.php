@@ -214,6 +214,7 @@ return [
                 ],
                 'Surveys' => [
                     ['All Surveys', 'rodeo.surveys'],
+                    ['Survey Emails', 'rodeo.survey-emails'],
                     ['New Survey', 'rodeo.surveys.create'],
                     ['Responses', 'rodeo.surveys.responses'],
                     ['Question Bank', 'rodeo.surveys.bank'],
@@ -353,6 +354,7 @@ return [
         'et:autopay' => ['Process AutoPay drafts', '0 6 * * *'],
         'et:scheduled-payments' => ['Pay scheduled My Account payments', '* * * * *'],
         'et:campaigns' => ['Send scheduled marketing campaigns', '*/5 * * * *'],
+        'et:survey-emails' => ['Send 90-day and farewell survey emails', '0 10 * * *'],
         'et:sync-payments' => ['Sync payments to Utilibill', '*/30 * * * *'],
         'et:welcome-packets' => ['Generate welcome packets', '0 * * * *'],
         'et:rewards-stars' => ['Rangler Rewards stars', '0 2 * * *'],

@@ -107,7 +107,7 @@
 
             {{-- Notes: account notes (the Note model) written on this ticket, staff only --}}
             <div class="panel" id="notes"><div class="panel-head"><h2>Notes</h2><span class="muted">{{ $t->notes->count() }} · staff only, also on the account's notes</span></div>
-                @if ($canWork && $t->customer_id)
+                @if ($t->customer_id)   {{-- anyone on the ticket team can add a note, whoever has the ticket --}}
                     @php $cats = config('corral.note_categories'); @endphp
                     <form method="post" action="{{ route('ranger.tickets.notes', $t) }}" class="panel-body rt-note-form" style="display:flex;flex-direction:column;gap:12px">@csrf
                         <div class="form-row note-selects">

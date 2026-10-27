@@ -115,7 +115,7 @@ class TicketController extends Controller
         return back()->with('status', ['portal' => 'Reply sent', 'email' => 'Email sent', 'phone' => 'Phone call logged'][$via].(isset($status) ? ' · '.SupportTicket::STATUSES[$status][0] : ''));
     }
 
-    /** A note on the ticket: an account Note (category, action, priority), staff only. */
+    /** A note on the ticket: an account Note (category, action, priority), staff only. Anyone on the ticket team can add one, whoever has the ticket. */
     public function addNote(Request $request, SupportTicket $ticket): RedirectResponse
     {
         $categories = config('corral.note_categories');
@@ -125,7 +125,6 @@ class TicketController extends Controller
             'action' => ['required', 'string', Rule::in($categories[$request->input('category')] ?? [])],
             'priority' => ['required', Rule::in(config('corral.priorities'))],
         ]);
-        $this->mayWork($request, $ticket);
         $ticket->addNote($data['body'], $request->user(), $data['priority'], $data['category'], $data['action']);
 
         return redirect(route('ranger.tickets.show', $ticket).'#notes')->with('status', 'Note added (it\'s on the customer\'s account notes too)');

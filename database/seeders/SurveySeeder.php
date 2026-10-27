@@ -33,6 +33,7 @@ class SurveySeeder extends Seeder
             ['Contact channels', 'Channels', 'multi', ['Phone', 'Email', 'Text message', 'Website chat', 'My Account messages']],
             ['How you heard about us', 'Channels', 'single', ['Search engine', 'Friend or family', 'Ad', 'Power to Choose', 'Other']],
             ['What matters most', 'Other', 'multi', ['Low rate', 'Fixed price', 'Renewable energy', 'Rewards', 'Great service', 'No deposit']],
+            ['Reasons for leaving', 'Other', 'single', ['Moving out of the area', 'Found a lower rate', 'Unhappy with customer service', 'Billing problems', 'Contract ended', 'Other']],
         ])->mapWithKeys(fn ($s) => [$s[0] => SurveyAnswerSet::create(['name' => $s[0], 'group' => $s[1], 'type' => $s[2], 'options' => $s[3]])]);
 
         $bank = collect([
@@ -53,6 +54,9 @@ class SurveySeeder extends Seeder
             ['Getting Started', 'Did your service start on the date you expected?', 'yes_no', null, null],
             ['About You', 'How did you hear about us?', 'single', 'How you heard about us', null],
             ['About You', 'Anything we could do better?', 'text', null, 'Optional'],
+            ['Overall Experience', 'What is the main reason you left?', 'single', 'Reasons for leaving', null],
+            ['Overall Experience', 'How likely are you to come back to us someday?', 'scale', 'Likelihood (5-point)', null],
+            ['Getting Started', 'How has your first three months with us been?', 'scale', 'Satisfaction (5-point)', null],
         ])->map(fn ($b) => SurveyBankQuestion::create(['survey_category_id' => $cats[$b[0]]->id, 'question' => $b[1], 'type' => $b[2],
             'survey_answer_set_id' => $b[3] ? $sets[$b[3]]->id : null, 'help' => $b[4]]))->keyBy('question');
 
@@ -94,6 +98,23 @@ class SurveySeeder extends Seeder
                 ['My rate is fair for what I get.', false],
             ]);
 
+        // Sent automatically by the et:survey-emails cron (Rodeo → Survey Emails)
+        $ninety = $make(['title' => '90-Day Check-In', 'slug' => '90-day-check-in', 'intro' => 'You’ve been with us about three months. How’s it going?',
+            'thank_you' => 'Thanks! We read every answer.', 'status' => 'active'], [
+                ['How has your first three months with us been?', true],
+                ['How likely are you to recommend us to a friend or colleague?', true],
+                ['My bill is easy to understand.', false],
+                ['How likely are you to renew when your contract ends?', false],
+                ['Anything we could do better?', false],
+            ]);
+        $farewell = $make(['title' => 'Sorry to See You Go', 'slug' => 'farewell', 'intro' => 'Thank you for being a customer. Tell us why you left; it helps us do better.',
+            'thank_you' => 'Thank you, and good luck. We’d love to have you back someday.', 'status' => 'active'], [
+                ['What is the main reason you left?', true],
+                ['Overall, how satisfied are you with your electricity service?', false],
+                ['How likely are you to come back to us someday?', false],
+                ['Anything we could do better?', false],
+            ]);
+
         // Fictional responses with a realistic spread
         $comments = ['Faster answers on the phone.', 'Text me when my bill is ready.', 'Happy so far, the app is easy.', 'The renewal letter was confusing.',
             'Love the rewards.', 'Rates went up at renewal, not thrilled.', 'Chat support was great.', 'Wish AutoPay was easier to set up.'];
@@ -128,6 +149,20 @@ class SurveySeeder extends Seeder
                 };
             }
             $onboarding->responses()->create(['customer_id' => $c->id, 'answers' => array_filter($answers, fn ($a) => $a !== null), 'source' => 'email', 'created_at' => now()->subDays(1 + $i * 3)]);
+        }
+        foreach ([$ninety, $farewell] as $k => $s) {
+            foreach ($customers->slice(10 * $k, 9)->values() as $i => $c) {
+                $answers = [];
+                foreach ($s->questions as $q) {
+                    $answers[$q->id] = match ($q->type) {
+                        'rating' => (string) [9, 10, 8, 7, 9, 10, 6, 9, 8][$i],
+                        'scale' => $q->choices()[[4, 3, 4, 2, 3, 4, 1, 3, 4][$i]],
+                        'single' => $q->choices()[[0, 1, 0, 2, 4, 0, 1, 3, 4][$i] % count($q->choices())],
+                        default => [null, 'Great so far.', null, 'The first bill was confusing.', null, null, 'Rate went up at renewal.', null, null][$i],
+                    };
+                }
+                $s->responses()->create(['customer_id' => $c->id, 'answers' => array_filter($answers, fn ($a) => $a !== null), 'source' => 'email', 'created_at' => now()->subDays(2 + $i * 3)]);
+            }
         }
     }
 }

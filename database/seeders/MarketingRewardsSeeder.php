@@ -43,7 +43,7 @@ class MarketingRewardsSeeder extends Seeder
             ['Billing', 'Bills, payments and collections notices', '#2e7d32', ['Bill Ready', 'Payment Made', 'Billing - Resi - Payment Made', 'Disconnect Notice']],
             ['Marketing', 'Offers and campaigns; only to opted-in customers', '#f39c12', ['Renewal Offer', 'Winback Offer']],
             ['Rewards', 'Peak Perks and Bounty emails', '#8e44ad', ['MyAcct - Peak Perks - Welcome to Peak Perks']],
-            ['Surveys', 'Survey invitations', '#c0392b', ['Customer Survey']],
+            ['Surveys', 'Survey invitations', '#c0392b', ['Customer Survey', 'Survey - 90 Day Check-In', 'Survey - Farewell']],
             ['Service', 'One-off messages from Customer Service', '#607d8b', ['Custom Message']],
         ] as $i => [$name, $desc, $color, $names]) {
             $cat = EmailCategory::create(['name' => $name, 'description' => $desc, 'color' => $color, 'position' => $i + 1]);

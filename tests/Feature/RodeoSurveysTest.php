@@ -35,7 +35,7 @@ class RodeoSurveysTest extends TestCase
         $this->get(route('rodeo.surveys.create'))->assertOk()->assertSee('+ Add a Question')->assertSee('Choose a question');
         $this->get(route('rodeo.surveys.edit', $survey))->assertOk()->assertSee('Overall Experience')->assertSee('Rodeo / <a', false);
         $this->get(route('rodeo.surveys.results', $survey))->assertOk()->assertSee('Net Promoter Score')->assertSee('Customer Service')->assertSee('Billing &amp; Payments', false)->assertSee('Responses by Week');
-        $this->get(route('rodeo.surveys.responses'))->assertOk()->assertSee('44 Responses');
+        $this->get(route('rodeo.surveys.responses'))->assertOk()->assertSee(\App\Models\SurveyResponse::count().' Responses');
         $this->get(route('rodeo.surveys.responses', ['band' => 'detractor', 'survey' => $survey->id]))->assertOk();
         $this->get(route('rodeo.surveys.responses', ['comments' => 1]))->assertOk()->assertSee('Faster answers on the phone.');
         $this->get(route('rodeo.surveys.responses.show', $survey->responses()->first()))->assertOk()->assertSee('Recommend Score')->assertSee('Overall Experience');
