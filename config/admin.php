@@ -357,21 +357,21 @@ return [
     ],
 
     // Rows are stored in the reference_rows table.
-    // Reference data tables: key => [name, columns, the app whose menu lists it (its "Data" section)]
+    // Reference data tables: key => [name, columns, the app whose menu lists it (its "Data" section), optional: how the columns show —
+    // order, a type per column (date = calendar picker) and widths (with the Remove column's; Caboose's Remove columns are all 1/8)]
     'reference_tables' => [
-        'deposit-thresholds' => ['Deposit Thresholds', ['Credit Score From', 'Credit Score To', 'Deposit'], 'caboose'],
-        'max-deposits' => ['Max Deposits', ['Customer Type', 'Max Deposit'], 'caboose'],
-        'tax-rates' => ['Tax Rates', ['City', 'Sales Tax', 'Gross Receipts', 'PUC Assessment'], 'caboose'],
-        'interest-rates' => ['Interest Rates', ['Year', 'Deposit Interest'], 'caboose'],
-        'bill-credits' => ['Bill Credits & Promos', ['Code', 'Description', 'Amount'], 'caboose'],
-        'charge-codes' => ['Charge Codes', ['Code', 'Description'], 'caboose'],
-        'rate-exports' => ['Rate Exports', ['Email', 'Customer Type', 'Markets', 'Frequency'], 'caboose'],
-        // Optional 4th: how the columns show — order, a type per column (date = calendar picker) and widths (with the Remove column's)
-        'blackout-days' => ['Blackout Days', ['Date', 'Reason'], 'caboose', ['order' => [1, 0], 'types' => [0 => 'date'], 'widths' => [1 => '66.6%', 0 => '16.7%', 'remove' => '16.7%']]],
+        'deposit-thresholds' => ['Deposit Thresholds', ['Credit Score From', 'Credit Score To', 'Deposit'], 'caboose', ['widths' => [0 => '29.2%', 1 => '29.2%', 2 => '29.1%', 'remove' => '12.5%']]],
+        'max-deposits' => ['Max Deposits', ['Customer Type', 'Max Deposit'], 'caboose', ['widths' => [0 => '70.8%', 1 => '16.7%', 'remove' => '12.5%']]],
+        'tax-rates' => ['Tax Rates', ['City', 'Sales Tax', 'Gross Receipts', 'PUC Assessment'], 'caboose', ['widths' => [0 => '27.5%', 1 => '20%', 2 => '20%', 3 => '20%', 'remove' => '12.5%']]],
+        'interest-rates' => ['Interest Rates', ['Year', 'Deposit Interest'], 'caboose', ['widths' => [0 => '43.75%', 1 => '43.75%', 'remove' => '12.5%']]],
+        'bill-credits' => ['Bill Credits & Promos', ['Code', 'Description', 'Amount'], 'caboose', ['widths' => [0 => '16.7%', 1 => '58.3%', 2 => '12.5%', 'remove' => '12.5%']]],
+        'charge-codes' => ['Charge Codes', ['Code', 'Description'], 'caboose', ['widths' => [0 => '16.7%', 1 => '70.8%', 'remove' => '12.5%']]],
+        'rate-exports' => ['Rate Exports', ['Email', 'Customer Type', 'Markets', 'Frequency'], 'caboose', ['widths' => [0 => '30%', 1 => '20%', 2 => '20%', 3 => '17.5%', 'remove' => '12.5%']]],
+                'blackout-days' => ['Blackout Days', ['Date', 'Reason'], 'caboose', ['order' => [1, 0], 'types' => [0 => 'date'], 'widths' => [1 => '70.8%', 0 => '16.7%', 'remove' => '12.5%']]],
         'ips' => ['IPs', ['IP Address', 'Action', 'Note'], 'lando'],
         'monthly-drawing' => ['Drawing Winners', ['Month', 'Prize', 'Winner Account', 'Drawn On'], 'bounty'],
-        'fraud-indicators' => ['Fraud Indicators', ['Rule', 'Action'], 'caboose'],
-        'note-dispositions' => ['CIS Note Dispositions', ['Code', 'Label'], 'caboose'],
+        'fraud-indicators' => ['Fraud Indicators', ['Rule', 'Action'], 'caboose', ['widths' => [0 => '58.3%', 1 => '29.2%', 'remove' => '12.5%']]],
+        'note-dispositions' => ['CIS Note Dispositions', ['Code', 'Label'], 'caboose', ['widths' => [0 => '16.7%', 1 => '70.8%', 'remove' => '12.5%']]],
     ],
 
     // Scheduled jobs (registered in routes/console.php). Run them on Linux with:

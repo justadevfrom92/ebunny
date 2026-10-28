@@ -934,3 +934,16 @@ dialog.modal::backdrop { background: rgba(16,34,71,.45); }
 .note-feed .note-meta { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; font-size: .78rem; color: var(--muted); margin-bottom: 4px; }
 .note-feed p { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
 @media (max-width: 1180px) { .note-feed { max-height: 480px; } }
+
+/* Every calendar date field looks the same wherever it is (forms, filters, tables): the same box, height, text and icon.
+   (datepicker.js turns input[type=date] into .dp-wrap > input.dp-input; before it runs, the raw date input gets the same box.) */
+.content .dp-wrap { display: inline-block; width: 100%; min-width: 160px; max-width: 220px; vertical-align: middle; }
+.content .ref-fixed .dp-wrap, .content .date-edit .dp-wrap { max-width: none; }
+.content .dp-wrap > input.dp-input, .content input[type=date] {
+  width: 100%; min-width: 160px; height: 38px; box-sizing: border-box; padding: 7px 40px 7px 10px !important;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink);
+  font: inherit; font-size: .9rem !important; font-variant-numeric: tabular-nums; text-align: left !important;
+}
+.content .dp-wrap > input.dp-input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(0,174,239,.18); }
+.content .dp-wrap > input.dp-input:disabled { background: var(--row); color: var(--muted); cursor: not-allowed; }
+.content .dp-wrap > input.dp-input:disabled + .dp-btn { opacity: .45; pointer-events: none; }

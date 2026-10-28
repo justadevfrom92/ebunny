@@ -89,7 +89,7 @@
   function enhance(input) {
     if (input.dataset.dp) return; input.dataset.dp = '1';
     if (input.min) input.dataset.min = input.min; if (input.max) input.dataset.max = input.max;
-    input.type = 'text'; input.inputMode = 'numeric'; input.autocomplete = 'off';
+    input.type = 'text'; input.inputMode = 'numeric'; input.autocomplete = 'off'; input.classList.add('dp-input');
     if (!input.placeholder) input.placeholder = 'YYYY-MM-DD';
     input.pattern = '\\d{4}-\\d{2}-\\d{2}';
     var wrap = document.createElement('span'); wrap.className = 'dp-wrap';
