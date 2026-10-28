@@ -48,11 +48,6 @@ return [
                     ['New Product', 'corral.shop.create'],
                     ['Product Orders', 'corral.shop.orders'],
                 ],
-                'Reports' => [
-                    ['Orders', 'corral.reports.orders'],
-                    ['Notes', 'corral.reports.notes'],
-                    ['Phonecalls', 'corral.reports.phonecalls'],
-                ],
                 'Website' => [
                     ['Web Messages', 'corral.messages.index', 'messages'], // contact form inbox (not in the original menu)
                 ],
@@ -146,6 +141,9 @@ return [
                 'Reports' => [
                     ['Report Status', 'walker.home', 'report_problems'],
                     ['Run a Report', 'walker.reports.index'],
+                    ['Orders', 'walker.activity.orders'],
+                    ['Notes', 'walker.activity.notes'],
+                    ['Phonecalls', 'walker.activity.phonecalls'],
                 ],
                 'Files' => [
                     ['All Files', 'walker.uploads.index'],
@@ -161,7 +159,7 @@ return [
         ],
         'caboose' => [
             'name' => 'Caboose',
-            'desc' => 'Finance: payments, credits and debits approval, refunds, deposits, receivables aging and the journal export.',
+            'desc' => 'Finance: payments, credits and debits approval, refunds, deposits, receivables aging, the journal export, MSIDs and promo codes.',
             'icon' => 'train',
             'home' => 'caboose.dashboard',
             'menu' => [
@@ -175,6 +173,9 @@ return [
                 'Accounting' => [
                     ['Receivables Aging', 'caboose.aging'],
                     ['Journal', 'caboose.journal'],
+                ],
+                'Tracking' => [
+                    ['MSIDs & Promo Codes', 'caboose.channels'],
                 ],
                 'Data' => 'reference_tables',    // pricing, deposits, taxes, fraud indicators and CIS note dispositions
             ],
@@ -200,7 +201,7 @@ return [
         ],
         'rodeo' => [
             'name' => 'Rodeo',
-            'desc' => 'Marketing: email and SMS campaigns, email templates, PDF templates (letters and notices made into PDFs), customer surveys, MSIDs and promo codes.',
+            'desc' => 'Marketing: email and SMS campaigns, email templates, PDF templates (letters and notices made into PDFs), and customer surveys.',
             'icon' => 'megaphone',
             'home' => 'rodeo.dashboard',
             'menu' => [
@@ -230,9 +231,6 @@ return [
                     ['Question Bank', 'rodeo.surveys.bank'],
                     ['Answer Sets', 'rodeo.surveys.answers'],
                     ['Categories', 'rodeo.surveys.categories'],
-                ],
-                'Tracking' => [
-                    ['MSIDs & Promo Codes', 'rodeo.channels'],
                 ],
             ],
         ],

@@ -119,10 +119,10 @@
 
         {{-- Shop orders: from My Account, or placed here by phone --}}
         @php $shopOrders = \App\Models\ShopOrder::with('placedBy')->where('customer_id', $c->id)->latest('id')->limit(5)->get(); @endphp
-        <div class="panel" id="shop"><div class="panel-head"><h2>Shop Orders</h2><a class="btn sm cyan" href="{{ route('corral.customers.shop', $c) }}">Order Products</a></div><div class="table-wrap"><table>
+        <div class="panel span-all" id="shop"><div class="panel-head"><h2>Shop Orders</h2><a class="btn sm cyan" href="{{ route('corral.customers.shop', $c) }}">Order Products</a></div><div class="table-wrap"><table>
             <thead><tr><th>ID</th><th>Placed</th><th>Items</th><th class="num">Total</th><th>Status</th></tr></thead>
             <tbody>@forelse ($shopOrders as $o)
-                @php $u = route('corral.shop.orders.show', $o); @endphp
+                @php $u = route('corral.shop.orders.show', [$o, 'from' => 'account']); @endphp
                 <tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $o->id }}</b></a><div class="help mono">{{ $o->number }}</div></td><td class="nowrap">{{ $o->created_at->format('n/j/Y') }}<div class="help">{{ $o->placedBy ? 'by '.$o->placedBy->name : 'My Account' }}</div></td>
                     <td class="wrap">{{ \Illuminate\Support\Str::limit(collect($o->items)->map(fn ($i) => $i['qty'].'× '.$i['name'])->implode(', '), 60) }}</td>
                     <td class="num">${{ number_format($o->total, 2) }}@if ($o->monthly > 0)<div class="help">+${{ number_format($o->monthly, 2) }}/mo</div>@endif</td>
@@ -212,7 +212,8 @@
         @endforeach</tbody></table></div>
     </div></div>
 
-    {{-- Notes --}}
+    {{-- Notes (2/3: add a note and the notes table) and All Notes (1/3: every note in full) --}}
+    <div class="grid-2-1" id="notes-row">
     <div class="panel" id="notes"><div class="panel-head"><h2>Notes ({{ $c->notes->count() }})</h2></div><div class="panel-body">
         <form method="post" action="{{ route('corral.customers.notes', $c) }}" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">@csrf
             <div class="form-row">
@@ -232,9 +233,18 @@
                 @php $u = route('corral.items.show', ['id' => $n->id, 'model' => 'ItemNote_model']); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $n->id }}</b></a></td><td class="nowrap">{{ $n->created_at->format('n/j/Y g:i A') }}</td><td>{{ $n->author ?? 'System' }}</td>
                     <td>{{ $n->category ?? '—' }}@if ($n->action)<div class="help">{{ $n->action }}</div>@endif</td>
                     <td>@if ($n->priority)@include('backend.partials.pill', ['text' => $n->priority, 'tone' => ['High' => 'bad', 'Medium' => 'warn'][$n->priority] ?? ''])@else — @endif</td>
-                    <td class="wrap" style="min-width:280px">{{ $n->body }}</td></tr>
+                    <td class="wrap" style="min-width:180px">{{ $n->body }}</td></tr>
             @empty <tr><td colspan="6" class="empty">No notes yet.</td></tr> @endforelse</tbody>
         </table></div>
+    </div>
+    <div class="panel" id="all-notes"><div class="panel-head"><h2>All Notes</h2><span class="muted">{{ $c->notes->count() }}</span></div>
+        <div class="note-feed">@forelse ($c->notes->sortByDesc('created_at') as $n)
+            @php $u = route('corral.items.show', ['id' => $n->id, 'model' => 'ItemNote_model']); @endphp
+            <article><div class="note-meta"><a href="{{ $u }}"><b>#{{ $n->id }}</b></a><span>{{ $n->created_at->format('n/j/Y g:i A') }}</span><span>{{ $n->author ?? 'System' }}</span>@if ($n->category)<span>{{ $n->category }}@if ($n->action) · {{ $n->action }}@endif</span>@endif
+                @if ($n->priority)@include('backend.partials.pill', ['text' => $n->priority, 'tone' => ['High' => 'bad', 'Medium' => 'warn'][$n->priority] ?? ''])@endif</div>
+                <p>{{ $n->body }}</p></article>
+        @empty <p class="muted" style="padding:16px">No notes yet.</p> @endforelse</div>
+    </div>
     </div>
 
     {{-- Phone calls and text messages with this customer --}}

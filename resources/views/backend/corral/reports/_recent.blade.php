@@ -12,7 +12,7 @@
                 <td class="num">{{ $r->status === 'done' ? number_format($r->rows) : '…' }}</td>
                 <td style="white-space:nowrap">@include('backend.partials.pill', ['text' => \App\Models\ReportRun::stateLabel($r->state())[0], 'tone' => \App\Models\ReportRun::stateLabel($r->state())[1]])</td>
                 <td class="actions">@include('backend.partials.report-actions', ['size' => 'row', 'downloadLabel' => 'Download '.$r->formatLabel(),
-                    'download' => $r->file ? route('corral.reports.download', $r) : null, 'why' => in_array($r->status, ['queued', 'running']) ? 'still running' : 'no file',
+                    'download' => $r->file ? route('walker.activity.download', $r) : null, 'why' => in_array($r->status, ['queued', 'running']) ? 'still running' : 'no file',
                     'rerun' => route('admin.files.rerun', $r)])</td></tr>
         @empty <tr><td colspan="7" class="empty">You haven't run this report yet. Pick the settings on the left and Run Report.</td></tr> @endforelse</tbody>
     </table></div>

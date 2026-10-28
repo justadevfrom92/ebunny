@@ -184,7 +184,7 @@ class CmsTest extends TestCase
         $m = Market::firstOrFail();
         $this->get('/admin/sheriff/markets')->assertOk()->assertSee('href="'.route('sheriff.markets.edit', $m).'"><b>', false)->assertDontSee('>Edit</a>', false);
         $this->get('/admin/corral/queues')->assertOk()->assertDontSee('>Open</a>', false);
-        $this->get('/admin/rodeo/channels')->assertOk()->assertDontSee('>Edit</a>', false);
+        $this->get('/admin/caboose/channels')->assertOk()->assertDontSee('>Edit</a>', false);
         $this->get('/admin/sheriff/cached-tables')->assertOk()->assertDontSee('>View</a>', false);
     }
 }

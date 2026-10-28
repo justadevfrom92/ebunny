@@ -17,7 +17,7 @@
     </div></form>
     </aside>
     <div class="search-main">
-    @include('backend.corral.reports._recent', ['route' => 'corral.reports.phonecalls'])
+    @include('backend.corral.reports._recent', ['route' => 'walker.activity.phonecalls'])
     </div>
     </div>
 @endsection

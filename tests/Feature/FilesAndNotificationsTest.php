@@ -32,13 +32,13 @@ class FilesAndNotificationsTest extends TestCase
     public function test_finished_report_shows_in_the_badge_until_seen(): void
     {
         Storage::fake('local');
-        $user = User::where('email', 'csr@example.com')->firstOrFail();
+        $user = User::where('email', 'finance@example.com')->firstOrFail(); // has Walker, where the Notes report lives
         $this->actingAs($user);
         ReportRun::where('user_id', $user->id)->update(['seen_at' => now()]);
         $user->adminNotifications()->update(['read_at' => now()]);
         $this->getJson(route('admin.notifications'))->assertOk()->assertJson(['count' => 0]);
 
-        $this->get('/admin/corral/reports/notes?run=1&start=2020-01-01&format=csv')->assertRedirect();
+        $this->get('/admin/walker/activity/notes?run=1&start=2020-01-01&format=csv')->assertRedirect();
         $run = ReportRun::where('user_id', $user->id)->latest('id')->firstOrFail();
         $this->assertSame('done', $run->status);
         $this->getJson(route('admin.notifications'))->assertOk()->assertJson(['count' => 1])

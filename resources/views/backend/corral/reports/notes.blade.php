@@ -24,7 +24,7 @@
     </div></form>
     </aside>
     <div class="search-main">
-    @include('backend.corral.reports._recent', ['route' => 'corral.reports.notes'])
+    @include('backend.corral.reports._recent', ['route' => 'walker.activity.notes'])
     </div>
     </div>
 @endsection

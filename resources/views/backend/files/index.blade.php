@@ -18,7 +18,7 @@
                 <td>@include('backend.partials.pill', ['text' => \App\Models\ReportRun::stateLabel($r->state())[0], 'tone' => \App\Models\ReportRun::stateLabel($r->state())[1]])</td>
                 <td class="actions">@include('backend.partials.report-actions', ['size' => 'row', 'downloadLabel' => 'Download '.$r->formatLabel(), 'download' => $r->file ? route('admin.files.download', $r) : null,
                     'why' => in_array($r->status, ['queued', 'running']) ? 'still running' : 'no file', 'rerun' => route('admin.files.rerun', $r)])</td></tr>
-        @empty <tr><td colspan="8" class="empty">No files yet. Run a report from Corral → Reports or Walker → Reports.</td></tr> @endforelse</tbody>
+        @empty <tr><td colspan="8" class="empty">No files yet. Run a report from Walker → Reports.</td></tr> @endforelse</tbody>
     </table></div>
     @include('backend.partials.pager', ['p' => $runs])</div>
 @endsection

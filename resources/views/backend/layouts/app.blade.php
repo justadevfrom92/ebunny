@@ -39,6 +39,8 @@
                 @endforeach
             @endforeach
         </nav>
+        {{-- Put the menu back where it was scrolled to before the page paints, so the link you clicked stays where it was (admin.js saves it) --}}
+        <script>(function(m){try{var s=sessionStorage.getItem('admin-sidebar-scroll:'+(location.pathname.split('/')[2]||'home'));if(s!==null){m.scrollTop=+s}else{var on=m.querySelector('a.on');if(on)m.scrollTop=on.offsetTop-m.offsetTop-m.clientHeight/2}}catch(e){}})(document.getElementById('menu'))</script>
         <div class="side-foot">
             {{-- Always in the bottom-left corner, outside the scrolling menu --}}
             <a class="side-website" href="/" target="_blank" rel="noopener">Website</a>
@@ -47,7 +49,7 @@
     <div class="main">
         <header class="topbar">
             <button class="menu-btn" id="menu-btn" aria-label="Open menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
-            <div class="crumbs">{{-- every part is a link: the app's home, the menu item, this page --}}<a href="{{ $app['home'] }}">{{ $app['name'] }}</a> /@if ($activeItem && ! $activeItem['exact'] && View::hasSection('crumb') && trim(View::getSection('crumb')) !== $activeLabel) <a href="{{ $activeItem['url'] }}">{{ $activeLabel }}</a> /@endif <a href="{{ url()->full() }}" aria-current="page"><b>@yield('crumb', $activeLabel)</b></a></div>
+            <div class="crumbs">{{-- every part is a link: the app's home, the menu item (or the page's own trail, e.g. the account you came from), this page --}}<a href="{{ $app['home'] }}">{{ $app['name'] }}</a> /@if (View::hasSection('crumb_trail')) @yield('crumb_trail') /@elseif ($activeItem && ! $activeItem['exact'] && View::hasSection('crumb') && trim(View::getSection('crumb')) !== $activeLabel) <a href="{{ $activeItem['url'] }}">{{ $activeLabel }}</a> /@endif <a href="{{ url()->full() }}" aria-current="page"><b>@yield('crumb', $activeLabel)</b></a></div>
             {{-- Shown when this browser has its own Style Guide changes (see partials/head) --}}
             <span class="local-style-flag" data-local-style-flag hidden><span data-local-style-text>Your style changes</span><button type="button" data-local-style-reset>Reset</button></span>
             @include('backend.partials.user-menu')

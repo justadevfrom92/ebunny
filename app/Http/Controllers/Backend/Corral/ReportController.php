@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 /**
- * Corral → Reports (Orders, Notes, Phonecalls). Run Report always runs in the background and saves a
+ * Walker → Reports (Orders, Notes, Phonecalls). Run Report always runs in the background and saves a
  * file in the format chosen (Excel, CSV, tab-separated or JSON; full rows or a summary). The page lists
  * your runs on the right; you get a notice (top right) when each one is ready. The queries are the report
  * classes in app/Reports, which Walker uses too.
@@ -67,7 +67,7 @@ class ReportController extends Controller
     {
         $def = Report::definition($key);
 
-        return ReportRun::create(['user_id' => $request->user()->id, 'app' => 'corral', 'report' => $key, 'title' => $def['title'], 'model' => $def['model'],
+        return ReportRun::create(['user_id' => $request->user()->id, 'app' => 'walker', 'report' => $key, 'title' => $def['title'], 'model' => $def['model'],
             'params' => collect($f)->except(['format', 'summary', 'output'])->filter(fn ($v) => $v !== null && $v !== [] && $v !== '')->all(),
             'format' => $f['format'], 'summary' => (bool) $f['summary'], 'rows' => 0, 'status' => 'queued', 'created_at' => now()]);
     }

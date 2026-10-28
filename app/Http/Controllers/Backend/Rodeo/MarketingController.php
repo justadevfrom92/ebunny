@@ -241,7 +241,7 @@ class MarketingController extends Controller
         $data = $request->validate(['msid' => ['required', 'regex:/^\d{3,8}$/'], 'name' => ['required', 'string', 'max:100'], 'type' => ['required', Rule::in(['Organic', 'Paid', 'Partner', 'Broker', 'Agent'])], 'active' => ['boolean']]);
         MarketingChannel::updateOrCreate(['msid' => $data['msid']], ['active' => $request->boolean('active', true)] + $data);
 
-        return redirect()->route('rodeo.channels')->with('status', 'MSID '.$data['msid'].' saved. Website links use ?msid='.$data['msid']);
+        return redirect()->route('caboose.channels')->with('status', 'MSID '.$data['msid'].' saved. Website links use ?msid='.$data['msid']);
     }
 
     /** New MSID / Edit MSID: its own page with a simple form. */
@@ -263,6 +263,6 @@ class MarketingController extends Controller
             'starts_on' => ['nullable', 'date'], 'ends_on' => ['nullable', 'date', 'after_or_equal:starts_on'], 'active' => ['boolean']]);
         PromoCode::updateOrCreate(['code' => $data['code']], ['active' => $request->boolean('active', true)] + $data);
 
-        return redirect()->route('rodeo.channels')->with('status', 'Promo code '.$data['code'].' saved. Website links use ?promo='.$data['code']);
+        return redirect()->route('caboose.channels')->with('status', 'Promo code '.$data['code'].' saved. Website links use ?promo='.$data['code']);
     }
 }

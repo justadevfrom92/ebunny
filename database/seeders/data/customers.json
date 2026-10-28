@@ -322,7 +322,7 @@
   "autopay": true,
   "paperless": true,
   "stars": 75,
-  "bookmarked": false
+  "bookmarked": true
  },
  {
   "account": "1219017849",
@@ -772,7 +772,7 @@
   "autopay": true,
   "paperless": true,
   "stars": 519,
-  "bookmarked": false
+  "bookmarked": true
  },
  {
   "account": "1219042563",

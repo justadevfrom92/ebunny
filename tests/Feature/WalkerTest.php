@@ -76,8 +76,8 @@ class WalkerTest extends TestCase
     {
         Storage::fake('local');
         $this->actingAs($this->admin());
-        $this->from('/admin/corral/reports/notes')->get('/admin/corral/reports/notes?run=1&start=2020-01-01')->assertRedirect();
-        $run = ReportRun::where('app', 'corral')->where('report', 'notes')->latest('id')->firstOrFail();
+        $this->from('/admin/walker/activity/notes')->get('/admin/walker/activity/notes?run=1&start=2020-01-01')->assertRedirect();
+        $run = ReportRun::where('app', 'walker')->where('report', 'notes')->latest('id')->firstOrFail();
         $this->assertSame('done', $run->status);
         $this->get('/admin/walker')->assertSee(route('walker.runs.show', $run));
     }
@@ -111,8 +111,8 @@ class WalkerTest extends TestCase
         $this->assertGreaterThan(10, substr_count($html, '<tr class="click" data-href="'.url('/admin/walker/runs')));
         $this->assertSame(substr_count($html, '<tr class="click" data-href="'.url('/admin/walker/runs')), substr_count($html, 'aria-label="Rerun report"'));
         // Corral reports: each of your runs has a download and a rerun icon
-        $this->get('/admin/corral/reports/notes?run=1&start=2025-01-01')->assertRedirect();
+        $this->get('/admin/walker/activity/notes?run=1&start=2025-01-01')->assertRedirect();
         $mine = ReportRun::where('report', 'notes')->latest('id')->firstOrFail();
-        $this->get('/admin/corral/reports/notes')->assertOk()->assertSee('Download Excel', false)->assertSee(route('admin.files.rerun', $mine), false);
+        $this->get('/admin/walker/activity/notes')->assertOk()->assertSee('Download Excel', false)->assertSee(route('admin.files.rerun', $mine), false);
     }
 }

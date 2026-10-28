@@ -149,8 +149,10 @@ class FinanceRewardsMarketingTest extends TestCase
         $this->assertGreaterThan(0, $suppressed);
         $this->assertSame($count - $suppressed, ContactLog::where('campaign_id', $campaign->id)->count());
 
-        $this->post(route('rodeo.channels.save'), ['msid' => '77001', 'name' => 'Radio spot', 'type' => 'Paid'])->assertRedirect();
-        $this->post(route('rodeo.promos.save'), ['code' => 'rodeo10', 'description' => '$10 off', 'credit' => 10])->assertRedirect();
+        // MSIDs and promo codes are in Caboose
+        $this->actingAs($this->user('admin@example.com'));
+        $this->post(route('caboose.channels.save'), ['msid' => '77001', 'name' => 'Radio spot', 'type' => 'Paid'])->assertRedirect();
+        $this->post(route('caboose.promos.save'), ['code' => 'rodeo10', 'description' => '$10 off', 'credit' => 10])->assertRedirect();
         $this->assertDatabaseHas('promo_codes', ['code' => 'RODEO10']);
     }
 

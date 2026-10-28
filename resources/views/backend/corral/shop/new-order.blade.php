@@ -1,6 +1,7 @@
 @extends('backend.layouts.app')
 
 @section('crumb', 'Order Products')
+@section('crumb_trail')<a href="{{ route('corral.customers.index') }}">Customer Search</a> / <a href="{{ route('corral.customers.show', $c) }}">Account {{ $c->account }}</a>@endsection
 
 {{-- Order Shop products for a customer on the phone, as they would on the website: pick items, then pay and ship like checkout. --}}
 @section('content')

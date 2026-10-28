@@ -19,11 +19,7 @@
     if (!side) return;
     // One saved position per admin app (Corral's menu and Lando's menu scroll separately)
     var key = 'admin-sidebar-scroll:' + (location.pathname.split('/')[2] || 'home');
-    try {
-      var saved = sessionStorage.getItem(key);
-      if (saved !== null) side.scrollTop = +saved;
-      else { var on = $('.sidebar a.on'); if (on) side.scrollTop = on.offsetTop - side.offsetTop - side.clientHeight / 2; }
-    } catch (e) {}
+    // (the saved position is put back by the inline script under the menu, before the page paints)
     function save() { try { sessionStorage.setItem(key, String(side.scrollTop)); } catch (e) {} }
     side.addEventListener('click', save, true);
     side.addEventListener('scroll', function () { clearTimeout(save.t); save.t = setTimeout(save, 120); });

@@ -268,10 +268,6 @@ Route::prefix('admin')->group(function () {
             Route::get('orders/create', [Backend\Corral\OrderController::class, 'create'])->name('orders.create');
             Route::get('orders/create-biz', [Backend\Corral\OrderController::class, 'createBiz'])->name('orders.create-biz');
             Route::post('orders', [Backend\Corral\OrderController::class, 'store'])->name('orders.store');
-            Route::get('reports/orders', [Backend\Corral\ReportController::class, 'orders'])->name('reports.orders');
-            Route::get('reports/download/{run}', [Backend\Corral\ReportController::class, 'download'])->name('reports.download');
-            Route::get('reports/notes', [Backend\Corral\ReportController::class, 'notes'])->name('reports.notes');
-            Route::get('reports/phonecalls', [Backend\Corral\ReportController::class, 'phonecalls'])->name('reports.phonecalls');
             Route::get('sms', [Backend\Corral\SmsController::class, 'index'])->name('sms');
             Route::get('sms/new', [Backend\Corral\SmsController::class, 'create'])->name('sms.create');
             Route::get('sms/{message}', [Backend\Corral\SmsController::class, 'show'])->whereNumber('message')->name('sms.show');
@@ -400,6 +396,11 @@ Route::prefix('admin')->group(function () {
             Route::get('runs/{run}', [Backend\Walker\ReportController::class, 'show'])->name('runs.show');
             Route::post('runs/{run}/rerun', [Backend\Walker\ReportController::class, 'rerun'])->name('runs.rerun');
             Route::get('runs/{run}/download', [Backend\Walker\ReportController::class, 'download'])->name('runs.download');
+            // Customer service reports (Orders, Notes, Phonecalls), moved here from Corral
+            Route::get('activity/orders', [Backend\Corral\ReportController::class, 'orders'])->name('activity.orders');
+            Route::get('activity/download/{run}', [Backend\Corral\ReportController::class, 'download'])->name('activity.download');
+            Route::get('activity/notes', [Backend\Corral\ReportController::class, 'notes'])->name('activity.notes');
+            Route::get('activity/phonecalls', [Backend\Corral\ReportController::class, 'phonecalls'])->name('activity.phonecalls');
             Route::get('reports', [Backend\Walker\ReportController::class, 'index'])->name('reports.index');
             Route::get('reports/{key}', [Backend\Walker\ReportController::class, 'report'])->name('reports.show');
             Route::post('reports/{key}', [Backend\Walker\ReportController::class, 'run'])->name('reports.run');
@@ -415,6 +416,17 @@ Route::prefix('admin')->group(function () {
             Route::get('uploads/{upload}/view', [Backend\Walker\UploadController::class, 'view'])->name('uploads.view');
             Route::patch('uploads/{upload}', [Backend\Walker\UploadController::class, 'update'])->name('uploads.update');
             Route::delete('uploads/{upload}', [Backend\Walker\UploadController::class, 'destroy'])->name('uploads.destroy');
+        });
+
+        // Caboose — MSIDs (sales channels) and promo codes, moved here from Rodeo
+        Route::prefix('caboose')->name('caboose.')->middleware('app:caboose')->controller(Backend\Rodeo\MarketingController::class)->group(function () {
+            Route::get('channels', 'channels')->name('channels');
+            Route::post('channels', 'saveChannel')->name('channels.save');
+            Route::get('channels/new', 'channelForm')->name('channels.create');
+            Route::get('channels/{channel}/edit', 'channelForm')->name('channels.edit');
+            Route::get('promos/new', 'promoForm')->name('promos.create');
+            Route::get('promos/{promo}/edit', 'promoForm')->name('promos.edit');
+            Route::post('promos', 'savePromo')->name('promos.save');
         });
 
         // Caboose — finance
@@ -553,13 +565,6 @@ Route::prefix('admin')->group(function () {
                 Route::get('{survey}/results', 'results')->name('.results');
                 Route::get('{survey}/export', 'export')->name('.export');
             });
-            Route::get('channels', 'channels')->name('channels');
-            Route::post('channels', 'saveChannel')->name('channels.save');
-            Route::get('channels/new', 'channelForm')->name('channels.create');
-            Route::get('channels/{channel}/edit', 'channelForm')->name('channels.edit');
-            Route::get('promos/new', 'promoForm')->name('promos.create');
-            Route::get('promos/{promo}/edit', 'promoForm')->name('promos.edit');
-            Route::post('promos', 'savePromo')->name('promos.save');
         });
 
         // Deputy — AI agents

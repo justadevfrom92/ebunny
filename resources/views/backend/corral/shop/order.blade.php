@@ -1,11 +1,16 @@
 @extends('backend.layouts.app')
 
 @section('crumb', 'Order '.$o->number)
+{{-- Opened from an account's Shop Orders: the breadcrumbs lead back to that account --}}
+@php $fromAccount = request('from') === 'account' && $o->customer; @endphp
+@if ($fromAccount)
+    @section('crumb_trail')<a href="{{ route('corral.customers.index') }}">Customer Search</a> / <a href="{{ route('corral.customers.show', $o->customer) }}">Account {{ $o->customer->account }}</a> / <a href="{{ route('corral.customers.show', $o->customer) }}#shop">Shop Orders</a>@endsection
+@endif
 
 {{-- One Shop order: what was bought, how it was paid, where it ships, and its status. --}}
 @section('content')
     @include('backend.partials.page-head', ['title' => 'Order '.$o->number, 'sub' => 'Order #'.$o->id.' · placed '.$o->created_at->format('n/j/Y g:i A').' '.($o->placedBy ? 'by '.e($o->placedBy->name).' (by phone)' : 'by the customer in My Account'),
-        'actions' => '<a class="btn ghost btn-back" href="'.route('corral.shop.orders').'">Back to Product Orders</a>'
+        'actions' => ($fromAccount ? '<a class="btn ghost btn-back" href="'.route('corral.customers.show', $o->customer).'#shop">Back to Account</a>' : '<a class="btn ghost btn-back" href="'.route('corral.shop.orders').'">Back to Product Orders</a>')
             .($o->customer ? '<a class="btn ghost" href="'.route('corral.customers.shop', $o->customer).'">New Order for This Customer</a>' : '')])
 
     <div style="display:flex;flex-direction:column;gap:20px">

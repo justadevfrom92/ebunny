@@ -88,23 +88,23 @@ class OriginalFieldsTest extends TestCase
 
         foreach (['orders', 'notes', 'phonecalls'] as $report) {
             foreach ([0, 1] as $summary) {
-                $this->get("/admin/corral/reports/$report?run=1&start=2020-01-01&format=xlsx&summary=$summary")->assertRedirect();
+                $this->get("/admin/walker/activity/$report?run=1&start=2020-01-01&format=xlsx&summary=$summary")->assertRedirect();
                 $run = ReportRun::where('report', $report)->latest('id')->firstOrFail();
                 $this->assertSame((bool) $summary, $run->summary);
                 $this->assertStringContainsString('<sheetData>', $this->unzip(Storage::disk('local')->get($run->file))['xl/worksheets/sheet1.xml'] ?? '');
             }
         }
 
-        $this->from('/admin/corral/reports/orders')->get('/admin/corral/reports/orders?run=1&start=2020-01-01')->assertRedirect();
+        $this->from('/admin/walker/activity/orders')->get('/admin/walker/activity/orders?run=1&start=2020-01-01')->assertRedirect();
         $run = ReportRun::where('report', 'orders')->latest('id')->firstOrFail();
         $this->assertSame('done', $run->status);
         $this->assertGreaterThan(0, $run->rows);
         Storage::disk('local')->assertExists($run->file);
-        $this->get('/admin/corral/reports/orders')->assertSee(route('corral.reports.download', $run));
-        $this->get(route('corral.reports.download', $run))->assertOk();
+        $this->get('/admin/walker/activity/orders')->assertSee(route('walker.activity.download', $run));
+        $this->get(route('walker.activity.download', $run))->assertOk();
 
         // Only the person who ran it can download it
-        $this->actingAs(User::where('email', 'csr@example.com')->firstOrFail())->get(route('corral.reports.download', $run))->assertNotFound();
+        $this->actingAs(User::where('email', 'csr@example.com')->firstOrFail())->get(route('walker.activity.download', $run))->assertRedirect(); // another user's run (and no Walker access)
     }
 
     public function test_astro_has_separate_modifier_and_byop_product_pages(): void

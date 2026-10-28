@@ -118,14 +118,14 @@ class AccountTest extends TestCase
         // Reports always run in the background and save a file in the chosen format
         foreach (['orders', 'notes', 'phonecalls'] as $report) {
             foreach (['xlsx', 'csv', 'txt', 'json'] as $format) {
-                $this->get('/admin/corral/reports/'.$report.'?run=1&start=2020-01-01&format='.$format)->assertRedirect();
+                $this->get('/admin/walker/activity/'.$report.'?run=1&start=2020-01-01&format='.$format)->assertRedirect();
                 $run = ReportRun::where('report', $report)->latest('id')->firstOrFail();
                 $this->assertSame('done', $run->status);
                 $this->assertStringEndsWith('.'.$format, $run->file);
             }
-            $this->get('/admin/corral/reports/'.$report)->assertOk()->assertSee('Your Runs')->assertSee('aria-label="Rerun report"', false);
+            $this->get('/admin/walker/activity/'.$report)->assertOk()->assertSee('Your Runs')->assertSee('aria-label="Rerun report"', false);
         }
-        $this->get('/admin/corral/reports/notes?run=1&start=2020-01-01&priorities[]=System&format=json')->assertRedirect();
+        $this->get('/admin/walker/activity/notes?run=1&start=2020-01-01&priorities[]=System&format=json')->assertRedirect();
         $this->assertStringContainsString('Enrollment submitted', json_encode(ReportRun::where('report', 'notes')->latest('id')->first()->preview));
 
         $this->get('/admin/corral/ercot')->assertOk()->assertSee('814_16');
