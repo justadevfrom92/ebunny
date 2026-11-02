@@ -11,6 +11,7 @@
             'download' => $latestFile ? route('walker.runs.download', $latestFile) : null, 'why' => $latest ? 'no saved file yet' : 'not run yet',
             'rerun' => $latest ? route('walker.runs.rerun', $latest) : route('walker.reports.run', $def['key'])])->render()])
 
+    @if ($from)<div class="alert info"><b>Saved report: {{ $from->name }}</b> Its settings are filled in below. <a href="{{ route('walker.saved.show', $from) }}">Open the saved report</a></div>@endif
     <div class="search-layout">
         <aside class="search-side">
             <form method="post" action="{{ route('walker.reports.run', $def['key']) }}" class="panel">@csrf
@@ -30,11 +31,18 @@
                         @endif
                     @endforeach
                     <div class="field"><label>Export as</label><div class="chips small">
-                        @foreach (\App\Support\Export::FORMATS as $v => [$l])<label><input type="radio" name="format" value="{{ $v }}" @checked(old('format', 'xlsx') === $v)><span>{{ $l }}</span></label>@endforeach
+                        @foreach (\App\Support\Export::FORMATS as $v => [$l])<label><input type="radio" name="format" value="{{ $v }}" @checked(old('format', $from?->format ?? 'xlsx') === $v)><span>{{ $l }}</span></label>@endforeach
                     </div></div>
-                    <label class="check"><input type="hidden" name="summary" value="0"><input type="checkbox" name="summary" value="1" @checked(old('summary'))> Summary only (counts instead of every row)</label>
+                    <label class="check"><input type="hidden" name="summary" value="0"><input type="checkbox" name="summary" value="1" @checked(old('summary', $from?->summary))> Summary only (counts instead of every row)</label>
                     <button class="btn cyan">Run Report</button>
                     <p class="help">Runs in the background and saves the file. You'll get a notice at the top right when it's ready.</p>
+                    {{-- Save these settings under Saved Reports, to rerun any time --}}
+                    <div class="save-report">
+                        <input type="hidden" name="report" value="{{ $def['key'] }}">
+                        <div class="field"><label for="save-name">Save as a Saved Report</label><input id="save-name" name="name" maxlength="120" placeholder="Name, e.g. Monthly on-flow orders" value="{{ old('name') }}"></div>
+                        <label class="check"><input type="hidden" name="shared" value="0"><input type="checkbox" name="shared" value="1"> Share with everyone who has Walker</label>
+                        <button class="btn ghost" formaction="{{ route('walker.saved.store') }}">Save Report</button>
+                    </div>
                 </div>
             </form>
         </aside>

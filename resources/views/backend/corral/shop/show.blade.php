@@ -24,13 +24,10 @@
             <dt>Category</dt><dd>{{ $cats[$p->cat] ?? $p->cat }}</dd>
         </dl></div></div>
 
-        <form method="get" action="" class="panel" data-order-for>
-            <div class="panel-head"><h2>Order for a Customer</h2></div>
-            <div class="panel-body">
-                <div class="form-row"><input name="account" required inputmode="numeric" aria-label="Account number" placeholder="Account number"><button class="btn cyan">Start Order</button></div>
-                <p class="help">Opens the order page for that account with this product in it, like the customer adding it to their cart on the website.</p>
-            </div>
-        </form>
+        {{-- Order for a Customer: find them, then start the order with this product in it (like adding it to their cart on the website) --}}
+        @include('backend.partials.customer-finder', ['id' => 'order-for', 'title' => 'Order for a Customer', 'found' => $found,
+            'help' => 'Find the customer, then start the order with this product in it, like the customer adding it to their cart on the website.',
+            'button' => fn ($c) => '<a class="btn sm cyan" href="'.e(route('corral.customers.shop', [$c, 'sku' => $p->sku])).'">Start order with this customer</a>'])
 
         <div class="panel"><div class="panel-head"><h2>Recent Orders</h2><a class="btn sm ghost" href="{{ route('corral.shop.orders') }}">All Orders</a></div><div class="table-wrap"><table>
             <thead><tr><th>ID</th><th>Order</th><th>Placed</th><th>Account</th><th class="num">Qty</th><th>Status</th></tr></thead>
@@ -42,15 +39,5 @@
             @empty <tr><td colspan="6" class="empty">Not ordered yet.</td></tr> @endforelse</tbody>
         </table></div></div>
     </div>
-    <script>
-    // Start Order: find the account's order page (account numbers are the account's address in Corral)
-    document.querySelector('[data-order-for]').addEventListener('submit', function (e) {
-        e.preventDefault();
-        var acct = this.account.value.replace(/\D/g, '');
-        if (!acct) return;
-        var a = document.createElement('a');   // a real link, so it opens like any other link on the page
-        a.href = {!! json_encode(url('/admin/corral/customers')) !!} + '/' + acct + '/order-products?sku={{ urlencode($p->sku) }}';
-        document.body.appendChild(a); a.click(); a.remove();
-    });
-    </script>
+    
 @endsection

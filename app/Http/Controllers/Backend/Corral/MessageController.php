@@ -49,7 +49,7 @@ class MessageController extends Controller
             ContactLog::create(['customer_id' => $c->id, 'channel' => 'Email', 'template' => 'Web Message Reply', 'body' => $data['reply'], 'status' => $ready ? 'queued' : 'not sent', 'user_id' => $request->user()->id]);
         }
 
-        return redirect()->route('corral.messages.show', $message)->with('status', 'Reply saved'.($ready ? ' and queued to '.$message->email : ' (email is not set up, so it was logged but not sent)').'.');
+        return redirect()->route('ranger.messages.show', $message)->with('status', 'Reply saved'.($ready ? ' and queued to '.$message->email : ' (email is not set up, so it was logged but not sent)').'.');
     }
 
     public function handled(Request $request, ContactMessage $message): RedirectResponse

@@ -80,4 +80,9 @@ class ReportRun extends Model
             default => $q,
         };
     }
+
+    public function savedReport(): BelongsTo
+    {
+        return $this->belongsTo(SavedReport::class);
+    }
 }

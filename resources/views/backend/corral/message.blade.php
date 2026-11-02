@@ -5,7 +5,7 @@
 @section('content')
     @include('backend.partials.page-head', ['title' => $m->topicLabel().': '.$m->first_name.' '.$m->last_name,
         'sub' => 'Received '.$m->created_at->format('l, F j, Y g:i A').' ('.$m->created_at->diffForHumans().')',
-        'actions' => '<a class="btn ghost" href="'.route('corral.messages.index').'">All Messages</a><form method="post" action="'.route('corral.messages.handled', $m).'" class="inline">'.csrf_field().'<button class="btn '.($m->handled_at ? 'ghost' : 'cyan').'">'.($m->handled_at ? 'Reopen' : 'Mark Handled').'</button></form>'])
+        'actions' => '<a class="btn ghost" href="'.route('ranger.messages.index').'">All Messages</a><form method="post" action="'.route('ranger.messages.handled', $m).'" class="inline">'.csrf_field().'<button class="btn '.($m->handled_at ? 'ghost' : 'cyan').'">'.($m->handled_at ? 'Reopen' : 'Mark Handled').'</button></form>'])
     <div class="grid-2" style="align-items:start;grid-template-columns:minmax(0,2fr) minmax(0,1fr)">
         <div style="display:grid;gap:20px;min-width:0">
             <div class="panel"><div class="panel-head"><h2>Message</h2>@include('backend.partials.pill', $m->handled_at ? ['text' => 'Handled', 'tone' => 'ok'] : ['text' => 'Open', 'tone' => 'warn'])</div>
@@ -14,7 +14,7 @@
                 <div class="panel"><div class="panel-head"><h2>Reply sent</h2><span class="muted">{{ $m->replier?->name }} · {{ $m->replied_at->format('n/j/Y g:i A') }}</span></div>
                     <div class="panel-body"><p style="white-space:pre-line;margin:0;line-height:1.6">{{ $m->reply }}</p></div></div>
             @endif
-            <form method="post" action="{{ route('corral.messages.reply', $m) }}" class="panel">@csrf
+            <form method="post" action="{{ route('ranger.messages.reply', $m) }}" class="panel">@csrf
                 <div class="panel-head"><h2>{{ $m->reply ? 'Send another reply' : 'Reply' }}</h2><span class="muted">emails {{ $m->email }}</span></div>
                 <div class="panel-body" style="display:grid;gap:10px">
                     <label for="reply" class="sr-only">Reply</label>
@@ -46,7 +46,7 @@
             </div></div>
             @if ($others->isNotEmpty())
                 <div class="panel"><div class="panel-head"><h2>Other messages from them</h2></div><div class="table-wrap"><table><tbody>@foreach ($others as $o)
-                    <tr class="click" data-href="{{ route('corral.messages.show', $o) }}"><td class="nowrap"><a href="{{ route('corral.messages.show', $o) }}"><b>#{{ $o->id }}</b></a></td><td class="nowrap">{{ $o->created_at->format('n/j/Y') }}</td><td>{{ $o->topicLabel() }}</td><td>{{ $o->handled_at ? 'Handled' : 'Open' }}</td></tr>
+                    <tr class="click" data-href="{{ route('ranger.messages.show', $o) }}"><td class="nowrap"><a href="{{ route('ranger.messages.show', $o) }}"><b>#{{ $o->id }}</b></a></td><td class="nowrap">{{ $o->created_at->format('n/j/Y') }}</td><td>{{ $o->topicLabel() }}</td><td>{{ $o->handled_at ? 'Handled' : 'Open' }}</td></tr>
                 @endforeach</tbody></table></div></div>
             @endif
         </div>

@@ -962,3 +962,10 @@ dialog.modal::backdrop { background: rgba(16,34,71,.45); }
 .adv-checks label { display: flex; gap: 8px; align-items: center; font-weight: 400; text-transform: none; letter-spacing: 0; font-size: .9rem; color: var(--ink); }
 .field .label { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
 @media (max-width: 560px) { .adv-bar { flex-wrap: wrap; } .adv-bar .search-field { flex-basis: 100%; } }
+/* Customer finder (Order for a Customer, Make a PDF for an Account): the row's button can wrap so the table fits */
+.customer-finder td:last-child { white-space: normal !important; }
+.customer-finder td:last-child .btn { white-space: normal; max-width: 140px; line-height: 1.2; text-align: center; }
+
+/* Walker: Save Report under the report's Run button / a run's parameters */
+.save-report { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.panel-body.save-report { margin-top: 0; }

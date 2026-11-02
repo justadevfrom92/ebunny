@@ -36,7 +36,17 @@
         <div class="panel"><div class="panel-head"><h2>Parameters</h2></div><div class="panel-body"><dl class="kv">
             @forelse ($run->params ?? [] as $k => $v)<dt>{{ \Illuminate\Support\Str::headline($k) }}</dt><dd>{{ is_array($v) ? implode(', ', $v) : $v }}</dd>
             @empty <dt>None</dt><dd>—</dd> @endforelse
-        </dl></div></div>
+            @if ($run->saved_report_id && $run->savedReport)<dt>Saved Report</dt><dd><a href="{{ route('walker.saved.show', $run->savedReport) }}">{{ $run->savedReport->name }}</a></dd>@endif
+        </dl></div>
+            @if ($def)
+            {{-- Bookmark these settings under Saved Reports --}}
+            <form method="post" action="{{ route('walker.saved.store') }}" class="panel-body save-report">@csrf
+                <input type="hidden" name="report" value="{{ $run->report }}"><input type="hidden" name="run" value="{{ $run->id }}">
+                <div class="form-row"><input name="name" maxlength="120" required aria-label="Saved report name" placeholder="Save these settings as…"><button class="btn sm ghost">Save Report</button></div>
+                <label class="check"><input type="hidden" name="shared" value="0"><input type="checkbox" name="shared" value="1"> Share with everyone who has Walker</label>
+            </form>
+            @endif
+        </div>
 
         <div class="panel"><div class="panel-head"><h2>File</h2></div><div class="panel-body"><dl class="kv">
             <dt>Name</dt><dd class="mono">{{ $run->file ? basename($run->file) : '—' }}</dd>

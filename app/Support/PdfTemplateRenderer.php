@@ -50,18 +50,31 @@ class PdfTemplateRenderer
         return preg_replace_callback('/\{\{\s*([a-z_]+)\s*\}\}/', fn ($m) => array_key_exists($m[1], $v) ? (string) ($v[$m[1]] ?? '—') : $m[0], $text);
     }
 
-    /** @param  array{title: string, body: string, footer: ?string, show_address: bool}  $doc */
+    /** @param  array{title: string, body: string, footer: ?string, show_address: bool, header?: ?array{title: ?string, subtitle: ?string, color: ?string}}  $doc */
     public static function build(array $doc, ?Customer $c): Pdf
     {
         $pdf = new Pdf;
         $title = self::fill($doc['title'], $c);
         $footer = trim(self::fill((string) ($doc['footer'] ?? ''), $c));
 
-        // First page: brand band, the account's name and address, the title
-        $pdf->rect(0, 0, Pdf::W, 80, self::NAVY)
-            ->text(self::LEFT, 40, strtoupper(config('brand.name')), 20, true, [1, 1, 1])
-            ->text(self::LEFT, 58, $title, 10, false, [0.75, 0.85, 0.95])
-            ->text(self::RIGHT, 40, now()->format('F j, Y'), 10, false, [0.75, 0.85, 0.95], 'right');
+        // First page: the header band (from the header picked: its big text, the line under it and its colors),
+        // the account's name and address, the title
+        $h = $doc['header'] ?? [];
+        $band = trim(self::fill((string) ($h['title'] ?? ''), $c)) ?: config('brand.name');
+        $under = trim(self::fill((string) ($h['subtitle'] ?? ''), $c)) ?: $title;
+        [$fill, $ink, $soft] = match ($h['color'] ?? 'navy') {
+            'cyan' => [self::CYAN, [1, 1, 1], [0.9, 0.97, 1]],
+            'white' => [null, self::NAVY, self::GREY],
+            default => [self::NAVY, [1, 1, 1], [0.75, 0.85, 0.95]],
+        };
+        if ($fill) {
+            $pdf->rect(0, 0, Pdf::W, 80, $fill);
+        } else {
+            $pdf->rect(0, 78, Pdf::W, 2, self::CYAN);
+        }
+        $pdf->text(self::LEFT, 40, strtoupper($band), 20, true, $ink)
+            ->text(self::LEFT, 58, $under, 10, false, $soft)
+            ->text(self::RIGHT, 40, now()->format('F j, Y'), 10, false, $soft, 'right');
         $y = 112;
         if ($doc['show_address'] ?? true) {
             if ($c) {

@@ -4,7 +4,9 @@ namespace Database\Seeders;
 
 use App\Models\Customer;
 use App\Models\PdfGeneration;
+use App\Models\PdfPart;
 use App\Models\PdfTemplate;
+use App\Models\PdfTestSend;
 use App\Models\User;
 use App\Support\PdfTemplateRenderer;
 use Illuminate\Database\Seeder;
@@ -15,7 +17,12 @@ class PdfTemplateSeeder extends Seeder
     public function run(): void
     {
         mt_srand(77);
-        $footer = '{{brand}} · Questions? Call {{phone}} or visit My Account. Sample document for demonstration.';
+        // PDF Headers & Footers (fictional wording): one default of each, plus a couple to pick from
+        PdfPart::create(['kind' => 'header', 'name' => 'Standard (navy)', 'title' => '{{brand}}', 'color' => 'navy', 'is_default' => true]);
+        $legal = PdfPart::create(['kind' => 'header', 'name' => 'Legal notice (white)', 'title' => '{{brand}}', 'subtitle' => 'Important notice about your electric service', 'color' => 'white']);
+        $promo = PdfPart::create(['kind' => 'header', 'name' => 'Rewards (cyan)', 'title' => 'Rangler Rewards', 'subtitle' => 'From {{brand}}', 'color' => 'cyan']);
+        PdfPart::create(['kind' => 'footer', 'name' => 'Standard', 'body' => '{{brand}} · Questions? Call {{phone}} or visit My Account. Sample document for demonstration.', 'is_default' => true]);
+        $legalFooter = PdfPart::create(['kind' => 'footer', 'name' => 'Legal (PUCT)', 'body' => '{{brand}} · PUCT Certificate #10000 (sample) · Complaints: Public Utility Commission of Texas, 1-888-782-8477 (sample) · Account {{account}}']);
         $templates = [
             ['Payment Reminder Letter', 'Collections', 'Payment Reminder', <<<'TXT'
 Hi {{first_name}},
@@ -154,14 +161,24 @@ TXT],
         $customers = Customer::with('plan')->inRandomOrder()->limit(30)->get();
         $staff = User::whereIn('email', ['admin@example.com', 'marketing@example.com', 'csr@example.com'])->pluck('id')->all() ?: [null];
         foreach ($templates as $i => [$name, $category, $title, $body]) {
-            $t = PdfTemplate::create(['name' => $name, 'category' => $category, 'title' => $title, 'body' => $body, 'footer' => $footer,
+            // Footers come from PDF Headers & Footers (the default, or the legal one for notices); Rewards letters use the cyan header
+            $t = PdfTemplate::create(['name' => $name, 'category' => $category, 'title' => $title, 'body' => $body, 'footer' => null,
+                'pdf_header_id' => match ($category) {
+                    'Legal', 'Collections' => $legal->id, 'Rewards' => $promo->id, default => null
+                },
+                'pdf_footer_id' => in_array($category, ['Legal', 'Collections'], true) ? $legalFooter->id : null,
                 'show_address' => $category !== 'Legal', 'status' => $i === 7 ? 'Draft' : 'Active']);
             $t->forceFill(['created_at' => now()->subDays(60 - $i * 3), 'updated_at' => now()->subDays(20 - $i)])->saveQuietly();
             foreach ($customers->random(min($customers->count(), $i === 7 ? 0 : mt_rand(2, 6))) as $c) {
-                $doc = $t->only(['title', 'body', 'footer', 'show_address']);
+                $doc = $t->document();
                 $pdf = PdfTemplateRenderer::build($doc, $c);
                 PdfGeneration::create($doc + ['pdf_template_id' => $t->id, 'customer_id' => $c->id, 'user_id' => $staff[array_rand($staff)],
                     'file_name' => $t->fileName($c), 'pages' => $pdf->pageCount(), 'size' => strlen($pdf->output($t->title)), 'created_at' => now()->subMinutes(mt_rand(30, 60 * 24 * 30))]);
+            }
+            // A couple of test sends (to fictional addresses)
+            if ($i < 3) {
+                PdfTestSend::create(['pdf_template_id' => $t->id, 'user_id' => $staff[0], 'customer_id' => $customers->first()?->id,
+                    'recipients' => 'marketing@example.com', 'status' => 'sent', 'created_at' => now()->subDays(3 + $i)]);
             }
         }
     }

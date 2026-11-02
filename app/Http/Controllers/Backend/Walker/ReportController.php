@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\RunReport;
 use App\Models\ReportColumn;
 use App\Models\ReportRun;
+use App\Models\SavedReport;
 use App\Reports\Report;
 use App\Support\Export;
 use Illuminate\Http\RedirectResponse;
@@ -73,13 +74,15 @@ class ReportController extends Controller
         return view('backend.walker.reports', ['groups' => collect(config('walker.reports'))->map(fn ($d, $k) => $d + ['key' => $k])->groupBy('category'), 'last' => $last]);
     }
 
-    public function report(string $key): View
+    public function report(Request $request, string $key): View
     {
         $report = Report::make($key);
+        // Opened from a saved report: its settings fill the form
+        $from = $request->filled('saved') ? SavedReport::visibleTo($request->user())->where('report', $key)->find($request->integer('saved')) : null;
 
         $saved = ReportColumn::where('report', $key)->first();
 
-        return view('backend.walker.report', ['def' => Report::definition($key), 'filters' => $report->filters(), 'defaults' => $report->defaults(),
+        return view('backend.walker.report', ['def' => Report::definition($key), 'filters' => $report->filters(), 'defaults' => array_merge($report->defaults(), $from?->params ?? []), 'from' => $from,
             'columns' => $report->columns(), 'export' => $saved?->columns ?? [], 'exportBy' => $saved?->user, 'exportAt' => $saved?->updated_at,
             'fields' => $report->fields(), 'runs' => ReportRun::where('report', $key)->with('user')->latest('id')->limit(10)->get()]);
     }
@@ -123,6 +126,61 @@ class ReportController extends Controller
         ReportColumn::updateOrCreate(['report' => $key], ['columns' => $cols, 'user_id' => $request->user()->id]);
 
         return back()->with('status', count($cols).' export '.str('column')->plural(count($cols)).' saved. Every run of this report, from Walker or Corral, uses them.');
+    }
+
+    // ---------- Saved Reports ----------
+
+    /** Saved Reports: yours and the shared ones, to open or rerun in one click. */
+    public function saved(Request $request): View
+    {
+        return view('backend.walker.saved', ['saved' => SavedReport::visibleTo($request->user())->with('user')->withCount('runs')
+            ->orderByRaw('user_id = ? desc', [$request->user()->id])->orderBy('name')->get()]);
+    }
+
+    public function savedShow(Request $request, SavedReport $saved): View
+    {
+        abort_unless($saved->shared || $saved->user_id === $request->user()->id, 404);
+
+        return view('backend.walker.saved-show', ['s' => $saved->load('user'), 'def' => $saved->definition(),
+            'runs' => $saved->runs()->with('user')->latest('id')->paginate(10)]);
+    }
+
+    /** Save the report form's settings (Save as Saved Report), or a past run's (?run=). */
+    public function saveReport(Request $request): RedirectResponse
+    {
+        $data = $request->validate(['name' => ['required', 'string', 'max:120'], 'report' => ['required', 'string'], 'run' => ['nullable', 'integer'], 'shared' => ['nullable', 'boolean'],
+            'format' => ['nullable', Rule::in(array_keys(Export::FORMATS))], 'summary' => ['nullable', 'boolean']], ['name.required' => 'Give the saved report a name.']);
+        $report = Report::make($data['report']);
+        if ($data['run'] ?? null) {
+            $run = ReportRun::where('report', $data['report'])->findOrFail($data['run']);
+            [$params, $format, $summary] = [$run->params ?? [], $run->format ?? 'xlsx', (bool) $run->summary];
+        } else {
+            $params = array_filter($request->validate($report->rules()), fn ($v) => $v !== null && $v !== []);
+            [$format, $summary] = [$data['format'] ?? 'xlsx', (bool) ($data['summary'] ?? false)];
+        }
+        $saved = SavedReport::create(['user_id' => $request->user()->id, 'name' => $data['name'], 'report' => $data['report'], 'params' => collect($params)->except(['output', 'format', 'summary', 'name', 'shared', 'run'])->all(),
+            'format' => $format, 'summary' => $summary, 'shared' => (bool) ($data['shared'] ?? false)]);
+
+        return redirect()->route('walker.saved.show', $saved)->with('status', '"'.$saved->name.'" saved. Find it under Saved Reports to rerun any time.');
+    }
+
+    public function runSaved(Request $request, SavedReport $saved): RedirectResponse
+    {
+        abort_unless($saved->shared || $saved->user_id === $request->user()->id, 404);
+        abort_unless($saved->definition(), 404, 'This report no longer exists.');
+        $run = $this->queue($request, $saved->report, array_merge(Report::make($saved->report)->defaults(), $saved->params ?? []), null, $saved->format, $saved->summary);
+        $run->forceFill(['saved_report_id' => $saved->id])->save();
+        $saved->forceFill(['last_run_at' => now()])->save();
+
+        return redirect()->route('walker.runs.show', $run)->with('status', '"'.$saved->name.'" is running in the background as #'.$run->id.'.');
+    }
+
+    public function deleteSaved(Request $request, SavedReport $saved): RedirectResponse
+    {
+        abort_unless($saved->user_id === $request->user()->id || $request->user()->can('configure'), 403, 'Only the person who saved it can remove it.');
+        $saved->delete();
+
+        return redirect()->route('walker.saved')->with('status', '"'.$saved->name.'" removed from Saved Reports. Its past runs are kept.');
     }
 
     private function queue(Request $request, string $key, array $params, ?int $rerunOf = null, string $format = 'xlsx', bool $summary = false): ReportRun

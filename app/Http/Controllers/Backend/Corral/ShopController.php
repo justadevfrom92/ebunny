@@ -9,6 +9,7 @@ use App\Models\ShopOrder;
 use App\Models\ShopProduct;
 use App\Services\Cart;
 use App\Services\ShopCheckout;
+use App\Support\CustomerFinder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -31,12 +32,13 @@ class ShopController extends Controller
             'counts' => ShopProduct::selectRaw('cat, count(*) as n')->groupBy('cat')->pluck('n', 'cat')]);
     }
 
-    public function show(ShopProduct $product): View
+    public function show(Request $request, ShopProduct $product): View
     {
         $orders = ShopOrder::with('customer')->latest('id')->get()->filter(fn ($o) => collect($o->items)->contains('sku', $product->sku))->take(10);
 
         return view('backend.corral.shop.show', ['p' => $product, 'cats' => config('shop.categories'), 'orders' => $orders,
-            'sold' => collect(ShopOrder::pluck('items')->flatten(1))->where('sku', $product->sku)->sum('qty')]);
+            'sold' => collect(ShopOrder::pluck('items')->flatten(1))->where('sku', $product->sku)->sum('qty'),
+            'found' => CustomerFinder::search($request->query(CustomerFinder::PARAM))]);
     }
 
     public function form(?ShopProduct $product = null): View

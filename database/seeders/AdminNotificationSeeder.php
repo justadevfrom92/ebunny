@@ -30,7 +30,7 @@ class AdminNotificationSeeder extends Seeder
             }
             if ($u->hasPerm('corral')) {
                 foreach (ContactMessage::latest('id')->limit(3)->get() as $m) {
-                    $items[] = ['email', 'New email from '.$m->first_name.' '.$m->last_name, $m->topic.': '.mb_substr((string) $m->message, 0, 120), route('corral.messages.show', $m), $m->created_at];
+                    $items[] = ['email', 'New email from '.$m->first_name.' '.$m->last_name, $m->topic.': '.mb_substr((string) $m->message, 0, 120), route('ranger.messages.show', $m), $m->created_at];
                 }
             }
             foreach (ReportRun::where('user_id', $u->id)->where('status', 'done')->latest('finished_at')->limit(3)->get() as $r) {

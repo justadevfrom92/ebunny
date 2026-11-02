@@ -20,17 +20,17 @@ class WebMessagesTest extends TestCase
         $this->actingAs(User::where('email', 'admin@example.com')->firstOrFail());
         $this->assertGreaterThan(10, ContactMessage::count());
         $open = ContactMessage::open()->whereNotNull('customer_id')->firstOrFail();
-        $this->get(route('corral.messages.index'))->assertOk()->assertSee('Open')->assertSee('Recently Handled')->assertSee(route('corral.messages.show', $open), false);
-        $this->get(route('corral.messages.index', ['topic' => 'billing']))->assertOk()->assertDontSee('Is there an outage');
-        $this->get(route('corral.messages.show', $open))->assertOk()->assertSee($open->customer->account)->assertSee('Send Reply')->assertSee('Mark Handled');
+        $this->get(route('ranger.messages.index'))->assertOk()->assertSee('Open')->assertSee('Recently Handled')->assertSee(route('ranger.messages.show', $open), false);
+        $this->get(route('ranger.messages.index', ['topic' => 'billing']))->assertOk()->assertDontSee('Is there an outage');
+        $this->get(route('ranger.messages.show', $open))->assertOk()->assertSee($open->customer->account)->assertSee('Send Reply')->assertSee('Mark Handled');
 
-        $this->post(route('corral.messages.reply', $open), ['reply' => 'Hi, all set.', 'handled' => 1])->assertRedirect(route('corral.messages.show', $open));
+        $this->post(route('ranger.messages.reply', $open), ['reply' => 'Hi, all set.', 'handled' => 1])->assertRedirect(route('ranger.messages.show', $open));
         $open->refresh();
         $this->assertSame('Hi, all set.', $open->reply);
         $this->assertNotNull($open->handled_at);
         $this->assertTrue(ContactLog::where('customer_id', $open->customer_id)->where('template', 'Web Message Reply')->exists());
-        $this->post(route('corral.messages.handled', $open))->assertRedirect();
+        $this->post(route('ranger.messages.handled', $open))->assertRedirect();
         $this->assertNull($open->fresh()->handled_at);   // Reopen
-        $this->get(route('corral.messages.show', $open))->assertSee('Reply sent')->assertSee('Reopen', false);
+        $this->get(route('ranger.messages.show', $open))->assertSee('Reply sent')->assertSee('Reopen', false);
     }
 }

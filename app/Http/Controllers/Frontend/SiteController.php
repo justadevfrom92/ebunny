@@ -130,8 +130,8 @@ class SiteController extends Controller
             'phone' => $data['phone'] ?? null, 'topic' => $data['topic'], 'message' => $data['message'],
             'ip' => $request->ip(),
         ]);
-        AdminNotification::notify(AdminNotification::appUsers('corral'), 'email', 'New email from '.$data['first'].' '.$data['last'], $data['topic'].': '.mb_substr($data['message'], 0, 140),
-            Route::has('corral.messages.show') ? route('corral.messages.show', $msg) : null);
+        AdminNotification::notify(AdminNotification::appUsers('ranger'), 'email', 'New email from '.$data['first'].' '.$data['last'], $data['topic'].': '.mb_substr($data['message'], 0, 140),
+            Route::has('ranger.messages.show') ? route('ranger.messages.show', $msg) : null);
 
         return response()->json(['ok' => true], 201);
     }

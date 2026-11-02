@@ -16,6 +16,7 @@ use App\Models\JobRun;
 use App\Models\LedgerEntry;
 use App\Models\Note;
 use App\Models\Payment;
+use App\Models\PdfTestSend;
 use App\Models\Phonecall;
 use App\Models\PlanTerm;
 use App\Models\QueueLog;
@@ -47,6 +48,7 @@ return [
     'ledger_entry' => [LedgerEntry::class, 'Credit / Debit'],
     'note' => [Note::class, 'Note'],
     'payment' => [Payment::class, 'Payment'],
+    'pdf_test' => [PdfTestSend::class, 'PDF Test Send'],
     'phonecall' => [Phonecall::class, 'Phone Call'],
     'plan_term' => [PlanTerm::class, 'Plan Term'],
     'queue_log' => [QueueLog::class, 'Queue Log'],

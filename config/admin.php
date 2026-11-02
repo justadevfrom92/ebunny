@@ -48,9 +48,6 @@ return [
                     ['New Product', 'corral.shop.create'],
                     ['Product Orders', 'corral.shop.orders'],
                 ],
-                'Website' => [
-                    ['Web Messages', 'corral.messages.index', 'messages'], // contact form inbox (not in the original menu)
-                ],
                 1 => [
                     ['ERCOT', 'corral.ercot'],
                 ],
@@ -59,13 +56,16 @@ return [
         ],
         'ranger' => [
             'name' => 'Ranger',
-            'desc' => 'Support tickets customers open from My Account: the queue, replies and notes, take over and join in for managers, the ticket team (in-office and 3rd party) and approval ratings.',
+            'desc' => 'Support tickets customers open from My Account and messages from the website contact form: the queue, replies and notes, take over and join in for managers, the ticket team (in-office and 3rd party) and approval ratings.',
             'icon' => 'ticket',
             'home' => 'ranger.dashboard',
             'menu' => [
                 'Tickets' => [
                     ['Dashboard', 'ranger.dashboard'],
                     ['Tickets', 'ranger.tickets', 'ranger_unassigned'],
+                ],
+                'Website' => [
+                    ['Web Messages', 'ranger.messages.index', 'messages'], // the website's contact form inbox
                 ],
                 'Team' => [
                     ['Ticket Team', 'ranger.team'],
@@ -142,6 +142,7 @@ return [
                 'Reports' => [
                     ['Report Status', 'walker.home', 'report_problems'],
                     ['Run a Report', 'walker.reports.index'],
+                    ['Saved Reports', 'walker.saved'],
                     ['Orders', 'walker.activity.orders'],
                     ['Notes', 'walker.activity.notes'],
                     ['Phonecalls', 'walker.activity.phonecalls'],
@@ -222,6 +223,7 @@ return [
                 'PDFs' => [
                     ['PDF Templates', 'rodeo.pdfs'],
                     ['New PDF Template', 'rodeo.pdfs.create'],
+                    ['PDF Headers & Footers', 'rodeo.pdf-parts'],
                     ['PDFs Made', 'rodeo.pdfs.generated'],
                 ],
                 'Surveys' => [
@@ -300,6 +302,7 @@ return [
     // Detail pages whose menu item isn't named after them: route area => menu route (Walker run pages sit under Report Status)
     'menu_parents' => [
         'walker.runs' => 'walker.home',
+        'walker.saved' => 'walker.saved',
         'corral.items' => 'corral.customers.index',
         'astro.rates.imports' => 'astro.rates.edit',
         'sheriff.heartbeat' => 'sheriff.heartbeat.checks',

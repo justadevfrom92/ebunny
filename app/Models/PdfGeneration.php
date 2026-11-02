@@ -14,7 +14,13 @@ class PdfGeneration extends Model
 
     protected function casts(): array
     {
-        return ['show_address' => 'boolean', 'created_at' => 'datetime'];
+        return ['show_address' => 'boolean', 'created_at' => 'datetime', 'header' => 'array'];
+    }
+
+    /** The wording and header it was made from, for the renderer. */
+    public function document(): array
+    {
+        return $this->only(['title', 'body', 'footer', 'show_address']) + ['header' => $this->header];
     }
 
     public function template(): BelongsTo

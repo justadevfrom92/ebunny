@@ -56,7 +56,7 @@ class AdminTest extends TestCase
             '/admin/corral/customers/'.$customer->account, '/admin/corral/esiid?q=Example', '/admin/corral/orders/create',
             '/admin/corral/orders/create-biz', '/admin/corral/orders/create?renew='.$customer->account,
             '/admin/walker/activity/orders', '/admin/corral/queues',
-            '/admin/corral/queues/unapplied-payments', '/admin/corral/messages',
+            '/admin/corral/queues/unapplied-payments', '/admin/ranger/messages',
             '/admin/lando/pages', '/admin/lando/pages/create', '/admin/lando/pages/1/edit', '/admin/lando/templates',
             '/admin/lando/blocks', '/admin/lando/blocks/create', '/admin/lando/blocks/8/edit', '/admin/astro/plans',
             '/admin/astro/plans/create', '/admin/astro/plans/'.$plan->id.'/edit', '/admin/astro/groups',
@@ -256,7 +256,7 @@ class AdminTest extends TestCase
             ->assertCreated();
         $this->assertSame($before + 1, ContactMessage::open()->count());
 
-        $this->actingAs($this->user())->get('/admin/corral/messages')->assertSee('Pat Example');
+        $this->actingAs($this->user())->get('/admin/ranger/messages')->assertSee('Pat Example');
     }
 
     public function test_csv_report_downloads(): void

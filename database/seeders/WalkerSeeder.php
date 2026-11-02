@@ -6,6 +6,7 @@ use App\Jobs\RunReport;
 use App\Models\JobRun;
 use App\Models\ReportRun;
 use App\Models\ReportUpload;
+use App\Models\SavedReport;
 use App\Models\User;
 use App\Reports\Report;
 use Illuminate\Database\Seeder;
@@ -98,6 +99,25 @@ class WalkerSeeder extends Seeder
                 JobRun::create(['command' => 'etl:'.$key, 'status' => $status,
                     'message' => $bad ? $problems[$key] : ($feed['direction'] === 'In' ? 'Loaded '.number_format($rows).' rows from ' : 'Sent '.number_format($rows).' rows in ').str_replace(['{date}', '{hour}', '{time}', '{month}'], [$at->format('Ymd'), $at->format('H'), $at->format('His'), $at->format('Ym')], $feed['file']),
                     'started_at' => $at, 'finished_at' => $at->copy()->addMilliseconds($ms), 'duration_ms' => $ms]);
+            }
+        }
+
+        // Saved Reports: a few bookmarked reports (fictional settings)
+        foreach ([
+            [$admin, 'On-flow orders this year', 'orders', ['start' => now()->startOfYear()->toDateString(), 'statuses' => ['Good - On Flow']], 'xlsx', false, true],
+            [$admin, 'Failed payments (summary)', 'payments', ['start' => now()->subDays(30)->toDateString(), 'status' => 'Failed'], 'csv', true, false],
+            [$finance, 'Payments last 30 days', 'payments', ['start' => now()->subDays(30)->toDateString()], 'xlsx', false, true],
+            [$admin, 'All notes this month', 'notes', ['start' => now()->startOfMonth()->toDateString()], 'xlsx', false, false],
+        ] as $i => [$by, $name, $key, $params, $format, $summary, $shared]) {
+            if (! $by) {
+                continue;
+            }
+            $saved = SavedReport::create(['user_id' => $by->id, 'name' => $name, 'report' => $key, 'params' => $params, 'format' => $format, 'summary' => $summary, 'shared' => $shared]);
+            $saved->forceFill(['created_at' => now()->subDays(20 - $i * 3)])->save();
+            // its most recent run of that report becomes the saved report's run
+            if ($run = ReportRun::where('report', $key)->whereNull('saved_report_id')->latest('id')->first()) {
+                $run->forceFill(['saved_report_id' => $saved->id])->save();
+                $saved->forceFill(['last_run_at' => $run->created_at])->save();
             }
         }
     }

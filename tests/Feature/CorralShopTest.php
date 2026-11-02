@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Customer;
+use App\Models\PdfTemplate;
 use App\Models\ShopOrder;
 use App\Models\ShopProduct;
 use App\Models\User;
@@ -50,5 +51,22 @@ class CorralShopTest extends TestCase
         $this->get(route('corral.shop.orders.show', $o))->assertOk()->assertSee('by phone');
         $this->patch(route('corral.shop.orders.update', $o), ['status' => 'Shipped'])->assertRedirect();
         $this->assertSame('Shipped', $o->fresh()->status);
+    }
+
+    public function test_order_for_a_customer_and_make_a_pdf_find_the_customer_by_name_phone_or_account(): void
+    {
+        $this->actingAs(User::where('email', 'admin@example.com')->firstOrFail());
+        $c = Customer::where('name', 'Hayden Fakeworth')->orderBy('id')->firstOrFail();
+        $p = ShopProduct::orderBy('id')->firstOrFail();
+        foreach (['Fakeworth', $c->account, substr(preg_replace('/\D/', '', $c->phone), -7)] as $term) {
+            $this->get(route('corral.shop.show', [$p, 'find' => $term]))->assertOk()->assertSee($c->account)
+                ->assertSee('Start order with this customer')->assertSee(route('corral.customers.shop', [$c, 'sku' => $p->sku]), false);
+        }
+        $this->get(route('corral.shop.show', [$p, 'find' => 'no-such-customer']))->assertOk()->assertSee('No customers match');
+
+        $t = PdfTemplate::orderBy('id')->firstOrFail();
+        $this->get(route('rodeo.pdfs.edit', [$t, 'find' => 'Fakeworth']))->assertOk()->assertSee($c->account)->assertSee('Make PDF');
+        $this->post(route('rodeo.pdfs.generate', $t), ['account' => $c->account])->assertRedirect();
+        $this->assertDatabaseHas('pdf_generations', ['pdf_template_id' => $t->id, 'customer_id' => $c->id]);
     }
 }

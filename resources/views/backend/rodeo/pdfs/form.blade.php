@@ -21,7 +21,10 @@
                 <label for="body">Body</label>
                 <div><textarea id="body" name="body" required spellcheck="true" style="min-height:320px;font-family:var(--font-mono, monospace);font-size:.88rem">{{ old('body', $template->body) }}</textarea>
                     <div class="help">One block per line: <span class="mono"># Heading</span>, <span class="mono">## Smaller heading</span>, <span class="mono">- bullet</span>, <span class="mono">| Label | Value |</span> for a shaded row, <span class="mono">**bold line**</span>, <span class="mono">---</span> for a line. A blank line starts a new paragraph.</div></div>
-                <label for="footer">Footer (small print on every page)</label><textarea id="footer" name="footer" maxlength="600" style="min-height:70px">{{ old('footer', $template->footer) }}</textarea>
+                <label for="pdf_header_id">Header</label><select id="pdf_header_id" name="pdf_header_id"><option value="">Default header</option>@foreach ($headers as $h)<option value="{{ $h->id }}" @selected((int) old('pdf_header_id', $template->pdf_header_id) === $h->id)>{{ $h->name }}{{ $h->is_default ? ' (default)' : '' }}</option>@endforeach</select>
+                <label for="pdf_footer_id">Footer</label><div><select id="pdf_footer_id" name="pdf_footer_id"><option value="">Default footer</option>@foreach ($footers as $ft)<option value="{{ $ft->id }}" @selected((int) old('pdf_footer_id', $template->pdf_footer_id) === $ft->id)>{{ $ft->name }}{{ $ft->is_default ? ' (default)' : '' }}</option>@endforeach</select>
+                    <div class="help">Headers and footers are under <a href="{{ route('rodeo.pdf-parts') }}">PDF Headers &amp; Footers</a>.</div></div>
+                <label for="footer">This template's own footer (optional: used instead of the footer above)</label><textarea id="footer" name="footer" maxlength="600" style="min-height:70px">{{ old('footer', $template->footer) }}</textarea>
                 <label for="show_address">Account block</label><label class="check"><input type="hidden" name="show_address" value="0"><input id="show_address" type="checkbox" name="show_address" value="1" @checked(old('show_address', $template->show_address))> Show the customer's name, address and account number on the first page</label>
             </div>
             <div class="panel-body"><button class="btn cyan">Save Template</button>
@@ -42,13 +45,29 @@
         </div>
 
         @if ($template->exists)
-            <form method="post" action="{{ route('rodeo.pdfs.generate', $template) }}" class="panel">@csrf
-                <div class="panel-head"><h2>Make a PDF for an Account</h2></div>
-                <div class="panel-body">
-                    <div class="form-row"><input name="account" required aria-label="Account number" placeholder="Account number" inputmode="numeric" value="{{ old('account', $sample?->account) }}"><button class="btn cyan">Make PDF</button></div>
-                    @error('account')<div class="help" style="color:var(--bad)">{{ $message }}</div>@enderror
-                    <p class="help">The PDF is kept under PDFs Made, and a note is added to the account.</p>
+            {{-- Make a PDF for an Account: find the customer, then make it (kept under PDFs Made, with a note on the account) --}}
+            @include('backend.partials.customer-finder', ['id' => 'make-pdf', 'title' => 'Make a PDF for an Account', 'found' => $found, 'keep' => array_filter(['account' => request('account')]),
+                'help' => 'Find the customer, then Make PDF. The PDF is kept under PDFs Made, and a note is added to the account.',
+                'button' => fn ($c) => '<form method="post" action="'.e(route('rodeo.pdfs.generate', $template)).'" class="inline">'.csrf_field().'<input type="hidden" name="account" value="'.e($c->account).'"><button class="btn sm cyan">Make PDF</button></form>'])
+
+            {{-- Send a Test: the PDF attached to an email marked as a test --}}
+            <form method="post" action="{{ route('rodeo.pdfs.test', $template) }}" class="panel" id="send-test">@csrf
+                <div class="panel-head"><h2>Send a Test PDF by Email</h2></div>
+                <div class="panel-body form-grid" style="grid-template-columns:1fr">
+                    <label for="test-to">Send to</label><input id="test-to" name="to" required maxlength="600" value="{{ old('to', auth()->user()->email) }}" placeholder="you@example.com, teammate@example.com">
+                    <span class="help">Up to 5 addresses, separated by commas. The email says it's a test, with the PDF attached.</span>
+                    <label for="test-account">Fill in for account</label><input id="test-account" name="account" inputmode="numeric" maxlength="20" value="{{ old('account', request('account', $sample?->account)) }}" placeholder="Account number (blank: the sample account)">
                 </div>
+                <div class="panel-body"><button class="btn cyan">Send Test</button>
+                    @unless (\App\Http\Controllers\Backend\Rodeo\TemplateTestController::delivers())<span class="help" style="margin-left:10px">Mail is written to the log here (MAIL_MAILER={{ config('mail.default') }}); set MAIL_MAILER in .env to deliver to inboxes.</span>@endunless</div>
+                @if ($tests->isNotEmpty())
+                <div class="table-wrap"><table>
+                    <thead><tr><th>ID</th><th>Sent</th><th>To</th><th>Filled In For</th><th>By</th><th>Result</th></tr></thead>
+                    <tbody>@foreach ($tests as $ts)@php $u = \App\Support\Records::url('pdf_test', $ts->id); @endphp<tr class="click" data-href="{{ $u }}"><td class="nowrap"><a href="{{ $u }}"><b>#{{ $ts->id }}</b></a></td><td class="nowrap">{{ $ts->created_at->format('n/j/Y g:i A') }}</td><td class="wrap">{{ $ts->recipients }}</td>
+                        <td>{{ $ts->customer?->account ?? '—' }}</td><td>{{ $ts->user?->name ?? '—' }}</td>
+                        <td>@include('backend.partials.pill', ['text' => ucfirst($ts->status), 'tone' => $ts->status === 'sent' ? 'ok' : 'bad'])@if ($ts->error)<div class="help">{{ \Illuminate\Support\Str::limit($ts->error, 80) }}</div>@endif</td></tr>@endforeach</tbody>
+                </table></div>
+                @endif
             </form>
 
             <div class="panel"><div class="panel-head"><h2>PDFs Made From This Template</h2><a class="btn sm ghost" href="{{ route('rodeo.pdfs.generated', ['template' => $template->id]) }}">All</a></div><div class="table-wrap"><table>

@@ -281,10 +281,6 @@ Route::prefix('admin')->group(function () {
             Route::get('queues', [Backend\Corral\QueueController::class, 'index'])->name('queues.index');
             Route::get('queues/{queue}', [Backend\Corral\QueueController::class, 'show'])->name('queues.show');
             Route::post('work-items/{item}/resolve', [Backend\Corral\QueueController::class, 'resolve'])->name('queues.resolve');
-            Route::get('messages', [Backend\Corral\MessageController::class, 'index'])->name('messages.index');
-            Route::post('messages/{message}/handled', [Backend\Corral\MessageController::class, 'handled'])->name('messages.handled');
-            Route::get('messages/{message}', [Backend\Corral\MessageController::class, 'show'])->name('messages.show');
-            Route::post('messages/{message}/reply', [Backend\Corral\MessageController::class, 'reply'])->name('messages.reply');
         });
 
         // Website pages, plan groups and plans: Lando's screens, which Astro's menu also has.
@@ -388,6 +384,11 @@ Route::prefix('admin')->group(function () {
             Route::post('team', [Backend\Ranger\TeamController::class, 'store'])->name('team.store');
             Route::patch('team/{agent}', [Backend\Ranger\TeamController::class, 'update'])->name('team.update');
             Route::get('satisfaction', [Backend\Ranger\TeamController::class, 'satisfaction'])->name('satisfaction');
+            // Website contact-form messages (moved here from Corral)
+            Route::get('messages', [Backend\Corral\MessageController::class, 'index'])->name('messages.index');
+            Route::post('messages/{message}/handled', [Backend\Corral\MessageController::class, 'handled'])->name('messages.handled');
+            Route::get('messages/{message}', [Backend\Corral\MessageController::class, 'show'])->name('messages.show');
+            Route::post('messages/{message}/reply', [Backend\Corral\MessageController::class, 'reply'])->name('messages.reply');
             Route::get('employees', [Backend\Ranger\TeamController::class, 'people'])->name('people');
             Route::get('employees/{user}', [Backend\Ranger\TeamController::class, 'person'])->whereNumber('user')->name('people.show');
         });
@@ -404,6 +405,11 @@ Route::prefix('admin')->group(function () {
             Route::get('activity/notes', [Backend\Corral\ReportController::class, 'notes'])->name('activity.notes');
             Route::get('activity/phonecalls', [Backend\Corral\ReportController::class, 'phonecalls'])->name('activity.phonecalls');
             Route::get('reports', [Backend\Walker\ReportController::class, 'index'])->name('reports.index');
+            Route::get('saved-reports', [Backend\Walker\ReportController::class, 'saved'])->name('saved');
+            Route::post('saved-reports', [Backend\Walker\ReportController::class, 'saveReport'])->name('saved.store');
+            Route::get('saved-reports/{saved}', [Backend\Walker\ReportController::class, 'savedShow'])->whereNumber('saved')->name('saved.show');
+            Route::post('saved-reports/{saved}/run', [Backend\Walker\ReportController::class, 'runSaved'])->whereNumber('saved')->name('saved.run');
+            Route::delete('saved-reports/{saved}', [Backend\Walker\ReportController::class, 'deleteSaved'])->whereNumber('saved')->name('saved.destroy');
             Route::get('reports/{key}', [Backend\Walker\ReportController::class, 'report'])->name('reports.show');
             Route::post('reports/{key}', [Backend\Walker\ReportController::class, 'run'])->name('reports.run');
             Route::get('uploads', [Backend\Walker\UploadController::class, 'index'])->name('uploads.index');
@@ -507,6 +513,13 @@ Route::prefix('admin')->group(function () {
                 Route::delete('{template}', 'destroy')->whereNumber('template')->name('pdfs.destroy');
                 Route::post('{template}/make', 'generate')->whereNumber('template')->middleware('throttle:30,1')->name('pdfs.generate');
             });
+            Route::post('pdfs/{template}/test', [Backend\Rodeo\PdfTemplateController::class, 'sendTest'])->whereNumber('template')->middleware('throttle:20,1')->name('pdfs.test');
+            Route::get('pdf-headers-footers', [Backend\Rodeo\PdfPartController::class, 'index'])->name('pdf-parts');
+            Route::get('pdf-headers-footers/new', [Backend\Rodeo\PdfPartController::class, 'form'])->name('pdf-parts.create');
+            Route::post('pdf-headers-footers', [Backend\Rodeo\PdfPartController::class, 'save'])->name('pdf-parts.store');
+            Route::get('pdf-headers-footers/{part}', [Backend\Rodeo\PdfPartController::class, 'form'])->whereNumber('part')->name('pdf-parts.edit');
+            Route::put('pdf-headers-footers/{part}', [Backend\Rodeo\PdfPartController::class, 'save'])->whereNumber('part')->name('pdf-parts.update');
+            Route::delete('pdf-headers-footers/{part}', [Backend\Rodeo\PdfPartController::class, 'destroy'])->whereNumber('part')->name('pdf-parts.destroy');
             Route::get('templates', 'templates')->name('templates');
             Route::get('templates/new', 'templateForm')->name('templates.create');
             Route::post('templates', 'saveTemplate')->name('templates.store');
