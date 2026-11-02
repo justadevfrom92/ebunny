@@ -388,6 +388,8 @@ Route::prefix('admin')->group(function () {
             Route::post('team', [Backend\Ranger\TeamController::class, 'store'])->name('team.store');
             Route::patch('team/{agent}', [Backend\Ranger\TeamController::class, 'update'])->name('team.update');
             Route::get('satisfaction', [Backend\Ranger\TeamController::class, 'satisfaction'])->name('satisfaction');
+            Route::get('employees', [Backend\Ranger\TeamController::class, 'people'])->name('people');
+            Route::get('employees/{user}', [Backend\Ranger\TeamController::class, 'person'])->whereNumber('user')->name('people.show');
         });
 
         // Walker — files & reporting: report runs by status, report library, file folders, ETL feeds

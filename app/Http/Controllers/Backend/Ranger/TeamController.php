@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Backend\Ranger;
 
 use App\Http\Controllers\Controller;
+use App\Models\Note;
 use App\Models\RangerAgent;
 use App\Models\Role;
 use App\Models\SupportTicket;
+use App\Models\SupportTicketMessage;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -115,6 +117,49 @@ class TeamController extends Controller
             'solved' => $mine()->where('solved_at', '>=', now()->subDays(90))->count(),
             'ratings' => $mine()->whereNotNull('rated_at')->latest('rated_at')->limit(30)->get(),
             'manager' => RangerAgent::canManage($request->user(), $agent->user) && $agent->user_id !== $request->user()->id, 'company' => $company]);
+    }
+
+    /** Everyone who has handled a ticket (owned, replied or noted): the ticket team and anyone else (administrators, CSRs). */
+    public function people(Request $request): View
+    {
+        $company = RangerAgent::companyOf($request->user());
+        $ids = SupportTicket::whereNotNull('assigned_to')->distinct()->pluck('assigned_to')
+            ->merge(SupportTicketMessage::whereIn('author', ['agent', 'note'])->whereNotNull('user_id')->distinct()->pluck('user_id'))
+            ->merge(Note::whereNotNull('support_ticket_id')->whereNotNull('user_id')->distinct()->pluck('user_id'))->unique();
+        $people = User::with('role')->whereIn('id', $ids)->when($company, fn ($q, $c) => $q->where('company', $c))->orderBy('name')->get();
+        $agents = RangerAgent::whereIn('user_id', $people->pluck('id'))->get()->keyBy('user_id');
+        $stats = $people->mapWithKeys(fn ($u) => [$u->id => [
+            'handled' => SupportTicket::handledBy($u->id)->count(),
+            'open' => SupportTicket::where('assigned_to', $u->id)->active()->count(),
+            'last' => SupportTicket::handledBy($u->id)->max('last_activity_at'),
+        ]]);
+
+        return view('backend.ranger.people', ['people' => $people, 'agents' => $agents, 'stats' => $stats]);
+    }
+
+    /** One employee: who they are and every ticket they handled (owned, replied to or wrote a note on). */
+    public function person(Request $request, User $user): View
+    {
+        $company = RangerAgent::companyOf($request->user());
+        abort_if($company && $user->company !== $company, 403, 'You can only see people from '.$company.'.');
+        $user->load('role');
+        $handled = fn () => SupportTicket::handledBy($user->id);
+        $tickets = $handled()->with(['customer', 'assignee'])->orderByRaw('coalesce(last_activity_at, created_at) desc')->paginate(10)->withQueryString();
+        $ids = $tickets->pluck('id');
+        $count = fn ($q) => $q->whereIn('support_ticket_id', $ids)->where('user_id', $user->id)->selectRaw('support_ticket_id, count(*) n')->groupBy('support_ticket_id')->pluck('n', 'support_ticket_id');
+        $replies = $count(SupportTicketMessage::where('author', 'agent'));
+        $noteCounts = [$count(Note::query()), $count(SupportTicketMessage::where('author', 'note'))];   // notes on the account, or on the ticket when there's no account
+        $notes = $ids->mapWithKeys(fn ($id) => [$id => ($noteCounts[0][$id] ?? 0) + ($noteCounts[1][$id] ?? 0)]);
+
+        return view('backend.ranger.person', ['u' => $user, 'agent' => RangerAgent::where('user_id', $user->id)->first(), 'tickets' => $tickets, 'replies' => $replies, 'notes' => $notes,
+            'stats' => [
+                'handled' => $handled()->count(),
+                'owned' => SupportTicket::where('assigned_to', $user->id)->count(),
+                'open' => SupportTicket::where('assigned_to', $user->id)->active()->count(),
+                'solved' => SupportTicket::where('assigned_to', $user->id)->where('solved_at', '>=', now()->subDays(90))->count(),
+                'replies' => SupportTicketMessage::where('user_id', $user->id)->where('author', 'agent')->count(),
+                'approval' => SupportTicket::approval(SupportTicket::where('assigned_to', $user->id)->where('rated_at', '>=', now()->subDays(90))),
+            ]]);
     }
 
     /** Managers: change someone's team or level, or take them off tickets. */

@@ -172,6 +172,40 @@ class RangerSeeder extends Seeder
                 }
             }
         }
+
+        $this->adminHandled($byEmail('admin@example.com'));
+    }
+
+    /** The sample administrator stepped in on a few tickets (replies, notes, a take-over), so their employee page has history. */
+    private function adminHandled(?User $admin): void
+    {
+        if (! $admin) {
+            return;
+        }
+        $lines = [
+            ['agent', 'I\'m the administrator on duty and took a look myself: everything on your account is in order now.'],
+            ['note', 'Admin review: checked the billing history, no error on our side. Explained to the customer.'],
+            ['agent', 'Sorry for the wait. I\'ve escalated this and applied a one-time courtesy credit.'],
+            ['note', 'Escalated by admin. Follow up with the utility if the read is still estimated next cycle.'],
+        ];
+        $tickets = SupportTicket::orderBy('id')->get()->filter(fn ($t) => $t->id % 5 === 1)->take(9)->values();
+        foreach ($tickets as $k => $t) {
+            $at = $t->created_at->copy()->addHours(2 + $k);
+            $at = $at->isFuture() ? now()->subMinutes(30) : $at;
+            $before = [$t->last_activity_at, $t->first_response_at, $t->status];
+            [$kind, $body] = $lines[$k % count($lines)];
+            if ($kind === 'note') {
+                $t->addNote($body, $admin, 'Medium');
+                Note::where('support_ticket_id', $t->id)->latest('id')->first()?->forceFill(['created_at' => $at, 'updated_at' => $at])->save();
+            } else {
+                $t->post('agent', $body, $admin)->forceFill(['created_at' => $at])->save();
+            }
+            if ($k % 3 === 0 && $t->assigned_to) {   // took over a ticket someone had
+                $t->forceFill(['assigned_to' => $admin->id])->save();
+            }
+            // posting stamps "now": put back the ticket's own times
+            $t->forceFill(['last_activity_at' => max($before[0] ?? $at, $at), 'first_response_at' => $before[1] ?? $at, 'status' => $before[2] === 'new' ? 'open' : $before[2]])->save();
+        }
     }
 
     /** What a customer might attach (fictional): a photo of their bill, a lease, a screenshot or a note. */

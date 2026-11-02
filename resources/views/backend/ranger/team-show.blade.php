@@ -10,7 +10,7 @@
     @endphp
     @include('backend.partials.page-head', ['title' => $u->name, 'sub' => view('backend.partials.pill', ['text' => \App\Models\RangerAgent::TEAMS[$agent->team], 'tone' => $agent->team === 'office' ? 'info' : 'warn'])->render()
         .' · '.e(\App\Models\RangerAgent::LEVELS[$agent->level]).($agent->active ? '' : ' · <b>Off tickets</b>'),
-        'actions' => '<a class="btn ghost" href="'.route('ranger.team').'">Ticket Team</a>'])
+        'actions' => '<a class="btn ghost" href="'.route('ranger.team').'">Ticket Team</a><a class="btn ghost" href="'.route('ranger.people.show', $u).'">Tickets Handled</a>'])
 
     <div class="grid-4 stat-row">
         <a class="stat" href="{{ route('ranger.tickets', ['view' => 'active', 'owner' => $u->id]) }}"><span>Open Tickets</span><strong>{{ $open->count() }}</strong><small>new, open or waiting</small></a>

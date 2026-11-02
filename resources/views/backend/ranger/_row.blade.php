@@ -6,7 +6,7 @@
     <td>{{ $t->name }}@if ($t->customer)<div class="help">@include('backend.partials.account-link', ['c' => $t->customer])</div>@endif</td>
     <td>@include('backend.partials.pill', ['text' => $sLabel, 'tone' => $sTone])@if ($t->priority !== 'normal') @include('backend.partials.pill', ['text' => $pLabel, 'tone' => $pTone])@endif</td>
     @unless ($compact ?? false)
-    <td>{{ $t->assignee?->name ?? '—' }}</td>
+    <td>@if ($t->assignee)<a href="{{ route('ranger.people.show', $t->assignee) }}">{{ $t->assignee->name }}</a>@else — @endif</td>
     <td class="nowrap">@if ($t->rating){{ $t->rating === 'good' ? '👍' : '👎' }}@else<span class="muted">—</span>@endif</td>
     @endunless
 </tr>

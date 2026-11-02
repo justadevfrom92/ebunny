@@ -58,6 +58,8 @@
             @include('backend.partials.flash')
             @yield('content')
         </main>
+        {{-- Pill rows → dropdowns now, before the page paints (see pills.js) --}}
+        <script>{!! file_get_contents(public_path('backend/pills.js')) !!}</script>
     </div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite" data-message="{{ session('status') }}"></div>

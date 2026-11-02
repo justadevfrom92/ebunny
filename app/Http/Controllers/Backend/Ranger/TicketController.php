@@ -52,8 +52,17 @@ class TicketController extends Controller
             'status' => ['nullable', Rule::in(array_keys(SupportTicket::STATUSES))],
             'team' => ['nullable', Rule::in(array_keys(RangerAgent::TEAMS))],
             'owner' => ['nullable', 'integer'],
+            // Advanced search: words or numbers, where to look, and more filters
+            'q' => ['nullable', 'string', 'max:200'],
+            'in' => ['nullable', 'array'], 'in.*' => ['in:text,notes,people'],
+            'priority' => ['nullable', Rule::in(array_keys(SupportTicket::PRIORITIES))],
+            'topic' => ['nullable', Rule::in(array_keys(SupportTicket::TOPICS))],
+            'channel' => ['nullable', Rule::in(array_keys(SupportTicket::CHANNELS))],
+            'from' => ['nullable', 'date_format:Y-m-d'], 'to' => ['nullable', 'date_format:Y-m-d'],
+            'handled_by' => ['nullable', 'integer'],
         ]);
-        $view = $f['view'] ?? 'active';
+        // A search looks through every ticket unless a list was picked
+        $view = $f['view'] ?? (filled($f['q'] ?? null) ? 'all' : 'active');
         $me = $request->user();
 
         $tickets = SupportTicket::with(['customer', 'assignee'])
@@ -67,10 +76,18 @@ class TicketController extends Controller
             ->when($f['status'] ?? null, fn ($x, $s) => $x->where('status', $s))
             ->when($f['owner'] ?? null, fn ($x, $o) => $x->where('assigned_to', $o))
             ->when($f['team'] ?? null, fn ($x, $t) => $x->whereIn('assigned_to', RangerAgent::where('team', $t)->select('user_id')))
+            ->when(filled($f['q'] ?? null), fn ($x) => $x->search($f['q'], $f['in'] ?? []))
+            ->when($f['priority'] ?? null, fn ($x, $p) => $x->where('priority', $p))
+            ->when($f['topic'] ?? null, fn ($x, $t) => $x->where('topic', $t))
+            ->when($f['channel'] ?? null, fn ($x, $c) => $x->where('channel', $c))
+            ->when($f['from'] ?? null, fn ($x, $d) => $x->where('created_at', '>=', $d.' 00:00:00'))
+            ->when($f['to'] ?? null, fn ($x, $d) => $x->where('created_at', '<=', $d.' 23:59:59'))
+            ->when($f['handled_by'] ?? null, fn ($x, $u) => $x->handledBy($u))
             ->orderByRaw(in_array($view, ['done', 'all'], true) ? 'coalesce(last_activity_at, created_at) desc' : $this->urgency())
             ->paginate(25)->withQueryString();
 
-        return view('backend.ranger.tickets', ['tickets' => $tickets, 'f' => $f, 'view' => $view, 'owner' => isset($f['owner']) ? User::find($f['owner']) : null,
+        return view('backend.ranger.tickets', ['tickets' => $tickets, 'f' => $f, 'view' => $view,
+            'people' => User::whereIn('id', SupportTicket::whereNotNull('assigned_to')->select('assigned_to'))->orWhereIn('id', SupportTicketMessage::where('author', 'agent')->whereNotNull('user_id')->select('user_id'))->orderBy('name')->get(['id', 'name']), 'owner' => isset($f['owner']) ? User::find($f['owner']) : null,
             'customer' => isset($f['customer']) ? Customer::find($f['customer']) : null, 'manager' => RangerAgent::isManager($me), 'counts' => [
                 'active' => SupportTicket::active()->count(), 'mine' => SupportTicket::active()->where('assigned_to', $me->id)->count(),
                 'unassigned' => SupportTicket::active()->whereNull('assigned_to')->count(),

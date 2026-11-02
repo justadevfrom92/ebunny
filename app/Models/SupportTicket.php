@@ -90,6 +90,48 @@ class SupportTicket extends Model
         return $this->belongsToMany(User::class, 'support_ticket_watchers')->withPivot('joined_at');
     }
 
+    /** Tickets a person handled: owned, replied to, or wrote a note on. */
+    public function scopeHandledBy(Builder $q, int $userId): void
+    {
+        $q->where(fn ($w) => $w->where('assigned_to', $userId)
+            ->orWhereIn('id', SupportTicketMessage::where('user_id', $userId)->whereIn('author', ['agent', 'note'])->select('support_ticket_id'))
+            ->orWhereIn('id', Note::where('user_id', $userId)->whereNotNull('support_ticket_id')->select('support_ticket_id')));
+    }
+
+    /**
+     * Search everything about a ticket: its number, subject and messages, notes, the customer
+     * (name, email, phone, account) and the owner. $in limits it to some of: text, notes, people.
+     */
+    public function scopeSearch(Builder $q, string $term, array $in = []): void
+    {
+        $term = trim($term);
+        $in = $in ?: ['text', 'notes', 'people'];
+        $like = '%'.$term.'%';
+        $digits = preg_replace('/\D/', '', $term);
+        $phone = "replace(replace(replace(replace(replace(phone, '(', ''), ')', ''), '-', ''), ' ', ''), '.', '')";
+        $q->where(function ($w) use ($term, $in, $like, $digits, $phone) {
+            // RT-10023 or 10023 or 23: the ticket itself
+            if (preg_match('/^(?:RT-?)?(\d+)$/i', $term, $m)) {
+                $n = (int) $m[1];
+                $w->orWhereIn('id', array_filter([$n, $n - 10000], fn ($i) => $i > 0));
+            }
+            if (in_array('text', $in, true)) {
+                $w->orWhere('subject', 'like', $like)->orWhere('topic', 'like', $like)
+                    ->orWhereIn('id', SupportTicketMessage::where('author', '!=', 'note')->where('body', 'like', $like)->select('support_ticket_id'));
+            }
+            if (in_array('notes', $in, true)) {
+                $w->orWhereIn('id', SupportTicketMessage::where('author', 'note')->where('body', 'like', $like)->select('support_ticket_id'))
+                    ->orWhereIn('id', Note::whereNotNull('support_ticket_id')->where('body', 'like', $like)->select('support_ticket_id'));
+            }
+            if (in_array('people', $in, true)) {
+                $w->orWhere('name', 'like', $like)->orWhere('email', 'like', $like)
+                    ->orWhereIn('customer_id', Customer::where(fn ($c) => $c->where('name', 'like', $like)->orWhere('email', 'like', $like)->orWhere('account', 'like', $like)
+                        ->when(strlen($digits) >= 3, fn ($c) => $c->orWhereRaw("$phone like ?", ['%'.$digits.'%'])))->select('id'))
+                    ->orWhereIn('assigned_to', User::where('name', 'like', $like)->select('id'));
+            }
+        });
+    }
+
     public function scopeActive(Builder $q): void
     {
         $q->whereIn('status', ['new', 'open', 'waiting']);
