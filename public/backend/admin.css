@@ -645,6 +645,9 @@ tr.row-new td { background: var(--info-bg); }
 .user-pop[hidden] { display: none; }
 .up-head { padding: 10px 10px 8px; border-bottom: 1px solid var(--line); margin-bottom: 4px; display: flex; flex-direction: column; }
 .up-head b { color: var(--navy); }
+a.up-head { text-decoration: none; border-radius: 8px 8px 0 0; }
+a.up-head:hover { background: var(--row); }
+.up-head .up-account { color: var(--cyan); font-size: .8rem; margin-top: 2px; }
 .up-head span { color: var(--muted); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; }
 .up-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 10px; border-radius: 6px; color: var(--navy); background: none; border: 0; font: inherit; cursor: pointer; text-align: left; }
 .up-item:hover { background: var(--row); text-decoration: none; }

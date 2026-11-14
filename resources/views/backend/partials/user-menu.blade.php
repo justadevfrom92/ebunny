@@ -11,7 +11,8 @@
         <svg class="caret" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
     </button>
     <div class="user-pop" data-user-pop hidden>
-        <div class="up-head"><b>{{ $user->name }}</b><span>{{ $user->email }}</span></div>
+        {{-- Your name opens your Account area (Notifications, My Files, Settings) --}}
+        <a class="up-head" href="{{ route(config('admin.account.home')) }}"><b>{{ $user->name }}</b><span>{{ $user->email }}</span><span class="up-account">My Account →</span></a>
         <div class="up-label up-label-first"><span>Notifications</span>@if ($unread)<span class="up-new">{{ $unread }} new</span>
             {{-- Clear: marks them all read (they stay in All Notifications) --}}
             <form method="post" action="{{ route('admin.notifications.read-all') }}" class="up-clear">@csrf<button type="submit">Clear</button></form>@endif</div>
