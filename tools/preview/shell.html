@@ -1,0 +1,110 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Utility Site Preview</title>
+<style>
+:root{--bg:#EDF4F7;--bar:#102247;--fg:#fff;--chip:#1c3466;--on:#00AEEF;--note:#fff3d6;--note-fg:#7a5000}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0b1324;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0b1324;color-scheme:dark}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);font:600 14px system-ui,sans-serif;display:flex;flex-direction:column}
+.bar{background:var(--bar);color:var(--fg);display:flex;gap:8px;align-items:center;padding:8px 16px;flex-wrap:wrap}
+.bar b{margin-right:8px}
+.bar button{font:inherit;border:0;border-radius:999px;padding:6px 12px;background:var(--chip);color:var(--fg);cursor:pointer}
+.bar button.on{background:var(--on)}
+.bar button:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.sp{flex:1}
+.who{background:#0a1733;color:var(--fg);display:flex;gap:8px 14px;align-items:center;padding:6px 12px;flex-wrap:wrap;font-size:12.5px}
+.who label{display:flex;align-items:center;gap:6px;opacity:.95;white-space:nowrap}
+.who select,.bar select{font:inherit;font-size:12.5px;color:#102247;background:#fff;border:0;border-radius:6px;padding:4px 6px;max-width:220px}
+.who select:focus-visible,.bar select:focus-visible{outline:2px solid var(--on);outline-offset:1px}
+#pagesel{display:none}
+@media (max-width:760px){
+  .bar{padding:6px 10px;gap:6px}.bar b{display:none}#tabs{display:none}#pagesel{display:block;max-width:150px}
+  .bar button{padding:4px 9px;font-size:12px}.who{padding:5px 10px;gap:6px 10px}.who select{max-width:150px}
+  .stage{padding:0}
+  .who{flex-wrap:nowrap}.who .lt{display:none}.who label{flex:1;min-width:0}.who select{width:100%;max-width:none}
+}
+.stage{flex:1;display:flex;justify-content:center;padding:12px 0;min-height:0;position:relative}
+iframe{border:0;background:#fff;width:100%;height:100%;box-shadow:0 6px 24px rgba(0,0,0,.2);transition:width .3s}
+.mobile iframe{width:390px;max-width:100%}
+.tablet iframe{width:820px;max-width:100%}
+.msg{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);background:var(--note);color:var(--note-fg);padding:10px 16px;border-radius:8px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.2);max-width:90%}
+@media (prefers-reduced-motion: reduce){iframe{transition:none}}
+</style>
+<div class="who" id="who" aria-label="Test sign-ins"></div>
+<div class="bar"><b>Preview &middot; placeholder brand</b><span id="tabs"></span><select id="pagesel" aria-label="Page"></select><span class="sp"></span>
+<button id="dev" class="on">Desktop</button><button id="tab">Tablet</button><button id="mob">Mobile</button></div>
+<div class="stage" id="stage"><iframe id="f" title="Site preview"></iframe><div class="msg" id="msg" hidden></div></div>
+<script>
+@@DATA@@
+var TABS=[['/index.html','Home'],['/plans.html','Plans'],['/build-your-own-plan.html','Build Your Own'],['/business.html','Business'],['/shop','Shop'],['/contact-us.html','Contact'],['/checkout','Sign Up'],['/admin/login','Admin']];
+var tabs=document.getElementById('tabs'),f=document.getElementById('f'),msg=document.getElementById('msg'),cur='';
+TABS.forEach(function(t){var b=document.createElement('button');b.textContent=t[1];b.dataset.p=t[0];b.onclick=function(){go(t[0])};tabs.appendChild(b)});
+// Test sign-ins: two dropdowns (admin role, My Account customer) so they take one short line, even on a phone
+var roleSel,custSel;
+(function(){var w=document.getElementById('who');
+  function sel(label,id,first,list,text,title){if(!list.length)return null;var l=document.createElement('label');var t=document.createElement('span');t.className='lt';t.textContent=label;l.appendChild(t);var s=document.createElement('select');s.id=id;
+    var o=document.createElement('option');o.value='';o.textContent=first;s.appendChild(o);
+    list.forEach(function(x){var op=document.createElement('option');op.value=x.id;op.textContent=text(x);op.title=title(x);s.appendChild(op)});l.appendChild(s);w.appendChild(l);return s}
+  roleSel=sel('Admin as','rolesel','Admin as…',PEOPLE.roles,function(r){return r.role+' ('+r.name+')'},function(r){return r.apps.length?'Opens: '+r.apps.join(', '):'No apps'});
+  custSel=sel('My Account as','custsel','My Account as…',PEOPLE.customers,function(c){return c.name},function(c){return c.detail});
+  if(roleSel)roleSel.onchange=function(){if(this.value)go('/admin?as='+this.value)};
+  if(custSel)custSel.onchange=function(){if(this.value)go('/myaccount/dashboard?as='+this.value)};
+})();
+// Page buttons collapse into this dropdown on small screens
+(function(){var ps=document.getElementById('pagesel');TABS.forEach(function(t){var o=document.createElement('option');o.value=t[0];o.textContent=t[1];ps.appendChild(o)});ps.onchange=function(){go(this.value)}})();
+function find(list,id){for(var i=0;i<list.length;i++)if(String(list[i].id)===String(id))return list[i];return null}
+function note(t){msg.textContent=t;msg.hidden=false;clearTimeout(note.t);note.t=setTimeout(function(){msg.hidden=true},3500)}
+function go(u){
+  var m=u.match(/^([^?#]*)(\?[^#]*)?(#.*)?$/), path=m[1]||'/index.html', qs=m[2]||'', hash=m[3]||'';
+  var key=path+qs, admin=path.indexOf('/admin')===0, as=qs.match(/^\?as=(\d+)$/);
+  if(as&&admin)role=find(PEOPLE.roles,as[1]);
+  if(as&&path.indexOf('/myaccount')===0)cust=find(PEOPLE.customers,as[1]);
+  if(path==='/admin/login'){role=null}
+  if(path==='/myaccount/login'){cust=null}
+  if(admin&&role&&!as){
+    var app=path.split('/')[2]||'';
+    if(path==='/admin'||path==='/admin/')key='/admin?as='+role.id;
+    else if(!qs&&P[path+'?as='+role.id])key=path+'?as='+role.id;   // this person's own view of the page (e.g. an agent's Ranger ticket)
+    else if(app&&role.role!=='Administrator'&&['login','logout','apps','history','custom','files','my','notifications'].indexOf(app)<0&&role.apps.indexOf(app)<0){note(role.name+' ('+role.role+') can\u2019t open that app: their role doesn\u2019t include it.');key='/admin?as='+role.id;qs='?as='+role.id}
+  }
+  if(!as&&cust&&path.indexOf('/myaccount')===0&&path!=='/myaccount/login'){if(P[path+'?as='+cust.id])key=path+'?as='+cust.id;else note('This preview has '+cust.name+'\u2019s Dashboard, Bills, Pay Bill, Plan, Rewards and Profile; other My Account pages show the demo customer.')}
+  if(!P[key]&&!admin&&P[path])key=path;
+  if(!P[key]){note(admin&&qs?'That search or filter is not in this preview. Run the app to try any search.':'That page is not included in this preview.');return}
+  unpack(P[key]).then(function(html){show(key,html,hash,admin,qs)});
+}
+// Pages are stored gzip-compressed to keep this file small
+function unpack(b64){var bin=atob(b64),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+  return new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).text()}
+function show(key,html,hash,admin,qs){
+  for(var k in A)html=html.split(k).join(A[k]);
+  html=html.split('__PVPAGE__').join(JSON.stringify(key.split('?')[0]));
+  html=html.split('__PVQS__').join(JSON.stringify(admin?'':qs)).split('__PVHASH__').join(JSON.stringify(hash));
+  html=html.split('__PVSIDE__').join(JSON.stringify(SIDE));
+  // Signed in as a sample admin: their name and role in the header
+  // An agent never sees Assign To (only managers and admins assign tickets)
+  if(admin&&role&&role.agent&&key.indexOf('?as=')<0)html=html.replace(/<form[^>]*class="panel">(?:(?!<\/form>)[\s\S])*?<h2>Assign To<\/h2>[\s\S]*?<\/form>/,'');
+  if(admin&&role)html=html.replace(/(<div class="user-chip"><span class="avatar">)[^<]*(<\/span><span><span>)[^<]*(<\/span><small>)[^<]*(<\/small>)/g,function(m,a,b,c,d){return a+role.initials+b+role.name+c+role.role+d});
+  cur=key;f.removeAttribute('src');f.srcdoc=html;
+  if(roleSel)roleSel.value=admin&&role?String(role.id):'';
+  if(custSel)custSel.value=!admin&&cust&&key.indexOf('/myaccount')===0?String(cust.id):'';
+  var ps=document.getElementById('pagesel'),pk=admin?'/admin/login':key;ps.value=[].some.call(ps.options,function(o){return o.value===pk})?pk:'';
+  f.onload=function(){if(hash&&!admin){try{var el=f.contentDocument.querySelector(hash);el&&el.scrollIntoView()}catch(e){}}f.onload=null};
+  [].forEach.call(tabs.children,function(b){b.classList.toggle('on',b.dataset.p===key||(b.dataset.p==='/admin/login'&&admin))});
+}
+// View PDF: open the stored bill PDF in a new tab (or in the frame if the browser blocks new tabs)
+function pdf(k){var b=PDFS[k];if(!b){note('That bill PDF is not in this preview. Run the app to open any bill.');return}
+  var bin=atob(b),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+  var url=URL.createObjectURL(new Blob([u],{type:'application/pdf'}));var w=null;try{w=window.open(url,'_blank')}catch(e){}
+  if(!w){f.removeAttribute('srcdoc');f.src=url;note('Showing the PDF here; use Back in the page buttons to return.')}}
+window.addEventListener('message',function(e){if(e.source!==f.contentWindow||!e.data)return;if(e.data.go)go(e.data.go);if(e.data.toast)note(e.data.toast);if(e.data.pdf)pdf(e.data.pdf);if(e.data.side)SIDE[e.data.side[0]]=e.data.side[1]});
+// Desktop (full width), Tablet (820px) and Mobile (390px) frames for checking each layout
+['dev','tab','mob'].forEach(function(id){document.getElementById(id).onclick=function(){
+ var st=document.getElementById('stage');st.classList.toggle('mobile',id==='mob');st.classList.toggle('tablet',id==='tab');
+ ['dev','tab','mob'].forEach(function(x){document.getElementById(x).classList.toggle('on',x===id)})}});
+go('/index.html');
+</script>
+
+</body></html>

@@ -1,0 +1,75 @@
+<script>
+window.__PV = { page: __PVPAGE__, qs: __PVQS__, hash: __PVHASH__ };
+var __PVC = @@COMPONENTS@@;
+window.ET = window.ET || {}; ET.root = '/';
+var __O = 'http://localhost:8127';
+function __pvKey(u) { try { var x = new URL(u, __O + __PV.page); return x.origin === __O ? x.pathname + x.search + x.hash : null; } catch (e) { return null; } }
+function __pvGo(k) { if (k) parent.postMessage({ go: k }, '*'); }
+function __pvToast(m) { parent.postMessage({ toast: m }, '*'); }
+var __PVJ = @@PVJ@@;
+var __fetch = window.fetch;
+window.fetch = function (u) {
+  u = String(u);
+  var J = function (o, st) { return Promise.resolve(new Response(JSON.stringify(o), { status: st || 200, headers: { 'Content-Type': 'application/json' } })); };
+  if (/site\/session/.test(u)) { var signedIn = /^\/myaccount(?!\/(login|create-account|forgot|reset|quickpay))/.test(__PV.page); var pc = null; try { pc = parent.__pvConsent || null; } catch (e) {} return J({ csrf: 'preview', user: null, customer: signedIn ? { name: 'Avery' } : null, consent: pc, cart: (function () { try { return parent.__pvCart || 0; } catch (e) { return 0; } })() }); }
+  // Cookie banner: remembered for this preview tab (the live site stores it in Laravel)
+  if (/site\/consent/.test(u)) { var body = {}; try { body = JSON.parse(arguments[1].body); } catch (e) {} var c = { choice: body.choice, analytics: body.choice === 'all' || (body.choice === 'custom' && !!body.analytics), marketing: body.choice === 'all' || (body.choice === 'custom' && !!body.marketing) }; try { parent.__pvConsent = c; } catch (e) {} return J({ consent: c }); }
+  if (/site\/ping/.test(u)) return J({ ok: true });
+  // Shop cart: Add to Cart counts up for this preview tab (the live site keeps the cart in Laravel)
+  if (/\/shop\/cart$/.test(u.split('?')[0])) { var n = 0; try { n = parent.__pvCart = (parent.__pvCart || 0) + 1; } catch (e) {} return J({ count: n, message: 'Added to your cart (preview).' }); }
+  // My Account chat bubble: a canned answer, since the bot needs the live server
+  if (/\/myaccount\/chat/.test(u)) { var said = ''; try { said = JSON.parse(arguments[1].body).message || ''; } catch (e) {} var greet = [{ from: 'bot', name: 'Assistant', text: 'Hi Avery, how can I help today?' }];
+    if (/\/person$/.test(u)) return J({ status: 'waiting', messages: greet.concat([{ from: 'bot', name: 'Assistant', text: 'I am getting a person for you now. (Preview: on the live site this appears in Deputy → Conversations → Needs a Person.)' }]) });
+    if (!said) return J({ status: 'new', messages: [] });
+    return J({ status: 'bot', messages: greet.concat([{ from: 'me', text: said }, { from: 'bot', name: 'Assistant', text: 'This preview is a snapshot. On the live site the assistant answers here using its open-weight model, and a person can take over from Deputy.' }]) }); }
+  if (/\/contact$/.test(u)) return Promise.resolve(new Response('{"ok":true}', { status: 201 }));
+  var cm = u.match(/site\/components\?page=([^&]+)/);
+  if (cm) return Promise.resolve(new Response(JSON.stringify(__PVC[decodeURIComponent(cm[1])] || {}), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+  var pk = (__pvKey(u) || '').split('?')[0];
+  if (__PVJ[pk]) return Promise.resolve(new Response(__PVJ[pk], { status: 200, headers: { 'Content-Type': 'application/json' } }));
+  if (/\/test\/recipients$/.test(pk)) return Promise.resolve(new Response('{"error":"Check Recipients needs the live server; this preview is a snapshot."}', { status: 422, headers: { 'Content-Type': 'application/json' } }));
+  return __fetch.apply(this, arguments);
+};
+// The admin sidebar keeps its scroll position from page to page (the parent remembers it per app)
+(function () {
+  var app = (__PV.page.split('/')[2] || 'home'), saved = __PVSIDE__;
+  function side() { return document.getElementById('sidebar'); }
+  document.addEventListener('DOMContentLoaded', function () {
+    var s = side(); if (!s) return;
+    if (saved[app] != null) s.scrollTop = saved[app];
+    else { var on = s.querySelector('a.on'); if (on) on.scrollIntoView({ block: 'center' }); }
+    var send = function () { parent.postMessage({ side: [app, s.scrollTop] }, '*'); };
+    s.addEventListener('scroll', function () { clearTimeout(send.t); send.t = setTimeout(send, 100); });
+    s.addEventListener('click', send, true);
+  });
+})();
+document.addEventListener('click', function (e) {
+  var a = e.target.closest('a[href]'); if (!a) return;
+  var h = a.getAttribute('href');
+  if (!h || h.charAt(0) === '#') { if (h === '#') e.preventDefault(); return; }
+  if (/^(tel:|mailto:)/.test(h)) return;
+  if (/\/pdf$/.test(h)) { e.preventDefault(); parent.postMessage({ pdf: __pvKey(h) }, '*'); return; }
+  var k = __pvKey(h); if (!k) return;
+  e.preventDefault(); __pvGo(k);
+}, true);
+window.addEventListener('submit', function (e) {
+  if (e.defaultPrevented) return;
+  var f = e.target, action = f.getAttribute('action') || __PV.page, method = (f.getAttribute('method') || 'get').toLowerCase();
+  e.preventDefault();
+  var k = __pvKey(action) || __PV.page;
+  var tl = k.match(/\/(admin|myaccount)\/login\/test\/(\d+)$/);
+  if (tl) { __pvGo(tl[1] === 'admin' ? '/admin?as=' + tl[2] : '/myaccount/dashboard?as=' + tl[2]); return; }
+  if (/\/admin\/login$/.test(k)) { __pvGo('/admin'); return; }
+  if (/\/admin\/logout$/.test(k)) { __pvGo('/admin/login'); return; }
+  // Sign-up: each step's form goes on to the next step, as the live site does after saving
+  var NEXT = { '/checkout/address': '/checkout/plan', '/checkout/plan': '/checkout/about', '/checkout/about': '/checkout/review', '/checkout/review': '/checkout/accepted', '/myaccount/checkout': @@ORDERPAGE@@ };
+  var nk = k.split('?')[0];
+  if (method === 'post' && NEXT[nk]) { __pvGo(NEXT[nk]); return; }
+  if (method === 'get') {
+    var q = new URLSearchParams(new FormData(f, e.submitter || undefined)).toString();
+    __pvGo(k.split('?')[0] + (q ? '?' + q : ''));
+    return;
+  }
+  __pvToast('Preview only: saving needs the Laravel server. Run it with php artisan serve.');
+});
+</script>
