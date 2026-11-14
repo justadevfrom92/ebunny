@@ -631,6 +631,11 @@ tr.row-new td { background: var(--info-bg); }
 
 /* ---------- User menu (top right): new-files badge, then your name; click for My Files, Switch user, Logout ---------- */
 .user-menu { position: relative; display: flex; align-items: center; gap: 8px; }
+.settings-gear { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 8px; color: var(--navy); border: 1px solid transparent; }
+.settings-gear svg { width: 20px; height: 20px; }
+.settings-gear:hover, .settings-gear.on { background: var(--row); border-color: var(--line); }
+.launcher-top .settings-gear { color: #fff; }
+.launcher-top .settings-gear:hover { background: rgba(255,255,255,.12); border-color: transparent; }
 .user-menu .user-chip { background: none; border: 1px solid transparent; border-radius: 8px; padding: 4px 8px; cursor: pointer; font: inherit; text-align: left; }
 .user-menu .user-chip:hover, .user-menu .user-chip[aria-expanded="true"] { border-color: var(--line); background: var(--row); }
 .launcher-top .user-menu .user-chip, .launcher-top .user-menu .user-chip small { color: #fff; }
@@ -645,9 +650,6 @@ tr.row-new td { background: var(--info-bg); }
 .user-pop[hidden] { display: none; }
 .up-head { padding: 10px 10px 8px; border-bottom: 1px solid var(--line); margin-bottom: 4px; display: flex; flex-direction: column; }
 .up-head b { color: var(--navy); }
-a.up-head { text-decoration: none; border-radius: 8px 8px 0 0; }
-a.up-head:hover { background: var(--row); }
-.up-head .up-account { color: var(--cyan); font-size: .8rem; margin-top: 2px; }
 .up-head span { color: var(--muted); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; }
 .up-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 10px; border-radius: 6px; color: var(--navy); background: none; border: 0; font: inherit; cursor: pointer; text-align: left; }
 .up-item:hover { background: var(--row); text-decoration: none; }
