@@ -634,8 +634,9 @@ tr.row-new td { background: var(--info-bg); }
 .settings-gear { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 8px; color: var(--navy); border: 1px solid transparent; }
 .settings-gear svg { width: 20px; height: 20px; }
 .settings-gear:hover, .settings-gear.on { background: var(--row); border-color: var(--line); }
-.launcher-top .settings-gear { color: #fff; }
-.launcher-top .settings-gear:hover { background: rgba(255,255,255,.12); border-color: transparent; }
+.up-who { display: flex; flex-direction: column; min-width: 0; }
+.up-who span { color: var(--muted); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; }
+.up-head .settings-gear { flex: none; }
 .user-menu .user-chip { background: none; border: 1px solid transparent; border-radius: 8px; padding: 4px 8px; cursor: pointer; font: inherit; text-align: left; }
 .user-menu .user-chip:hover, .user-menu .user-chip[aria-expanded="true"] { border-color: var(--line); background: var(--row); }
 .launcher-top .user-menu .user-chip, .launcher-top .user-menu .user-chip small { color: #fff; }
@@ -648,9 +649,8 @@ tr.row-new td { background: var(--info-bg); }
 @keyframes badge-bump { 40% { transform: scale(1.35); } }
 .user-pop { position: absolute; right: 0; top: calc(100% + 6px); width: 300px; max-width: calc(100vw - 32px); background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.18); z-index: 80; padding: 6px; }
 .user-pop[hidden] { display: none; }
-.up-head { padding: 10px 10px 8px; border-bottom: 1px solid var(--line); margin-bottom: 4px; display: flex; flex-direction: column; }
+.up-head { padding: 10px 10px 8px; border-bottom: 1px solid var(--line); margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .up-head b { color: var(--navy); }
-.up-head span { color: var(--muted); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; }
 .up-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 10px; border-radius: 6px; color: var(--navy); background: none; border: 0; font: inherit; cursor: pointer; text-align: left; }
 .up-item:hover { background: var(--row); text-decoration: none; }
 .up-item > span:first-child { flex: 1; }
