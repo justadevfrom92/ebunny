@@ -24,7 +24,7 @@ class FilesAndNotificationsTest extends TestCase
     public function test_user_menu_has_notifications_files_settings_and_logout(): void
     {
         $this->actingAs($this->admin());
-        $this->get('/admin')->assertOk()->assertSee('data-user-menu', false)->assertSee('All Notifications')->assertSee('My Files')->assertSee('Settings')->assertDontSee('Switch user')->assertSee('Logout')
+        $this->get('/admin')->assertOk()->assertSee('data-user-menu', false)->assertSee('All Notifications')->assertSee('My Files')->assertSee('aria-label="Settings"', false)->assertDontSee('Switch user')->assertSee('Logout')
             ->assertSee(route('admin.notifications'), false);
         $this->get('/admin/corral')->assertSee('data-user-menu', false);
     }

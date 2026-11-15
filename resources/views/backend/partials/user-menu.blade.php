@@ -1,5 +1,5 @@
 {{-- Top right: your avatar (with the number of unread notifications on its corner) and name. Clicking your name opens your
-     latest 5 notifications, My Files, Settings and Logout. --}}
+     latest 5 notifications (with the Settings gear by your name), My Files and Logout. --}}
 @php
     $unread = $user->adminNotifications()->whereNull('read_at')->count();
     $latest = $user->adminNotifications()->limit(5)->get();
@@ -24,7 +24,6 @@
         </div>
         <a class="up-item" href="{{ route('admin.notifications.index') }}"><span>All Notifications</span></a>
         <a class="up-item" href="{{ route('admin.files') }}"><span>My Files</span><span class="up-count" data-files-total>{{ $myFiles }}</span></a>
-        <a class="up-item" href="{{ route('admin.settings') }}"><span>Settings</span></a>
         <form method="post" action="{{ route('admin.logout') }}">@csrf<button class="up-item up-logout">Logout</button></form>
     </div>
 </div>
