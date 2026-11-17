@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
  */
 class SelfTest extends Command
 {
-    protected $signature = 'et:self-test {--as=admin@example.com : The admin user to open the admin pages as} {--app= : Only this admin app (e.g. corral)}';
+    protected $signature = 'et:self-test {--as=admin@example.com : The admin user to open the admin pages as} {--app= : Only this admin app (e.g. corral, or account for your own pages)}';
 
     protected $description = 'Self-test: open the website and every admin menu page and report errors';
 
@@ -35,6 +35,15 @@ class SelfTest extends Command
             foreach (AdminMenu::sections($app) as $items) {
                 foreach ($items as $it) {
                     $pages->push([config("admin.apps.$app.name"), parse_url($it['url'], PHP_URL_PATH).(($q = parse_url($it['url'], PHP_URL_QUERY)) ? '?'.$q : ''), true]);
+                }
+            }
+        }
+        // The admin home (launcher) and your own Account area (Notifications, My Files, Settings, My Profile…)
+        if (! $this->option('app') || $this->option('app') === 'account') {
+            $pages->push(['Admin', '/admin', true]);
+            foreach (AdminMenu::sections('account') as $items) {
+                foreach ($items as $it) {
+                    $pages->push([config('admin.account.name'), parse_url($it['url'], PHP_URL_PATH), true]);
                 }
             }
         }
