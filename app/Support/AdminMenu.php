@@ -50,7 +50,7 @@ class AdminMenu
     /** Notifications, My Files and Settings (the user menu's pages). */
     public static function isAccountPage(): bool
     {
-        return Str::is(['admin.files', 'admin.files.*', 'admin.notifications.*', 'admin.settings', 'admin.settings.*'], (string) Route::currentRouteName());
+        return Str::is(['admin.files', 'admin.files.*', 'admin.notifications.*', 'admin.settings', 'admin.settings.*', 'admin.account.*'], (string) Route::currentRouteName());
     }
 
     /** The app's name and home page, for the sidebar and the breadcrumbs (also for the Account area). */

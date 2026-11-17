@@ -125,7 +125,7 @@ class AccountTest extends TestCase
             }
             $this->get('/admin/walker/activity/'.$report)->assertOk()->assertSee('Your Runs')->assertSee('aria-label="Rerun report"', false);
         }
-        $this->get('/admin/walker/activity/notes?run=1&start=2020-01-01&priorities[]=System&format=json')->assertRedirect();
+        $this->get('/admin/walker/activity/notes?run=1&start=2020-01-01&priorities[]=System&contains=Enrollment&format=json')->assertRedirect();
         $this->assertStringContainsString('Enrollment submitted', json_encode(ReportRun::where('report', 'notes')->latest('id')->first()->preview));
 
         $this->get('/admin/corral/ercot')->assertOk()->assertSee('814_16');

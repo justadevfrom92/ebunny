@@ -286,7 +286,7 @@ return [
         ],
     ],
 
-    // Your own pages (user menu): notifications, My Files and settings, in their own Account area rather than inside an app
+    // Your own pages (user menu): notifications, My Files, settings, profile, password, access and activity, in their own Account area rather than inside an app
     'account' => [
         'name' => 'Account',
         'home' => 'admin.notifications.index',
@@ -295,6 +295,12 @@ return [
                 ['Notifications', 'admin.notifications.index', 'unread_notifications'],
                 ['My Files', 'admin.files'],
                 ['Settings', 'admin.settings'],
+            ],
+            'You' => [
+                ['My Profile', 'admin.account.profile'],
+                ['Change Password', 'admin.account.password'],
+                ['My Access & Sign-ins', 'admin.account.access'],
+                ['My Activity', 'admin.account.activity'],
             ],
         ],
     ],
