@@ -123,4 +123,10 @@ class HeartbeatTest extends TestCase
         $this->get(route('sheriff.jobs.index'))->assertOk()->assertSee('#'.$run->id)->assertSee(route('sheriff.jobs.show', $run), false);
         $this->get(route('sheriff.jobs.show', $run))->assertOk()->assertSee('Run #'.$run->id)->assertSee('Run Details')->assertSee('Other Runs of This Job');
     }
+
+    public function test_self_test_opens_menu_and_record_pages(): void
+    {
+        $this->artisan('et:self-test', ['--app' => 'ranger', '--records' => true, '--per' => 1])
+            ->expectsOutputToContain('linked pages (level 1)')->expectsOutputToContain('all OK')->assertSuccessful();
+    }
 }
