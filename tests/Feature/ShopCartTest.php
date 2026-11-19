@@ -38,7 +38,7 @@ class ShopCartTest extends TestCase
         $this->post('/myaccount/checkout', ['pay_with' => 'bill', 'ship' => 'other'])->assertSessionHasErrors(['street', 'city', 'zip', 'agree']);
         $stars = $c->stars;
         $this->post('/myaccount/checkout', ['pay_with' => 'bill', 'ship' => 'service', 'agree' => 1])->assertRedirect();
-        $o = ShopOrder::where('customer_id', $c->id)->firstOrFail();
+        $o = ShopOrder::where('customer_id', $c->id)->latest('id')->firstOrFail();   // the order just placed (the account has sample orders too)
         $this->assertSame(['702.54', '14.99', 'bill', 'On next bill'], [$o->total, $o->monthly, $o->pay_with, $o->payment_status]);
         $this->assertTrue($c->hasProduct('Air Conditioning Protection Program'));
         $this->assertSame($stars + 1200 + 200, $c->fresh()->stars);
