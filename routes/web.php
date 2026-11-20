@@ -168,15 +168,13 @@ Route::prefix('admin')->group(function () {
             Route::get('my/settings', 'settings')->name('admin.settings');
             Route::put('my/settings', 'saveSettings')->name('admin.settings.save');
         });
-        // Your Account area: My Profile, Change Password, My Access & Sign-ins, My Activity
+        // Your Account area: My Profile (the dashboard: details, access, sign-ins, activity) and Change Password
         Route::controller(Backend\AccountController::class)->prefix('my')->name('admin.account.')->group(function () {
             Route::get('profile', 'profile')->name('profile');
             Route::put('profile', 'saveProfile')->name('profile.save');
             Route::get('password', 'password')->name('password');
             Route::put('password', 'savePassword')->name('password.save');
-            Route::get('access', 'access')->name('access');
             Route::post('access/sign-out-others', 'signOutOthers')->name('sign-out-others');
-            Route::get('activity', 'activity')->name('activity');
             Route::get('activity/{item}', 'activityShow')->whereNumber('item')->name('activity.show');
         });
         Route::get('/', Backend\LauncherController::class)->name('admin.launcher');

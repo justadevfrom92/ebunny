@@ -125,7 +125,7 @@ class FilesAndNotificationsTest extends TestCase
             ->assertSee('<a href="'.route('corral.customers.index').'">Corral</a>', false);
         foreach (['admin.notifications.index', 'admin.files', 'admin.settings'] as $r) {
             $this->get(route($r))->assertOk()->assertSee('<small>Account</small>', false)
-                ->assertSee('<a href="'.route('admin.notifications.index').'">Account</a>', false)
+                ->assertSee('<a href="'.route('admin.account.profile').'">Account</a>', false)
                 ->assertSee('aria-current="page"', false);
         }
         // Notifications: a real dropdown, and Clear in the user menu marks them read

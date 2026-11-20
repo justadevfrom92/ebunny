@@ -286,27 +286,24 @@ return [
         ],
     ],
 
-    // Your own pages (user menu): notifications, My Files, settings, profile, password, access and activity, in their own Account area rather than inside an app
+    // Your own pages (user menu): My Profile (with your access and activity), notifications, My Files, settings and password, in their own Account area rather than inside an app
     'account' => [
         'name' => 'Account',
-        'home' => 'admin.notifications.index',
+        'home' => 'admin.account.profile',   // My Profile is the Account dashboard: your details, access, sign-ins and activity
         'menu' => [
             'Account' => [
+                ['My Profile', 'admin.account.profile'],
                 ['Notifications', 'admin.notifications.index', 'unread_notifications'],
                 ['My Files', 'admin.files'],
                 ['Settings', 'admin.settings'],
-            ],
-            'You' => [
-                ['My Profile', 'admin.account.profile'],
                 ['Change Password', 'admin.account.password'],
-                ['My Access & Sign-ins', 'admin.account.access'],
-                ['My Activity', 'admin.account.activity'],
             ],
         ],
     ],
 
     // Detail pages whose menu item isn't named after them: route area => menu route (Walker run pages sit under Report Status)
     'menu_parents' => [
+        'admin.account.activity' => 'admin.account.profile',   // an activity entry opened from My Profile
         'walker.runs' => 'walker.home',
         'walker.saved' => 'walker.saved',
         'corral.items' => 'corral.customers.index',

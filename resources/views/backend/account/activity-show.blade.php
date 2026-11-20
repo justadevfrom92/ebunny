@@ -4,7 +4,7 @@
 
 @section('content')
     @include('backend.partials.page-head', ['title' => $item->summary, 'sub' => e($item->group).' · '.e($item->action).' · '.$item->created_at->format('F jS, Y @ g:i:s A'),
-        'actions' => '<a class="btn ghost" href="'.route('admin.account.activity').'">Back to My Activity</a>'])
+        'actions' => '<a class="btn ghost" href="'.route('admin.account.profile').'#activity">Back to My Activity</a>'])
 
     <div class="panel"><div class="panel-head"><h2>Details</h2><span class="mono muted">#{{ $item->id }}</span></div><div class="panel-body"><dl class="kv">
         <dt>What</dt><dd>{{ $item->summary }}</dd>

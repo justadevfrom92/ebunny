@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Models\HistoryItem;
-use App\Models\ReportRun;
 use App\Models\SavedReport;
 use App\Support\AdminApps;
 use App\Support\History;
@@ -18,12 +17,32 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
-/** Your own pages in the Account area: My Profile, Change Password, My Access & Sign-ins and My Activity. */
+/** Your own pages in the Account area: My Profile (the dashboard, with your access, sign-ins and activity) and Change Password. */
 class AccountController extends Controller
 {
+    /** The Account dashboard: your details, what you can open, where you're signed in, your sign-ins and your activity. */
     public function profile(Request $request): View
     {
-        return view('backend.account.profile', ['u' => $request->user()->load(['role', 'manager'])]);
+        $u = $request->user()->load(['role', 'manager']);
+        $q = trim((string) $request->query('q'));
+        $group = (string) $request->query('group');
+
+        return view('backend.account.profile', [
+            'u' => $u,
+            'apps' => AdminApps::all(),
+            'rights' => config('admin.permissions'),
+            'changes' => $u->accessChanges(),
+            'devices' => self::devices($request),
+            'logins' => HistoryItem::where('model', 'AdminLogin_model')->where('record_id', $u->id)->latest('created_at')->latest('id')
+                ->paginate(10, ['*'], 'logins_page')->withQueryString()->fragment('sign-ins'),
+            'items' => HistoryItem::with('customer')->where('user_id', $u->id)
+                ->when($q !== '', fn ($w) => $w->where('summary', 'like', '%'.$q.'%'))
+                ->when($group !== '', fn ($w) => $w->where('group', $group))
+                ->latest('created_at')->latest('id')->paginate(10, ['*'], 'activity_page')->withQueryString()->fragment('activity'),
+            'q' => $q, 'group' => $group,
+            'groups' => HistoryItem::where('user_id', $u->id)->distinct()->orderBy('group')->pluck('group'),
+            'saved' => SavedReport::where('user_id', $u->id)->latest()->get(),
+        ]);
     }
 
     /** You can change your name and phone extension; Sheriff sets the rest. */
@@ -53,20 +72,6 @@ class AccountController extends Controller
         History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $user->id, 'action' => 'updated', 'summary' => 'Changed their password']);
 
         return redirect()->route('admin.account.password')->with('status', 'Password changed.');
-    }
-
-    public function access(Request $request): View
-    {
-        $u = $request->user()->load('role');
-
-        return view('backend.account.access', [
-            'u' => $u,
-            'apps' => AdminApps::all(),
-            'rights' => config('admin.permissions'),
-            'changes' => $u->accessChanges(),
-            'devices' => self::devices($request),
-            'logins' => HistoryItem::where('model', 'AdminLogin_model')->where('record_id', $u->id)->latest('created_at')->latest('id')->paginate(10, ['*'], 'logins_page'),
-        ]);
     }
 
     /** Browsers you're signed in on (database sessions), this one first. */
@@ -112,28 +117,7 @@ class AccountController extends Controller
         $request->user()->forceFill(['remember_token' => Str::random(60)])->save();
         History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $request->user()->id, 'action' => 'logged', 'summary' => 'Signed out their other devices']);
 
-        return redirect()->route('admin.account.access')->with('status', $n ? 'Signed out of '.$n.' other '.Str::plural('device', $n).'.' : 'You were not signed in anywhere else.');
-    }
-
-    /** What you've done: everything recorded under your name, plus your Saved Reports and report runs. */
-    public function activity(Request $request): View
-    {
-        $u = $request->user();
-        $q = trim((string) $request->query('q'));
-        $group = (string) $request->query('group');
-        $items = HistoryItem::with('customer')->where('user_id', $u->id)
-            ->when($q !== '', fn ($w) => $w->where('summary', 'like', '%'.$q.'%'))
-            ->when($group !== '', fn ($w) => $w->where('group', $group))
-            ->latest('created_at')->latest('id')->paginate(10)->withQueryString();
-
-        return view('backend.account.activity', [
-            'items' => $items, 'q' => $q, 'group' => $group,
-            'groups' => HistoryItem::where('user_id', $u->id)->distinct()->orderBy('group')->pluck('group'),
-            'total' => HistoryItem::where('user_id', $u->id)->count(),
-            'week' => HistoryItem::where('user_id', $u->id)->where('created_at', '>=', now()->subDays(7))->count(),
-            'saved' => SavedReport::where('user_id', $u->id)->latest()->get(),
-            'runs' => ReportRun::where('user_id', $u->id)->count(),
-        ]);
+        return redirect()->to(route('admin.account.profile').'#signed-in')->with('status', $n ? 'Signed out of '.$n.' other '.Str::plural('device', $n).'.' : 'You were not signed in anywhere else.');
     }
 
     /** One of your activity entries. */

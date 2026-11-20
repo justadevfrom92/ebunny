@@ -4,12 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\HistoryItem;
 use App\Models\User;
+use App\Support\AdminMenu;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
-/** The Account area's own pages: My Profile, Change Password, My Access & Sign-ins, My Activity. */
+/** The Account area: My Profile is the dashboard (details, access, sign-ins, activity); Change Password. */
 class AccountPagesTest extends TestCase
 {
     use RefreshDatabase;
@@ -21,12 +22,16 @@ class AccountPagesTest extends TestCase
         return User::where('email', 'csr@example.com')->firstOrFail();
     }
 
-    public function test_pages_open_with_the_account_menu(): void
+    public function test_my_profile_is_the_account_dashboard_with_access_and_activity(): void
     {
         $this->actingAs($this->csr());
-        foreach (['profile' => 'My Profile', 'password' => 'Change Password', 'access' => 'What You Can Open', 'activity' => 'My Activity'] as $p => $see) {
-            $this->get('/admin/my/'.$p)->assertOk()->assertSee($see)->assertSee('My Access &amp; Sign-ins', false)->assertSee('Notifications');
-        }
+        $this->get('/admin/my/profile')->assertOk()->assertSeeInOrder(['Your Details', 'Work Details', 'My Activity', 'Signed In On', 'What You Can Open', 'Sign-in History'])
+            ->assertDontSee('<h4>You</h4>', false)->assertDontSee('stat-row', false);
+        $this->get('/admin/my/password')->assertOk()->assertSee('Change Password')->assertSee('My Profile');
+        $this->get('/admin/my/access')->assertNotFound();
+        $this->get('/admin/my/activity')->assertNotFound();
+        // The Account app opens on My Profile
+        $this->assertSame(route('admin.account.profile'), AdminMenu::appInfo('account')['home']);
     }
 
     public function test_profile_saves_name_and_extension_only(): void
@@ -60,8 +65,8 @@ class AccountPagesTest extends TestCase
         config(['session.driver' => 'database']);
         $u = $this->csr();
         DB::table('sessions')->insert(['id' => 'other-device', 'user_id' => $u->id, 'ip_address' => '10.0.0.9', 'user_agent' => 'Mozilla/5.0 (iPhone) Safari/604', 'payload' => '', 'last_activity' => time()]);
-        $this->actingAs($u)->get('/admin/my/access')->assertOk()->assertSee('Safari on iOS');
-        $this->post('/admin/my/access/sign-out-others')->assertRedirect('/admin/my/access');
+        $this->actingAs($u)->get('/admin/my/profile')->assertOk()->assertSee('Safari on iOS');
+        $this->post('/admin/my/access/sign-out-others')->assertRedirect(route('admin.account.profile').'#signed-in');
         $this->assertFalse(DB::table('sessions')->where('id', 'other-device')->exists());
     }
 
@@ -70,7 +75,7 @@ class AccountPagesTest extends TestCase
         $u = $this->csr();
         $mine = HistoryItem::create(['user_id' => $u->id, 'model' => 'Test_model', 'group' => 'Notes', 'action' => 'created', 'summary' => 'My own test note', 'created_at' => now()]);
         $theirs = HistoryItem::create(['user_id' => 1, 'model' => 'Test_model', 'group' => 'Notes', 'action' => 'created', 'summary' => 'Someone else note', 'created_at' => now()]);
-        $this->actingAs($u)->get('/admin/my/activity?q=note')->assertOk()->assertSee('My own test note')->assertDontSee('Someone else note');
+        $this->actingAs($u)->get('/admin/my/profile?q=note')->assertOk()->assertSee('My own test note')->assertDontSee('Someone else note');
         $this->get('/admin/my/activity/'.$mine->id)->assertOk()->assertSee('My own test note');
         $this->get('/admin/my/activity/'.$theirs->id)->assertNotFound();
     }
