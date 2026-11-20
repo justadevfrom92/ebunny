@@ -177,11 +177,14 @@ Route::prefix('admin')->group(function () {
             Route::put('password', 'savePassword')->name('password.save');
             Route::post('access/sign-out-others', 'signOutOthers')->name('sign-out-others');
             // One place you're signed in (Signed In On): see it, sign it out, block it, report it, end someone's Log in as
-            Route::get('signed-in/{key}', 'device')->where('key', '[a-f0-9]{64}')->name('device');
-            Route::post('signed-in/{key}/sign-out', 'deviceSignOut')->where('key', '[a-f0-9]{64}')->name('device.sign-out');
-            Route::post('signed-in/{key}/block', 'deviceBlock')->where('key', '[a-f0-9]{64}')->name('device.block');
-            Route::post('signed-in/{key}/report', 'deviceReport')->where('key', '[a-f0-9]{64}')->name('device.report');
+            Route::get('signed-in/{signIn}', 'device')->whereNumber('signIn')->name('device');
+            Route::post('signed-in/{signIn}/sign-out', 'deviceSignOut')->whereNumber('signIn')->name('device.sign-out');
+            Route::post('signed-in/{signIn}/block', 'deviceBlock')->whereNumber('signIn')->name('device.block');
+            Route::post('signed-in/{signIn}/report', 'deviceReport')->whereNumber('signIn')->name('device.report');
             Route::delete('blocked/{block}', 'unblock')->name('unblock');
+            // Administrators: change your own access to one app or right (What You Can Open)
+            Route::get('access/{perm}', 'accessEdit')->where('perm', '[a-z0-9_-]+')->name('access.edit');
+            Route::put('access/{perm}', 'accessSave')->where('perm', '[a-z0-9_-]+')->name('access.save');
             Route::get('activity/{item}', 'activityShow')->whereNumber('item')->name('activity.show');
         });
         Route::get('/', Backend\LauncherController::class)->name('admin.launcher');

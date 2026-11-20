@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\HistoryItem;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\UserSignIn;
 use App\Support\AdminApps;
 use App\Support\History;
 use Illuminate\Http\RedirectResponse;
@@ -68,10 +69,11 @@ class UserController extends Controller
         History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $me->id, 'action' => 'logged', 'summary' => 'Logged in as '.$user->name.' (from Sheriff)']);
         // Stay "logged in as" across a chain: the first person is who you go back to
         $original = $request->session()->get('impersonator_id', $me->id);
+        UserSignIn::end($request, 'Used Log in as for '.$user->name);
         Auth::login($user);
         $request->session()->regenerate();
         $request->session()->put('impersonator_id', $original);
-        $request->session()->put('signed_in_at', now()->timestamp);
+        UserSignIn::start($request, $user, 'log_in_as', $original);
         History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $user->id, 'action' => 'logged', 'summary' => 'Signed in by '.$me->name.' with Log in as']);
 
         return redirect()->route('admin.launcher')->with('status', 'You are logged in as '.$user->name.'. Use "Back to '.$me->name.'" at the top to return.');

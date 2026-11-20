@@ -305,6 +305,7 @@ return [
     'menu_parents' => [
         'admin.account.activity' => 'admin.account.profile',   // an activity entry opened from My Profile
         'admin.account' => 'admin.account.profile',            // a sign-in (Signed In On) opened from My Profile
+        'admin.account.access' => 'admin.account.profile',     // an app or right (What You Can Open) opened from My Profile
         'walker.runs' => 'walker.home',
         'walker.saved' => 'walker.saved',
         'corral.items' => 'corral.customers.index',

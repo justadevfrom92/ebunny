@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\HistoryItem;
 use App\Models\User;
 use App\Models\UserBlock;
+use App\Models\UserSignIn;
 use App\Support\AdminMenu;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,9 @@ class AccountPagesTest extends TestCase
             ->assertDontSee('Sign-in History')->assertSee('<table data-page="0">', false)
             ->assertDontSee('<h4>You</h4>', false)->assertDontSee('stat-row', false);
         $this->get('/admin/my/password')->assertOk()->assertSee('Change Password')->assertSee('My Profile');
+        // CSRs aren't administrators: What You Can Open is read-only
+        $this->get('/admin/my/profile')->assertDontSee(route('admin.account.access.edit', 'corral'), false);
+        $this->get(route('admin.account.access.edit', 'corral'))->assertForbidden();
         $this->get('/admin/my/access')->assertNotFound();
         $this->get('/admin/my/activity')->assertNotFound();
         // The Account app opens on My Profile
@@ -82,13 +86,14 @@ class AccountPagesTest extends TestCase
         $this->get('/admin/my/activity/'.$theirs->id)->assertNotFound();
     }
 
-    /** A stored sign-in for $u from another device; returns its key (the hash used in links). */
-    private function otherDevice(User $u, string $ip = '10.0.0.9', string $ua = 'Mozilla/5.0 (iPhone) Safari/604', array $data = []): string
+    /** A sign-in for $u from another device, still signed in; returns its record (its #ID is used in links). */
+    private function otherDevice(User $u, string $ip = '10.0.0.9', string $ua = 'Mozilla/5.0 (iPhone) Safari/604', array $data = []): UserSignIn
     {
         DB::table('sessions')->insert(['id' => $id = 'dev-'.md5($ip.$ua), 'user_id' => $u->id, 'ip_address' => $ip, 'user_agent' => $ua,
             'payload' => base64_encode(json_encode($data + ['signed_in_at' => now()->subHour()->timestamp])), 'last_activity' => time()]);
 
-        return hash('sha256', $id);
+        return UserSignIn::create(['user_id' => $u->id, 'impersonator_id' => $data['impersonator_id'] ?? null, 'session_key' => hash('sha256', $id), 'ip' => $ip, 'user_agent' => $ua,
+            'how' => isset($data['impersonator_id']) ? 'log_in_as' : 'password', 'signed_in_at' => now()->subHour()]);
     }
 
     public function test_each_sign_in_opens_its_own_page_and_can_be_signed_out(): void
@@ -101,7 +106,10 @@ class AccountPagesTest extends TestCase
             ->assertSee('Sign Out This Device')->assertSee('Block This Device')->assertSee('Report to Administrators');
         $this->post(route('admin.account.device.sign-out', $key))->assertRedirect(route('admin.account.profile').'#signed-in');
         $this->assertFalse(DB::table('sessions')->where('id', 'dev-'.md5('10.0.0.9Mozilla/5.0 (iPhone) Safari/604'))->exists());
-        $this->get(route('admin.account.device', $key))->assertNotFound();
+        // It stays in the history, ended
+        $this->assertSame('Signed out from another device', $key->fresh()->ended_reason);
+        $this->get(route('admin.account.device', $key))->assertOk()->assertSee('Signed out from another device')->assertDontSee('Sign Out This Device');
+        $this->post(route('admin.account.device.sign-out', $key))->assertNotFound();
     }
 
     public function test_block_keeps_that_device_out_and_report_tells_the_administrators(): void
@@ -153,5 +161,47 @@ class AccountPagesTest extends TestCase
         $key = $this->otherDevice($u, '127.0.0.1', 'Symfony');
         $this->actingAs($u)->get(route('admin.account.device', $key))->assertSee('can\'t be blocked', false)->assertDontSee('Block This Device');
         $this->post(route('admin.account.device.block', $key))->assertStatus(422);
+    }
+
+    public function test_signed_in_on_is_the_whole_history_current_first_ten_a_page(): void
+    {
+        config(['session.driver' => 'database']);
+        $u = $this->csr();
+        $old = UserSignIn::where('user_id', $u->id)->count();
+        $this->assertGreaterThan(10, $old);   // sample history
+        $live = $this->otherDevice($u, '10.0.0.40', 'Mozilla/5.0 (Windows) Firefox/120');
+        $page = $this->actingAs($u)->get('/admin/my/profile')->assertOk();
+        $html = $page->getContent();
+        preg_match('#id="signed-in".*?</table>#s', $html, $m);
+        $this->assertSame(10, substr_count($m[0], 'class="click"'));
+        $this->assertStringContainsString('#'.$live->id, $m[0]);   // signed in now: on the first page, at the top
+        $this->assertLessThan(strpos($m[0], 'Expired') ?: PHP_INT_MAX, strpos($m[0], '#'.$live->id));
+        $this->get('/admin/my/profile?signins_page=2')->assertOk()->assertSee('ID#');
+    }
+
+    public function test_signing_in_and_out_is_recorded(): void
+    {
+        $u = $this->csr();
+        $before = UserSignIn::where('user_id', $u->id)->count();
+        $this->post('/admin/login', ['email' => $u->email, 'password' => 'password']);
+        $s = UserSignIn::where('user_id', $u->id)->latest('id')->first();
+        $this->assertSame([$before + 1, null, 'password'], [UserSignIn::where('user_id', $u->id)->count(), $s->ended_at, $s->how]);
+        $this->post('/admin/logout');
+        $this->assertSame('Signed out', $s->fresh()->ended_reason);
+    }
+
+    public function test_admins_can_edit_their_own_access_from_what_you_can_open(): void
+    {
+        $admin = User::where('email', 'admin@example.com')->first();
+        $this->actingAs($admin)->get('/admin/my/profile')->assertSee(route('admin.account.access.edit', 'corral'), false);
+        $this->get(route('admin.account.access.edit', 'corral'))->assertOk()->assertSee('Always allow')->assertSee('Never allow');
+        $this->put(route('admin.account.access.save', 'corral'), ['access' => 'deny', 'access_note' => 'Testing'])->assertRedirect(route('admin.account.profile').'#access');
+        $this->assertFalse($admin->fresh()->hasPerm('corral'));
+        $this->put(route('admin.account.access.save', 'corral'), ['access' => 'role'])->assertRedirect();
+        $this->assertTrue($admin->fresh()->hasPerm('corral'));
+        // Can't lock yourself out of Sheriff
+        $this->put(route('admin.account.access.save', 'sheriff'), ['access' => 'deny'])->assertSessionHasErrors('access');
+        $this->assertTrue($admin->fresh()->hasPerm('sheriff'));
+        $this->get(route('admin.account.access.edit', 'nope'))->assertNotFound();
     }
 }

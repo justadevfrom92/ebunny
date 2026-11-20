@@ -60,23 +60,28 @@
         @include('backend.partials.pager', ['p' => $items])
     </div>
 
-    {{-- My Access: where you're signed in (each opens its own page to sign it out, block or report it) and what you can open --}}
+    {{-- Signed In On: every sign-in, where you're signed in now at the top; each opens its own page --}}
+    @php $live = $signIns->getCollection()->filter(fn ($x) => $x->device)->count(); @endphp
     <div class="panel" id="signed-in"><div class="panel-head"><h2>Signed In On</h2>
-            @if ($devices->where('current', false)->isNotEmpty() && ! session()->has('impersonator_id'))
-                <form method="post" action="{{ route('admin.account.sign-out-others') }}" class="inline" data-confirm="Sign out your other devices?|Every other browser signed in as you will have to sign in again.|Sign out">@csrf<button class="btn sm ghost">Sign Out Other Devices</button></form>
-            @endif
+            <span class="muted">{{ $live }} signed in now · {{ $signIns->total() }} total</span>
         </div>
-        <div class="table-wrap"><table data-page="0">
-            <thead><tr><th>Browser</th><th>IP Address</th><th>Signed In</th><th>Last Active</th></tr></thead>
-            <tbody>@forelse ($devices as $d)
-                <tr class="click" data-href="{{ route('admin.account.device', $d->key) }}"><td><a href="{{ route('admin.account.device', $d->key) }}"><b>{{ $d->browser }}</b></a>
-                        @if ($d->current) <span class="pill ok">This browser</span>@endif
-                        @if ($d->logged_in_as_by) <span class="pill warn">{{ $d->logged_in_as_by->name }} using Log in as</span>@endif</td>
-                    <td class="mono">{{ $d->ip ?? '—' }}</td><td class="nowrap">{{ $d->since?->format('n/j/Y g:i A') ?? '—' }}</td>
-                    <td class="nowrap">{{ $d->last->format('n/j/Y g:i A') }} <span class="muted">({{ $d->last->diffForHumans() }})</span></td></tr>
-            @empty <tr><td colspan="4" class="empty">No sign-ins recorded.</td></tr> @endforelse</tbody>
+        <div class="table-wrap"><table>
+            <thead><tr><th>ID#</th><th>Signed In</th><th>Browser</th><th>IP Address</th><th>Status</th></tr></thead>
+            <tbody>@forelse ($signIns as $x)
+                <tr class="click" data-href="{{ route('admin.account.device', $x) }}"><td class="nowrap"><a href="{{ route('admin.account.device', $x) }}"><b>#{{ $x->id }}</b></a></td>
+                    <td class="nowrap">{{ $x->signed_in_at->format('n/j/Y g:i A') }}</td>
+                    <td><b>{{ $x->browser() }}</b>@if ($x->impersonator) <span class="pill warn">{{ $x->impersonator->name }} using Log in as</span>@endif</td>
+                    <td class="mono">{{ $x->ip ?? '—' }}</td>
+                    <td>@if ($x->device?->current)<span class="pill ok">This browser</span>
+                        @elseif ($x->device)<span class="pill info">Signed in now</span> <span class="muted">active {{ $x->device->last->diffForHumans() }}</span>
+                        @else<span class="muted">{{ $x->ended_reason ?? 'Expired' }}{{ $x->ended_at ? ' · '.$x->ended_at->format('n/j g:i A') : '' }}</span>@endif</td></tr>
+            @empty <tr><td colspan="5" class="empty">No sign-ins recorded.</td></tr> @endforelse</tbody>
         </table></div>
-        @if ($devices->count() > 1)<div class="panel-body help">More than one sign-in? Open any you don't recognize to sign it out, block it or report it.</div>@endif
+        @include('backend.partials.pager', ['p' => $signIns])
+        @if ($live > 1 && ! session()->has('impersonator_id'))
+            <div class="panel-body help">More than one sign-in? Open any you don't recognize to sign it out, block it or report it, or
+                <form method="post" action="{{ route('admin.account.sign-out-others') }}" class="inline" data-confirm="Sign out your other devices?|Every other browser signed in as you will have to sign in again.|Sign out">@csrf<button class="btn sm ghost">Sign Out Other Devices</button></form></div>
+        @endif
     </div>
 
     @if ($blocks->isNotEmpty())
@@ -91,18 +96,19 @@
         </table></div></div>
     @endif
 
-    <div class="panel" id="access"><div class="panel-head"><h2>What You Can Open</h2><span class="help">ask an administrator to change it</span></div><div class="table-wrap"><table data-page="0">
+    @php $canEdit = $u->hasPerm('sheriff') && ! session()->has('impersonator_id'); @endphp
+    <div class="panel" id="access"><div class="panel-head"><h2>What You Can Open</h2><span class="help">{{ $canEdit ? 'you\'re an administrator: open one to change it' : 'ask an administrator to change it' }}</span></div><div class="table-wrap"><table data-page="0">
         <thead><tr><th>App or Right</th><th>Access</th><th>Why</th></tr></thead>
         <tbody>
             @foreach ($apps as $key => $a)
                 @php $has = $u->hasPerm($key); $ch = $changes[$key] ?? null; @endphp
-                <tr><td><b>{{ $a['name'] }}</b></td>
+                <tr @if ($canEdit) class="click" data-href="{{ route('admin.account.access.edit', $key) }}" @endif><td>@if ($canEdit)<a href="{{ route('admin.account.access.edit', $key) }}"><b>{{ $a['name'] }}</b></a>@else<b>{{ $a['name'] }}</b>@endif</td>
                     <td>@include('backend.partials.pill', $has ? ['text' => 'Can open', 'tone' => 'ok'] : ['text' => 'No access', 'tone' => ''])</td>
                     <td class="help">{{ $ch === 'added' ? 'Added just for you' : ($ch === 'removed' ? 'Taken away just for you (your role has it)' : ($has ? 'From your role' : '—')) }}</td></tr>
             @endforeach
             @foreach ($rights as $key => $label)
                 @php $has = $u->hasPerm($key); $ch = $changes[$key] ?? null; @endphp
-                <tr><td><b>{{ $label }}</b></td>
+                <tr @if ($canEdit) class="click" data-href="{{ route('admin.account.access.edit', $key) }}" @endif><td>@if ($canEdit)<a href="{{ route('admin.account.access.edit', $key) }}"><b>{{ $label }}</b></a>@else<b>{{ $label }}</b>@endif</td>
                     <td>@include('backend.partials.pill', $has ? ['text' => 'Allowed', 'tone' => 'ok'] : ['text' => 'Not allowed', 'tone' => ''])</td>
                     <td class="help">{{ $ch === 'added' ? 'Added just for you' : ($ch === 'removed' ? 'Taken away just for you (your role has it)' : ($has ? 'From your role' : '—')) }}</td></tr>
             @endforeach

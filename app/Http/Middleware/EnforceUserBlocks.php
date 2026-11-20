@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\UserBlock;
+use App\Models\UserSignIn;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,7 @@ class EnforceUserBlocks
     {
         $user = Auth::guard('web')->user();
         if ($user && ! $request->session()->has('impersonator_id') && UserBlock::blocks($user, $request)) {
+            UserSignIn::end($request, 'Blocked device');
             Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

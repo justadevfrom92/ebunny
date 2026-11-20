@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Backend;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserBlock;
+use App\Models\UserSignIn;
 use App\Support\History;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,10 +33,11 @@ class AuthController extends Controller
         if (Auth::check()) {
             History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => Auth::id(), 'action' => 'logged', 'summary' => 'Switched to test user '.$user->name]);
         }
+        UserSignIn::end($request, 'Switched to '.$user->name);
         Auth::login($user);
         $request->session()->regenerate();
         $request->session()->forget('impersonator_id');
-        $request->session()->put('signed_in_at', now()->timestamp);
+        UserSignIn::start($request, $user, 'test');
         $user->forceFill(['last_login_at' => now()])->save();
         History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $user->id, 'action' => 'logged', 'summary' => 'Signed in to the admin as a test user']);
 
@@ -65,7 +67,7 @@ class AuthController extends Controller
         }
         $request->session()->regenerate();
         $request->session()->forget('impersonator_id');
-        $request->session()->put('signed_in_at', now()->timestamp);
+        UserSignIn::start($request, $request->user());
         $request->user()->forceFill(['last_login_at' => now()])->save();
         History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $request->user()->id,
             'action' => 'logged', 'summary' => 'Signed in to the admin', 'data' => ['user_agent' => substr((string) $request->userAgent(), 0, 250)]]);
@@ -83,9 +85,11 @@ class AuthController extends Controller
         abort_unless($original, 404);
         $was = $request->user();
         History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $was->id, 'action' => 'logged', 'summary' => 'Log in as ended; back to '.$original->name]);
+        UserSignIn::end($request, 'Log in as ended');
         Auth::login($original);
         $request->session()->regenerate();
         $request->session()->forget('impersonator_id');
+        UserSignIn::start($request, $original, 'back_from_log_in_as');
         History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $original->id, 'action' => 'logged', 'summary' => 'Back from logging in as '.$was->name]);
 
         return redirect()->route('sheriff.users.show', $was)->with('status', 'Back to '.$original->name.'.');
@@ -95,6 +99,7 @@ class AuthController extends Controller
     {
         History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $request->user()->id,
             'action' => 'logged', 'summary' => 'Signed out of the admin']);
+        UserSignIn::end($request, 'Signed out');
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
