@@ -10,6 +10,7 @@ use App\Http\Controllers\Frontend\SiteController;
 use App\Http\Controllers\Frontend\SitePageController;
 use App\Http\Controllers\Frontend\SurveyController;
 use App\Http\Middleware\CacheAdminTables;
+use App\Http\Middleware\EnforceUserBlocks;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -147,7 +148,7 @@ Route::prefix('admin')->group(function () {
     Route::post('login/test/{user}', [Backend\AuthController::class, 'testLogin'])->middleware('throttle:30,1')->name('admin.login.test');
 
     // Every admin page keeps a cached copy of its table (Sheriff → Cached Tables)
-    Route::middleware(['auth:web', CacheAdminTables::class])->group(function () {
+    Route::middleware(['auth:web', EnforceUserBlocks::class, CacheAdminTables::class])->group(function () {
         Route::post('logout', [Backend\AuthController::class, 'logout'])->name('admin.logout');
         Route::post('log-in-as/return', [Backend\AuthController::class, 'returnToSelf'])->name('admin.login-as.return');
 
@@ -175,6 +176,12 @@ Route::prefix('admin')->group(function () {
             Route::get('password', 'password')->name('password');
             Route::put('password', 'savePassword')->name('password.save');
             Route::post('access/sign-out-others', 'signOutOthers')->name('sign-out-others');
+            // One place you're signed in (Signed In On): see it, sign it out, block it, report it, end someone's Log in as
+            Route::get('signed-in/{key}', 'device')->where('key', '[a-f0-9]{64}')->name('device');
+            Route::post('signed-in/{key}/sign-out', 'deviceSignOut')->where('key', '[a-f0-9]{64}')->name('device.sign-out');
+            Route::post('signed-in/{key}/block', 'deviceBlock')->where('key', '[a-f0-9]{64}')->name('device.block');
+            Route::post('signed-in/{key}/report', 'deviceReport')->where('key', '[a-f0-9]{64}')->name('device.report');
+            Route::delete('blocked/{block}', 'unblock')->name('unblock');
             Route::get('activity/{item}', 'activityShow')->whereNumber('item')->name('activity.show');
         });
         Route::get('/', Backend\LauncherController::class)->name('admin.launcher');
@@ -670,7 +677,7 @@ Route::prefix('admin')->group(function () {
 });
 
 // Record pages for table rows without a page of their own (config/records.php), inside each app
-Route::prefix('admin')->middleware(['auth:web', CacheAdminTables::class])->group(function () {
+Route::prefix('admin')->middleware(['auth:web', EnforceUserBlocks::class, CacheAdminTables::class])->group(function () {
     foreach (array_keys(config('admin.apps')) as $app) {
         Route::prefix($app)->name($app.'.')->middleware('app:'.$app)->group(function () {
             Route::get('records/{type}/{id}', [Backend\RecordController::class, 'show'])->where(['type' => '[a-z_]+', 'id' => '[0-9]+'])->name('records.show');

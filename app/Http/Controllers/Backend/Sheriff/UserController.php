@@ -71,6 +71,7 @@ class UserController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
         $request->session()->put('impersonator_id', $original);
+        $request->session()->put('signed_in_at', now()->timestamp);
         History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $user->id, 'action' => 'logged', 'summary' => 'Signed in by '.$me->name.' with Log in as']);
 
         return redirect()->route('admin.launcher')->with('status', 'You are logged in as '.$user->name.'. Use "Back to '.$me->name.'" at the top to return.');

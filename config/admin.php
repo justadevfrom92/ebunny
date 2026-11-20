@@ -304,6 +304,7 @@ return [
     // Detail pages whose menu item isn't named after them: route area => menu route (Walker run pages sit under Report Status)
     'menu_parents' => [
         'admin.account.activity' => 'admin.account.profile',   // an activity entry opened from My Profile
+        'admin.account' => 'admin.account.profile',            // a sign-in (Signed In On) opened from My Profile
         'walker.runs' => 'walker.home',
         'walker.saved' => 'walker.saved',
         'corral.items' => 'corral.customers.index',

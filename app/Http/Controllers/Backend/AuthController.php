@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\UserBlock;
 use App\Support\History;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,6 +35,7 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
         $request->session()->forget('impersonator_id');
+        $request->session()->put('signed_in_at', now()->timestamp);
         $user->forceFill(['last_login_at' => now()])->save();
         History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $user->id, 'action' => 'logged', 'summary' => 'Signed in to the admin as a test user']);
 
@@ -54,8 +56,16 @@ class AuthController extends Controller
             ])->redirectTo(route('admin.login'));
         }
 
+        // A device the person blocked (My Profile → Signed In On) can't sign in to their account
+        if (UserBlock::blocks($request->user(), $request)) {
+            $blockedId = $request->user()->id;
+            Auth::guard('web')->logout();
+            History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $blockedId, 'action' => 'logged', 'summary' => 'Sign-in refused: blocked device '.$request->ip()]);
+            throw ValidationException::withMessages(['email' => 'This device was blocked from signing in to that account. Ask an administrator if you think this is wrong.'])->redirectTo(route('admin.login'));
+        }
         $request->session()->regenerate();
         $request->session()->forget('impersonator_id');
+        $request->session()->put('signed_in_at', now()->timestamp);
         $request->user()->forceFill(['last_login_at' => now()])->save();
         History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $request->user()->id,
             'action' => 'logged', 'summary' => 'Signed in to the admin', 'data' => ['user_agent' => substr((string) $request->userAgent(), 0, 250)]]);

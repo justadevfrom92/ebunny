@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminNotification;
 use App\Models\HistoryItem;
 use App\Models\SavedReport;
+use App\Models\User;
+use App\Models\UserBlock;
 use App\Support\AdminApps;
 use App\Support\History;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
@@ -33,8 +37,7 @@ class AccountController extends Controller
             'rights' => config('admin.permissions'),
             'changes' => $u->accessChanges(),
             'devices' => self::devices($request),
-            'logins' => HistoryItem::where('model', 'AdminLogin_model')->where('record_id', $u->id)->latest('created_at')->latest('id')
-                ->paginate(10, ['*'], 'logins_page')->withQueryString()->fragment('sign-ins'),
+            'blocks' => UserBlock::where('user_id', $u->id)->latest()->get(),
             'items' => HistoryItem::with('customer')->where('user_id', $u->id)
                 ->when($q !== '', fn ($w) => $w->where('summary', 'like', '%'.$q.'%'))
                 ->when($group !== '', fn ($w) => $w->where('group', $group))
@@ -83,9 +86,125 @@ class AccountController extends Controller
         $current = $request->session()->getId();
 
         return DB::table(config('session.table', 'sessions'))->where('user_id', $request->user()->id)->orderByDesc('last_activity')->get()
-            ->map(fn ($s) => (object) ['current' => $s->id === $current, 'ip' => $s->ip_address, 'browser' => self::browser((string) $s->user_agent),
-                'last' => Carbon::createFromTimestamp($s->last_activity)])
+            ->map(function ($s) use ($current) {
+                $data = self::sessionData((string) $s->payload);
+                $by = isset($data['impersonator_id']) ? User::find($data['impersonator_id']) : null;
+
+                return (object) ['key' => hash('sha256', $s->id), 'id' => $s->id, 'current' => $s->id === $current, 'ip' => $s->ip_address, 'ua' => (string) $s->user_agent,
+                    'browser' => self::browser((string) $s->user_agent), 'last' => Carbon::createFromTimestamp($s->last_activity),
+                    'since' => isset($data['signed_in_at']) ? Carbon::createFromTimestamp($data['signed_in_at']) : null,
+                    'logged_in_as_by' => $by];
+            })
             ->sortByDesc('current')->values();
+    }
+
+    /** What a stored session holds (database sessions are base64 of JSON or serialized data, unless encrypted). */
+    private static function sessionData(string $payload): array
+    {
+        try {
+            $raw = base64_decode($payload, true);
+            if ($raw === false) {
+                return [];
+            }
+            if (config('session.encrypt')) {
+                $raw = decrypt($raw, false);
+            }
+            $data = config('session.serialization') === 'json' ? json_decode($raw, true) : @unserialize($raw, ['allowed_classes' => false]);
+
+            return is_array($data) ? $data : [];
+        } catch (\Throwable) {
+            return [];
+        }
+    }
+
+    /** One of your sign-ins by its key (a hash of the session, so the session itself is never in a link). */
+    private function deviceOr404(Request $request, string $key): object
+    {
+        return self::devices($request)->firstWhere('key', $key) ?? abort(404, 'That sign-in has ended.');
+    }
+
+    /** One place you're signed in: what it is, and buttons to sign it out, block it or report it. */
+    public function device(Request $request, string $key): View
+    {
+        $d = $this->deviceOr404($request, $key);
+
+        return view('backend.account.device', ['d' => $d, 'u' => $request->user(), 'loggedInAs' => $request->session()->has('impersonator_id'),
+            'blocked' => UserBlock::where('user_id', $request->user()->id)->where('ip', $d->ip)->where('user_agent', $d->ua)->first(),
+            'sameDevice' => $d->ip === $request->ip() && $d->ua === (string) $request->userAgent(),
+            'logins' => HistoryItem::where('model', 'AdminLogin_model')->where('record_id', $request->user()->id)->where('ip', $d->ip)->latest('created_at')->latest('id')->limit(5)->get()]);
+    }
+
+    /** End that sign-in. Your own browser signs you out. */
+    public function deviceSignOut(Request $request, string $key): RedirectResponse
+    {
+        abort_if($request->session()->has('impersonator_id'), 403);
+        $d = $this->deviceOr404($request, $key);
+        if ($d->current) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('admin.login')->with('status', 'You are signed out.');
+        }
+        $this->endSession($request, $d, $d->logged_in_as_by ? 'Ended '.$d->logged_in_as_by->name.'\'s Log in as' : 'Signed out '.$d->browser.' ('.$d->ip.')');
+
+        return redirect()->to(route('admin.account.profile').'#signed-in')->with('status', $d->logged_in_as_by ? $d->logged_in_as_by->name.' is no longer logged in as you.' : 'Signed out '.$d->browser.'.');
+    }
+
+    /** Sign it out and keep that device (this IP address with this browser) from signing in to your account again. */
+    public function deviceBlock(Request $request, string $key): RedirectResponse
+    {
+        $d = $this->blockable($request, $key);
+        $this->block($request, $d, null);
+
+        return redirect()->to(route('admin.account.profile').'#signed-in')->with('status', 'Blocked '.$d->browser.' at '.$d->ip.'. It was signed out and can\'t sign in to your account.');
+    }
+
+    /** Block it, and tell the administrators (Sheriff) so they can look into it. */
+    public function deviceReport(Request $request, string $key): RedirectResponse
+    {
+        $d = $this->blockable($request, $key);
+        $reason = trim((string) $request->validate(['reason' => ['nullable', 'string', 'max:500']])['reason'] ?? '');
+        $this->block($request, $d, $reason ?: 'Reported: not recognized');
+        $u = $request->user();
+        AdminNotification::notify(AdminNotification::appUsers('sheriff')->reject(fn ($a) => $a->id === $u->id), 'security',
+            $u->name.' reported a sign-in they don\'t recognize', $d->browser.' at '.$d->ip.($reason ? ' — '.$reason : '').'. It was signed out and blocked.', route('sheriff.users.show', $u));
+
+        return redirect()->to(route('admin.account.profile').'#signed-in')->with('status', 'Reported to the administrators. '.$d->browser.' at '.$d->ip.' was signed out and blocked.');
+    }
+
+    public function unblock(Request $request, UserBlock $block): RedirectResponse
+    {
+        abort_if($block->user_id !== $request->user()->id || $request->session()->has('impersonator_id'), 404);
+        $block->delete();
+        History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $request->user()->id, 'action' => 'updated', 'summary' => 'Unblocked '.self::browser((string) $block->user_agent).' at '.$block->ip]);
+
+        return redirect()->to(route('admin.account.profile').'#signed-in')->with('status', 'Unblocked. That device can sign in again.');
+    }
+
+    /** You can't block the browser you're using (or one that looks exactly like it), or act while using Log in as. */
+    private function blockable(Request $request, string $key): object
+    {
+        abort_if($request->session()->has('impersonator_id'), 403);
+        $d = $this->deviceOr404($request, $key);
+        abort_if($d->current || ($d->ip === $request->ip() && $d->ua === (string) $request->userAgent()), 422, 'You can\'t block the browser you are using.');
+
+        return $d;
+    }
+
+    private function block(Request $request, object $d, ?string $reason): void
+    {
+        UserBlock::firstOrCreate(['user_id' => $request->user()->id, 'ip' => $d->ip, 'user_agent' => $d->ua],
+            ['reason' => $reason, 'reported_at' => $reason ? now() : null, 'created_by' => $request->user()->id]);
+        $this->endSession($request, $d, ($reason ? 'Reported and blocked ' : 'Blocked ').$d->browser.' ('.$d->ip.')');
+    }
+
+    /** Remove the sign-in, and reset "remember me" so it can't come back on its own. */
+    private function endSession(Request $request, object $d, string $summary): void
+    {
+        DB::table(config('session.table', 'sessions'))->where('id', $d->id)->where('user_id', $request->user()->id)->delete();
+        $request->user()->forceFill(['remember_token' => Str::random(60)])->save();
+        History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $request->user()->id, 'action' => 'logged', 'summary' => $summary]);
     }
 
     /** "Chrome on Windows" from a user agent. */

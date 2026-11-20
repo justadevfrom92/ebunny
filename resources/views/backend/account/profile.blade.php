@@ -3,7 +3,7 @@
 @section('crumb', 'My Profile')
 
 {{-- The Account dashboard: your details (you can change your name and phone ext; the rest is set in Sheriff → Users),
-     what you can open, where you're signed in, your sign-in history and everything recorded under your name. --}}
+     what you can open, where you're signed in and everything recorded under your name. --}}
 @section('content')
     @include('backend.partials.page-head', ['title' => 'My Profile', 'sub' => e($u->title ?? 'Employee').' · '.e($u->company ? $u->company.' (3rd party)' : ($u->department ?? 'No department'))
         .' · Role: '.e($u->role?->name ?? 'none').' · Last sign-in: '.($u->last_login_at?->format('n/j/Y g:i A') ?? 'never')])
@@ -60,21 +60,38 @@
         @include('backend.partials.pager', ['p' => $items])
     </div>
 
-    {{-- My Access: where you're signed in, what you can open, your sign-in history --}}
+    {{-- My Access: where you're signed in (each opens its own page to sign it out, block or report it) and what you can open --}}
     <div class="panel" id="signed-in"><div class="panel-head"><h2>Signed In On</h2>
             @if ($devices->where('current', false)->isNotEmpty() && ! session()->has('impersonator_id'))
                 <form method="post" action="{{ route('admin.account.sign-out-others') }}" class="inline" data-confirm="Sign out your other devices?|Every other browser signed in as you will have to sign in again.|Sign out">@csrf<button class="btn sm ghost">Sign Out Other Devices</button></form>
             @endif
         </div>
-        <div class="table-wrap"><table>
-            <thead><tr><th>Browser</th><th>IP Address</th><th>Last Active</th></tr></thead>
+        <div class="table-wrap"><table data-page="0">
+            <thead><tr><th>Browser</th><th>IP Address</th><th>Signed In</th><th>Last Active</th></tr></thead>
             <tbody>@forelse ($devices as $d)
-                <tr><td><b>{{ $d->browser }}</b>@if ($d->current) <span class="pill ok">This browser</span>@endif</td><td class="mono">{{ $d->ip ?? '—' }}</td><td>{{ $d->last->format('n/j/Y g:i A') }} <span class="muted">({{ $d->last->diffForHumans() }})</span></td></tr>
-            @empty <tr><td colspan="3" class="empty">No sign-ins recorded.</td></tr> @endforelse</tbody>
+                <tr class="click" data-href="{{ route('admin.account.device', $d->key) }}"><td><a href="{{ route('admin.account.device', $d->key) }}"><b>{{ $d->browser }}</b></a>
+                        @if ($d->current) <span class="pill ok">This browser</span>@endif
+                        @if ($d->logged_in_as_by) <span class="pill warn">{{ $d->logged_in_as_by->name }} using Log in as</span>@endif</td>
+                    <td class="mono">{{ $d->ip ?? '—' }}</td><td class="nowrap">{{ $d->since?->format('n/j/Y g:i A') ?? '—' }}</td>
+                    <td class="nowrap">{{ $d->last->format('n/j/Y g:i A') }} <span class="muted">({{ $d->last->diffForHumans() }})</span></td></tr>
+            @empty <tr><td colspan="4" class="empty">No sign-ins recorded.</td></tr> @endforelse</tbody>
         </table></div>
+        @if ($devices->count() > 1)<div class="panel-body help">More than one sign-in? Open any you don't recognize to sign it out, block it or report it.</div>@endif
     </div>
 
-    <div class="panel" id="access"><div class="panel-head"><h2>What You Can Open</h2><span class="help">ask an administrator to change it</span></div><div class="table-wrap"><table>
+    @if ($blocks->isNotEmpty())
+        <div class="panel" id="blocked"><div class="panel-head"><h2>Blocked Devices</h2><span class="help">can't sign in to your account</span></div><div class="table-wrap"><table data-page="0">
+            <thead><tr><th>ID#</th><th>Date</th><th>Device</th><th>Reason</th><th><span class="sr-only">Unblock</span></th></tr></thead>
+            <tbody>@foreach ($blocks as $b)
+                <tr><td class="nowrap"><b>#{{ $b->id }}</b></td><td class="nowrap">{{ $b->created_at->format('n/j/Y g:i A') }}</td>
+                    <td><b>{{ \App\Http\Controllers\Backend\AccountController::browser((string) $b->user_agent) }}</b> <span class="mono muted">{{ $b->ip }}</span></td>
+                    <td class="wrap">{{ $b->reason ?? 'Blocked by you' }}@if ($b->reported_at) <span class="pill info">Reported</span>@endif</td>
+                    <td class="actions">@unless (session()->has('impersonator_id'))<form method="post" action="{{ route('admin.account.unblock', $b) }}" data-confirm="Unblock this device?|It will be able to sign in to your account again.|Unblock">@csrf @method('delete')<button class="btn sm ghost">Unblock</button></form>@endunless</td></tr>
+            @endforeach</tbody>
+        </table></div></div>
+    @endif
+
+    <div class="panel" id="access"><div class="panel-head"><h2>What You Can Open</h2><span class="help">ask an administrator to change it</span></div><div class="table-wrap"><table data-page="0">
         <thead><tr><th>App or Right</th><th>Access</th><th>Why</th></tr></thead>
         <tbody>
             @foreach ($apps as $key => $a)
@@ -91,15 +108,6 @@
             @endforeach
         </tbody>
     </table></div></div>
-
-    <div class="panel" id="sign-ins"><div class="panel-head"><h2>Sign-in History</h2><span class="muted">{{ $logins->total() }}</span></div><div class="table-wrap"><table>
-        <thead><tr><th>ID#</th><th>Date</th><th>What Happened</th></tr></thead>
-        <tbody>@forelse ($logins as $l)
-            <tr class="click" data-href="{{ route('admin.account.activity.show', $l) }}"><td class="nowrap"><a href="{{ route('admin.account.activity.show', $l) }}"><b>#{{ $l->id }}</b></a></td><td class="nowrap">{{ $l->created_at->format('n/j/Y g:i A') }}</td><td class="wrap">{{ $l->summary }}@if ($l->ip) <span class="muted">· {{ $l->ip }}</span>@endif</td></tr>
-        @empty <tr><td colspan="3" class="empty">No sign-ins recorded.</td></tr> @endforelse</tbody>
-    </table></div>
-    @include('backend.partials.pager', ['p' => $logins])
-    </div>
 
     <div class="panel" id="saved-reports"><div class="panel-head"><h2>My Saved Reports</h2><span class="muted">{{ $saved->count() }}</span></div><div class="table-wrap"><table>
         <thead><tr><th>ID#</th><th>Date</th><th>Name</th><th>Shared</th></tr></thead>
