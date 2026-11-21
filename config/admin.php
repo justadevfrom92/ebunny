@@ -324,6 +324,7 @@ return [
     // Extra permissions a role can hold besides app access
     'permissions' => [
         'refunds' => 'Refunds & reversals',
+        'vip_accounts' => 'Money & service changes on Friends & Family accounts',
     ],
 
     // Sheriff → APIs → Configure writes uploaded values into this file

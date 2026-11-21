@@ -21,9 +21,11 @@
     </nav>
 
     {{-- Alerts from flags, and the protection cross-sell --}}
+    @php $locked = $c->lockedActionsFor(auth()->user()); @endphp
     @foreach ($banners as [$bTitle, $bText])
-        <div class="alert bad"><b>{{ $bTitle }}</b> {{ $bText }}</div>
+        <div class="alert bad"><b>{{ $bTitle }}</b> {{ $bText }}@if ($bTitle === 'Friends and Family') <b>{{ $locked ? 'Those actions are locked for you; ask a Customer Service Lead.' : 'You can make these changes.' }}</b>@endif</div>
     @endforeach
+    @error('action')<div class="alert bad" role="alert">{{ $message }}</div>@enderror
     @if ($crossSell)
         <div class="alert info"><b>Generic Protection</b> {{ config('brand.name') }} has partnered with AIG to help customers avoid costly home repairs: heating and cooling, electrical system and surge protection. Ask if they're interested.</div>
     @endif
@@ -54,7 +56,7 @@
                 <div><h3>{{ $heading }}</h3>
                 @forelse ($pending->where('kind', $kind) as $e)
                     <div class="row-line"><span>{{ $money($e->amount) }} — {{ $e->description }}</span>
-                        <form method="post" action="{{ route('corral.ledger.delete', $e) }}" class="inline" data-confirm="Delete this pending {{ $kind }}?|{{ $money($e->amount) }} — {{ $e->description }}|Delete" style="flex:none">@csrf @method('delete')<button class="btn sm ghost">Delete</button></form></div>
+                        <form method="post" action="{{ route('corral.ledger.delete', $e) }}" class="inline" data-confirm="Delete this pending {{ $kind }}?|{{ $money($e->amount) }} — {{ $e->description }}|Delete" style="flex:none">@csrf @method('delete')@if ($c->canDeleteLedger(auth()->user()))<button class="btn sm ghost">Delete</button>@else<span class="btn sm ghost disabled" aria-disabled="true" data-tip="Friends and Family account: only a Customer Service Lead can delete this">Delete</span>@endif</form></div>
                 @empty <p class="help">None</p> @endforelse
                 </div>
             @endforeach
@@ -66,7 +68,7 @@
                 <form method="get" class="form-row" data-action-form="{{ route('corral.customers.action', [$c, '__action__']) }}">
                     <select required aria-label="{{ $group === 'status' ? 'Status action' : 'Customer service action' }}"><option value="">{{ $placeholder }}</option>
                         @foreach (config('corral.actions.'.$group) as $key => $def)
-                            @if (! isset($def[2]) || auth()->user()->hasPerm($def[2]))<option value="{{ $key }}">{{ $def[0] }}</option>@endif
+                            @if (! isset($def[2]) || auth()->user()->hasPerm($def[2]))<option value="{{ $key }}" @disabled(in_array($key, $locked, true))>{{ $def[0] }}{{ in_array($key, $locked, true) ? ' (Lead only)' : '' }}</option>@endif
                         @endforeach
                     </select>
                     <button class="btn sm">Go</button>

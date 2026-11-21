@@ -37,10 +37,19 @@ class AccountController extends Controller
 
     // ---------- Actions menus ----------
 
+    /** Friends & Family (and other flags in corral.flag_locks): only a Customer Service Lead can run these. */
+    private function lockedFor(Customer $customer, string $action): bool
+    {
+        return in_array($action, $customer->lockedActionsFor(request()->user()), true);
+    }
+
     /** The action's form, or a confirmation when it has nothing to fill in. */
-    public function actionForm(Customer $customer, string $action): View
+    public function actionForm(Customer $customer, string $action): View|RedirectResponse
     {
         abort_unless(AccountActions::exists($action), 404);
+        if ($this->lockedFor($customer, $action)) {
+            return redirect(route('corral.customers.show', $customer).'#actions')->withErrors(['action' => 'Only a Customer Service Lead can do that on a Friends and Family account.']);
+        }
         $def = config('corral.actions.status')[$action] ?? config('corral.actions.service')[$action];
 
         return view('backend.corral.account.action', ['c' => $customer, 'action' => $action, 'label' => $def[0], 'fields' => $def[1],
@@ -50,6 +59,7 @@ class AccountController extends Controller
     public function runAction(Request $request, Customer $customer, string $action): RedirectResponse
     {
         abort_unless(AccountActions::exists($action), 404);
+        abort_if($this->lockedFor($customer, $action), 403, 'Only a Customer Service Lead can do that on a Friends and Family account.');
         $def = config('corral.actions.status')[$action] ?? config('corral.actions.service')[$action];
         if (isset($def[2])) {
             Gate::authorize($def[2]);
@@ -114,6 +124,7 @@ class AccountController extends Controller
 
     public function deleteLedger(LedgerEntry $entry): RedirectResponse
     {
+        abort_unless($entry->customer->canDeleteLedger(request()->user()), 403, 'Only a Customer Service Lead can delete a pending credit or charge on a Friends and Family account.');
         $entry->update(['status' => 'deleted']);
 
         return $this->back($entry->customer, 'balances', 'Pending '.$entry->kind.' deleted');
