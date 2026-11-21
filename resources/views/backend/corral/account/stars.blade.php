@@ -1,6 +1,6 @@
 @extends('backend.layouts.app')
 
-@section('crumb', 'Account '.$c->account.' › Spend Stars')
+@section('crumb', $c->account.' › Spend Stars')
 
 @section('content')
     @include('backend.partials.page-head', [

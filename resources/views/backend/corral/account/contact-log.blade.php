@@ -1,6 +1,6 @@
 @extends('backend.layouts.app')
 
-@section('crumb', 'Account '.$c->account.' › Contact Log')
+@section('crumb', $c->account.' › Contact Log')
 
 @section('content')
     @include('backend.partials.page-head', [

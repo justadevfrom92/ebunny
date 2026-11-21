@@ -4,7 +4,7 @@
 {{-- Opened from an account's Shop Orders: the breadcrumbs lead back to that account --}}
 @php $fromAccount = request('from') === 'account' && $o->customer; @endphp
 @if ($fromAccount)
-    @section('crumb_trail')<a href="{{ route('corral.customers.index') }}">Customer Search</a> / <a href="{{ route('corral.customers.show', $o->customer) }}">Account {{ $o->customer->account }}</a> / <a href="{{ route('corral.customers.show', $o->customer) }}#shop">Shop Orders</a>@endsection
+    @section('crumb_trail')<a href="{{ route('corral.customers.index') }}">Customer Search</a> / <a href="{{ route('corral.customers.show', $o->customer) }}">{{ $o->customer->account }}</a> / <a href="{{ route('corral.customers.show', $o->customer) }}#shop">Shop Orders</a>@endsection
 @endif
 
 {{-- One Shop order: what was bought, how it was paid, where it ships, and its status. --}}

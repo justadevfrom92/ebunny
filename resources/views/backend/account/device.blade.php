@@ -21,43 +21,30 @@
     <section class="panel secure-panel" id="secure" aria-labelledby="secure-title">
         <div class="secure-head">
             <span class="secure-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.4 9.3-8 11-4.6-1.7-8-6-8-11V5z"/><path d="M12 8v4M12 16h.01"/></svg></span>
-            <div><h2 id="secure-title">Secure Your Account</h2>
-                <p>{{ $d && ! $d->current ? 'Don\'t recognize this sign-in? Act now: sign it out, block it or report it.' : ($d?->current ? 'This is you, in this browser.' : 'Don\'t recognize this sign-in? Block the device or report it, and change your password.') }}</p></div>
+            <h2 id="secure-title">Secure Your Account</h2>
         </div>
         <div class="secure-actions">
             @if ($loggedInAs)
-                <p class="secure-opt">You're using Log in as, so you can't change this person's sign-ins. Go back to yourself first.</p>
+                <p class="secure-opt">You're using Log in as, so you can't change this person's sign-ins.</p>
             @else
                 <div class="secure-opt">
+                    <h3>{{ $s->impersonator && $d ? 'End Log in as' : 'Sign Out' }}</h3>
                     @if ($d?->current)
-                        <h3>Sign Out</h3><p>Sign out of this browser. To end every other sign-in, use Sign Out Other Devices on My Profile.</p>
-                        <form method="post" action="{{ route('admin.account.device.sign-out', $s) }}">@csrf<button class="btn">Sign Out This Browser</button></form>
+                        <p>This is the browser you're using</p>
+                        <form method="post" action="{{ route('admin.account.device.sign-out', $s) }}">@csrf<button class="btn">Sign Out</button></form>
                     @elseif ($d)
-                        <h3>{{ $s->impersonator ? 'End Log in as' : 'Sign Out' }}</h3><p>Ends this sign-in now{{ $s->impersonator ? '; '.$s->impersonator->name.' goes back to their own account' : '' }}. It can sign in again.</p>
+                        <p>{{ $s->impersonator ? $s->impersonator->name.' is using Log in as' : 'I don\'t recognize this device' }}</p>
                         <form method="post" action="{{ route('admin.account.device.sign-out', $s) }}" data-confirm="{{ $s->impersonator ? 'End '.$s->impersonator->name.'\'s Log in as?' : 'Sign out '.$s->browser().'?' }}|This sign-in ends now.|{{ $s->impersonator ? 'End it' : 'Sign out' }}">@csrf
-                            <button class="btn">{{ $s->impersonator ? 'End Log in as' : 'Sign Out This Device' }}</button></form>
+                            <button class="btn">{{ $s->impersonator ? 'End Log in as' : 'Sign Out' }}</button></form>
                     @else
-                        <h3>Sign Out</h3><p>This sign-in has already ended, so there's nothing to sign out.</p>
-                        <a class="btn ghost" href="{{ route('admin.account.password') }}">Change Password</a>
+                        <p>This sign-in has already ended</p>
                     @endif
                 </div>
-
-                @if ($blocked)
-                    <div class="secure-opt"><h3>Blocked</h3><p>This device is already blocked. Unblock it on My Profile.</p></div>
-                @elseif ($sameDevice || $d?->current)
-                    <div class="secure-opt"><h3>Block</h3><p>This is from the same IP address and browser you're using, so it can't be blocked (that would block you too).</p></div>
-                @else
-                    <div class="secure-opt">
-                        <h3>Block</h3><p>{{ $d ? 'Signs it out and keeps' : 'Keeps' }} this device (this IP address with this browser) from signing in to your account again. You can unblock it on My Profile.</p>
-                        <form method="post" action="{{ route('admin.account.device.block', $s) }}" data-confirm="Block this device?|It can't sign in to your account until you unblock it.|Block">@csrf<button class="btn">Block This Device</button></form>
-                    </div>
-                    <div class="secure-opt secure-report">
-                        <h3>Report</h3><p>You don't recognize it. Blocks it{{ $d ? ', signs it out' : '' }} and tells the administrators so they can look into it. Change your password too.</p>
-                        <form method="post" action="{{ route('admin.account.device.report', $s) }}" data-confirm="Report this sign-in?|The device is blocked and the administrators are told.|Report">@csrf
-                            <div class="field"><label for="reason">What happened (optional)</label><input id="reason" name="reason" maxlength="500" placeholder="e.g. I wasn't signed in on this browser"></div>
-                            <button class="btn danger" style="margin-top:8px">Report to Administrators</button></form>
-                    </div>
-                @endif
+                <div class="secure-opt">
+                    <h3>Block</h3>
+                    <p>I don't recognize this IP Address</p>
+                    <div class="btn disabled" aria-disabled="true">Block</div>
+                </div>
             @endif
         </div>
     </section>

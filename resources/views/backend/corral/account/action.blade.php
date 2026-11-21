@@ -1,6 +1,6 @@
 @extends('backend.layouts.app')
 
-@section('crumb', 'Account '.$c->account.' › '.$label)
+@section('crumb', $c->account.' › '.$label)
 
 {{-- One account action. Fields come from config/corral.php; with no fields it is a confirmation. --}}
 @section('content')

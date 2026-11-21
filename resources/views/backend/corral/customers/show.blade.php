@@ -1,6 +1,6 @@
 @extends('backend.layouts.app')
 
-@section('crumb', 'Account '.$c->account)
+@section('crumb', $c->account)
 
 {{-- The Corral account page, in the same order as the original. --}}
 @section('content')
@@ -54,7 +54,7 @@
                 <div><h3>{{ $heading }}</h3>
                 @forelse ($pending->where('kind', $kind) as $e)
                     <div class="row-line"><span>{{ $money($e->amount) }} — {{ $e->description }}</span>
-                        <form method="post" action="{{ route('corral.ledger.delete', $e) }}" class="inline" data-confirm="Delete this pending {{ $kind }}?|{{ $money($e->amount) }} — {{ $e->description }}|Delete">@csrf @method('delete')<button class="link-btn">[ delete ]</button></form></div>
+                        <form method="post" action="{{ route('corral.ledger.delete', $e) }}" class="inline" data-confirm="Delete this pending {{ $kind }}?|{{ $money($e->amount) }} — {{ $e->description }}|Delete" style="flex:none">@csrf @method('delete')<button class="btn sm ghost">Delete</button></form></div>
                 @empty <p class="help">None</p> @endforelse
                 </div>
             @endforeach

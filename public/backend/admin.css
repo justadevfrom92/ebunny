@@ -981,9 +981,19 @@ dialog.modal::backdrop { background: rgba(16,34,71,.45); }
 .secure-ico { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; background: var(--bad); color: #fff; }
 .secure-head h2 { margin: 0; font-size: 1.35rem; color: var(--bad); }
 .secure-head p { margin: 2px 0 0; font-weight: 600; color: var(--navy); }
-.secure-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; padding: 12px 20px 20px; }
+.secure-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding: 12px 20px 20px; }
 .secure-opt { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 0; }
 .secure-opt h3 { margin: 0 0 4px; font-size: 1rem; color: var(--navy); }
 .secure-opt p { margin: 0 0 10px; font-size: .85rem; color: var(--muted); }
-.secure-report { border-color: var(--bad); }
-@media (max-width: 1100px) { .secure-actions { grid-template-columns: 1fr; } }
+@media (max-width: 1180px) { .secure-actions { grid-template-columns: minmax(0, 1fr); } }
+/* A disabled-looking button (shown for looks only) */
+.btn.disabled { opacity: .45; cursor: not-allowed; }
+div.btn.disabled { display: inline-flex; align-items: center; user-select: none; }
+/* Small desktop / laptop (between desktop and tablet): three sections to a row become two, and a section left
+   on its own takes the whole row, so nothing gets squeezed into thirds */
+@media (min-width: 1181px) and (max-width: 1440px) {
+  .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-3 > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .note-selects { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .note-selects > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
