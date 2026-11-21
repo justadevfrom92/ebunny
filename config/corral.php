@@ -20,7 +20,7 @@ return [
     // Banner shown at the top of the account when the flag is present: [title, message]
     'flag_banners' => [
         'SOLAR CUSTOMER' => ['SOLAR CUSTOMER', 'Handle with care!'],
-        'VIP - Friends & Family' => ['Friends and Family', 'This customer is a Friends and Family customer. Please escalate to the back office!'],
+        'VIP - Friends & Family' => ['Friends and Family', 'An employee\'s friend or family member. Help them like any other customer; a Customer Service Lead approves any credit, refund, fee waiver or disconnect.'],
         'VIP - PUC Complaint' => ['PUC Complaint', 'Open PUC complaint. Escalate to a supervisor before making changes.'],
         'VIP - Critical Care' => ['Critical Care', 'Critical care customer. Do not disconnect.'],
         'Fraudulent Order' => ['Fraudulent Order', 'Verify identity before discussing the account.'],
