@@ -65,6 +65,9 @@ window.addEventListener('submit', function (e) {
   var NEXT = { '/checkout/address': '/checkout/plan', '/checkout/plan': '/checkout/about', '/checkout/about': '/checkout/review', '/checkout/review': '/checkout/accepted', '/myaccount/checkout': @@ORDERPAGE@@ };
   var nk = k.split('?')[0];
   if (method === 'post' && NEXT[nk]) { __pvGo(NEXT[nk]); return; }
+  // Lead Approvals: asking goes to the list of your requests; a Lead's approve or deny goes back to the list
+  if (method === 'post' && /\/(actions\/[^/]+\/request|request-delete)$/.test(nk)) { __pvToast('Sent to a Lead for approval. (Preview: not saved; the samples below show how it looks.)'); __pvGo('/admin/corral/lead-approvals'); return; }
+  if (method === 'post' && /\/lead-approvals\/\d+\/(approve|deny)$/.test(nk)) { __pvToast((/approve$/.test(nk) ? 'Approved' : 'Denied') + '. (Preview: not saved.)'); __pvGo('/admin/corral/lead-approvals'); return; }
   if (method === 'get') {
     var q = new URLSearchParams(new FormData(f, e.submitter || undefined)).toString();
     __pvGo(k.split('?')[0] + (q ? '?' + q : ''));

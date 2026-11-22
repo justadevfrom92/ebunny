@@ -5,7 +5,7 @@
     @include('backend.partials.page-head', ['title' => 'Monthly Drawing', 'sub' => 'Customers enter by redeeming the free "Monthly Drawing" offer. The winner is saved to Bounty → Drawing Winners.',
         'actions' => $winner && $current ? null : '<a class="btn cyan" href="'.route('bounty.drawing.draw').'">Draw a Winner</a>'])
 
-    <select class="pill-select" aria-label="Month" style="margin-bottom:18px" onchange="location.href=this.value">
+    <select class="pill-select" aria-label="Month" style="margin-bottom:18px" onchange="adminGoTo(this.value)">
         @foreach ($months as $m)<option value="{{ route('bounty.drawing', $m->isSameMonth(now()) ? [] : ['month' => $m->format('Y-m')]) }}" @selected($m->isSameMonth($month))>{{ $m->format('F Y') }}</option>@endforeach
     </select>
 

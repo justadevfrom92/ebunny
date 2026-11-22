@@ -29,17 +29,17 @@ body{background:var(--bg);font:600 14px system-ui,sans-serif;display:flex;flex-d
 .stage{flex:1;display:flex;justify-content:center;padding:12px 0;min-height:0;position:relative}
 iframe{border:0;background:#fff;width:100%;height:100%;box-shadow:0 6px 24px rgba(0,0,0,.2);transition:width .3s}
 .mobile iframe{width:390px;max-width:100%}
-.tablet iframe{width:820px;max-width:100%}
+.tablet iframe{width:1024px;max-width:100%}
 .laptop iframe{width:1300px;max-width:100%}
 .sizes{background:var(--bar);color:var(--fg);display:flex;justify-content:flex-end;gap:6px 16px;flex-wrap:wrap;padding:0 16px 8px;font-size:12px;font-weight:500;opacity:.9}
-.sizes span.on{color:var(--on);font-weight:700}
+.sizes b{color:var(--on)}
 .msg{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);background:var(--note);color:var(--note-fg);padding:10px 16px;border-radius:8px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.2);max-width:90%}
 @media (prefers-reduced-motion: reduce){iframe{transition:none}}
 </style>
 <div class="who" id="who" aria-label="Test sign-ins"></div>
 <div class="bar"><b>Preview &middot; placeholder brand</b><span id="tabs"></span><select id="pagesel" aria-label="Page"></select><span class="sp"></span>
 <button id="dev" class="on">Desktop</button><button id="lap">Laptop</button><button id="tab">Tablet</button><button id="mob">Mobile</button></div>
-<div class="sizes" id="sizes" aria-live="polite"><span data-s="dev">Desktop: full window</span><span data-s="lap">Laptop: 1300px</span><span data-s="tab">Tablet: 820px</span><span data-s="mob">Mobile: 390px</span><span id="now"></span></div>
+<div class="sizes" id="sizes" aria-live="polite"><span id="now"></span></div>
 <div class="stage" id="stage"><iframe id="f" title="Site preview"></iframe><div class="msg" id="msg" hidden></div></div>
 <script>
 @@DATA@@
@@ -64,6 +64,7 @@ function note(t){msg.textContent=t;msg.hidden=false;clearTimeout(note.t);note.t=
 function go(u){
   var m=u.match(/^([^?#]*)(\?[^#]*)?(#.*)?$/), path=m[1]||'/index.html', qs=m[2]||'', hash=m[3]||'';
   var key=path+qs, admin=path.indexOf('/admin')===0, as=qs.match(/^\?as=(\d+)$/);
+  showSize.admin=admin;setTimeout(showSize,0);
   if(as&&admin)role=find(PEOPLE.roles,as[1]);
   if(as&&path.indexOf('/myaccount')===0)cust=find(PEOPLE.customers,as[1]);
   if(path==='/admin/login'){role=null}
@@ -104,15 +105,17 @@ function pdf(k){var b=PDFS[k];if(!b){note('That bill PDF is not in this preview.
   var url=URL.createObjectURL(new Blob([u],{type:'application/pdf'}));var w=null;try{w=window.open(url,'_blank')}catch(e){}
   if(!w){f.removeAttribute('srcdoc');f.src=url;note('Showing the PDF here; use Back in the page buttons to return.')}}
 window.addEventListener('message',function(e){if(e.source!==f.contentWindow||!e.data)return;if(e.data.go)go(e.data.go);if(e.data.toast)note(e.data.toast);if(e.data.pdf)pdf(e.data.pdf);if(e.data.side)SIDE[e.data.side[0]]=e.data.side[1]});
-// Desktop (full width), Laptop (1300px: three sections to a row become two), Tablet (820px) and Mobile (390px) frames
+// Desktop (full width), Laptop (1300px: three sections to a row become two), Tablet (1024px) and Mobile (390px) frames
 ['dev','lap','tab','mob'].forEach(function(id){document.getElementById(id).onclick=function(){
  var st=document.getElementById('stage');st.classList.toggle('mobile',id==='mob');st.classList.toggle('tablet',id==='tab');st.classList.toggle('laptop',id==='lap');
  ['dev','lap','tab','mob'].forEach(function(x){document.getElementById(x).classList.toggle('on',x===id)})}});
-// The size the page is showing at right now, under the size buttons
-function showSize(){var f=document.getElementById('f'),r=f.getBoundingClientRect(),on=document.querySelector('.bar button.on');
- document.querySelectorAll('#sizes [data-s]').forEach(function(x){x.classList.toggle('on',on&&x.dataset.s===on.id)});
- var d=document.querySelector('#sizes [data-s="dev"]');d.textContent='Desktop: full window ('+window.innerWidth+'px)';
- document.getElementById('now').textContent='Showing '+Math.round(r.width)+' × '+Math.round(r.height)+' px'}
+// The view you're on: the screen widths it covers (min – max) and the size it's showing at right now.
+// The admin and the website change layout at different widths.
+var RANGES={admin:{dev:[1441,2560],lap:[1181,1440],tab:[861,1180],mob:[320,860]},site:{dev:[1321,2560],lap:[1025,1320],tab:[861,1024],mob:[320,860]}};
+var NAMES={dev:'Desktop',lap:'Laptop',tab:'Tablet',mob:'Mobile'};
+function showSize(){var f=document.getElementById('f'),r=f.getBoundingClientRect(),on=document.querySelector('#dev.on,#lap.on,#tab.on,#mob.on'),id=on?on.id:'dev';
+ var rg=RANGES[(showSize.admin?'admin':'site')][id];
+ document.getElementById('now').innerHTML='<b>'+NAMES[id]+': '+rg[0]+'px – '+rg[1]+'px</b> &nbsp;·&nbsp; showing '+Math.round(r.width)+' × '+Math.round(r.height)+'px'}
 ['dev','lap','tab','mob'].forEach(function(id){document.getElementById(id).addEventListener('click',function(){setTimeout(showSize,350)})});
 window.addEventListener('resize',showSize);showSize();
 go('/index.html');

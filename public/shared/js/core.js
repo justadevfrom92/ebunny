@@ -50,6 +50,7 @@
   ET.page = function () { return location.pathname.split('/').pop() || 'index.html'; };
   ET.go = function (url, newTab) {
     if (newTab && window.open(url, '_blank')) return;
-    location.href = url;
+    // As a clicked link (so anything watching link clicks, like the preview, sees it)
+    var a = document.createElement('a'); a.href = url; a.hidden = true; document.body.appendChild(a); a.click(); a.remove();
   };
 })();

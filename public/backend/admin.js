@@ -6,6 +6,9 @@
   'use strict';
 
   function $(sel, root) { return (root || document).querySelector(sel); }
+  // Go to a page the way a clicked link does (so anything watching link clicks, like the preview, sees it)
+  function goTo(url) { var a = document.createElement('a'); a.href = url; a.hidden = true; document.body.appendChild(a); a.click(); a.remove(); }
+  window.adminGoTo = goTo;   // for onchange="adminGoTo(this.value)" filter dropdowns
   function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -214,14 +217,14 @@
             sels.forEach(function (sel) { var now = $(sel.trim()), fresh = doc.querySelector(sel.trim()); if (now && fresh) { now.replaceWith(fresh); pillsToSelects(fresh); found++; } });
             if (!found) throw new Error('no results');
             history.replaceState(null, '', url);
-          }).catch(function (e) { if (!e || e.name !== 'AbortError') location.href = url; });   // fall back to loading the page
+          }).catch(function (e) { if (!e || e.name !== 'AbortError') goTo(url); });   // fall back to loading the page
       }
     });
 
     // Clickable table rows (delegated, so rows swapped in later, like Walker's live tables, work too)
     document.addEventListener('click', function (e) {
       var tr = e.target.closest && e.target.closest('tr[data-href]');
-      if (tr && !e.target.closest('a, button, input, select, form')) location.href = tr.dataset.href;
+      if (tr && !e.target.closest('a, button, input, select, form')) goTo(tr.dataset.href);
     });
 
     // Selects that submit their form on change
@@ -349,7 +352,7 @@
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         var v = $('select', form).value;
-        if (v) location.href = form.dataset.actionForm.replace('__action__', encodeURIComponent(v));
+        if (v) goTo(form.dataset.actionForm.replace('__action__', encodeURIComponent(v)));
       });
     });
 

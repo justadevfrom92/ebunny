@@ -6,7 +6,7 @@
 @section('content')
     @include('backend.partials.page-head', ['title' => 'Control Log', 'sub' => 'Every restart, reboot, take down, bring up, clear and retry used on a heartbeat check: who, when and what came back.'])
 
-    <select class="pill-select" aria-label="Check" style="margin-bottom:18px" onchange="location.href=this.value">
+    <select class="pill-select" aria-label="Check" style="margin-bottom:18px" onchange="adminGoTo(this.value)">
         <option value="{{ route('sheriff.heartbeat.log') }}">All checks</option>
         @foreach (\App\Support\Health::CHECKS as $k => [$n])<option value="{{ route('sheriff.heartbeat.log', ['check' => $k]) }}" @selected($check === $k)>{{ $n }}</option>@endforeach
     </select>

@@ -9,7 +9,7 @@
             .'<a class="btn ghost" href="'.route('admin.settings').'">Settings</a>'])
 
     {{-- A real dropdown from the server, so the page never flashes pills first --}}
-    <select class="pill-select" aria-label="Kind" style="margin-bottom:18px" onchange="location.href=this.value">
+    <select class="pill-select" aria-label="Kind" style="margin-bottom:18px" onchange="adminGoTo(this.value)">
         <option value="{{ route('admin.notifications.index') }}">All notifications</option>
         @foreach (\App\Models\AdminNotification::KINDS as $k => [$l])<option value="{{ route('admin.notifications.index', ['kind' => $k]) }}" @selected(($f['kind'] ?? '') === $k)>{{ $l }}</option>@endforeach
     </select>

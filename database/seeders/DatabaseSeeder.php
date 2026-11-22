@@ -44,7 +44,8 @@ class DatabaseSeeder extends Seeder
             ApiExchangeSeeder::class,
             PdfTemplateSeeder::class,
             RateImportSeeder::class,    // sample rate uploads: live, waiting to confirm, failed   // sample letters and notices, and PDFs made from them   // what each sample API call sent and got back
-            UserSignInSeeder::class,    // sample sign-in history (My Profile → Signed In On)
+            UserSignInSeeder::class,
+            LeadApprovalSeeder::class,  // sample Lead Approvals on Friends & Family accounts    // sample sign-in history (My Profile → Signed In On)
             AdminNotificationSeeder::class,   // last: points at tickets, reports, files, emails and campaigns
         ]);
     }

@@ -67,17 +67,23 @@
             </div>
         </div></div>
 
+        @php $needsLead = $c->lockedActionsFor(auth()->user()); @endphp
         <div class="panel"><div class="panel-head"><h2>Actions</h2><a class="btn sm ghost" href="{{ route('corral.customers.panel-log', [$c, 'actions']) }}">Log</a></div><div class="panel-body" style="display:flex;flex-direction:column;gap:14px">
             @foreach (['status' => '-- Status --', 'service' => '-- Customer Service --'] as $group => $placeholder)
                 <form method="get" class="form-row" data-action-form="{{ route('corral.customers.action', [$c, '__action__']) }}">
                     <select required aria-label="{{ $group === 'status' ? 'Status action' : 'Customer service action' }}"><option value="">{{ $placeholder }}</option>
                         @foreach (config('corral.actions.'.$group) as $key => $def)
-                            @if (! isset($def[2]) || auth()->user()->hasPerm($def[2]))<option value="{{ $key }}">{{ $def[0] }}</option>@endif
+                            @if (! isset($def[2]) || auth()->user()->hasPerm($def[2]))<option value="{{ $key }}" @if (in_array($key, $needsLead, true)) data-approval @endif>{{ $def[0] }}</option>@endif
                         @endforeach
                     </select>
-                    <button class="btn sm">Go</button>
+                    <button class="btn sm" data-go>Go</button>
                 </form>
             @endforeach
+            @if ($needsLead)
+                {{-- Changes a Lead approves on this account: the button says so as soon as one is picked --}}
+                <script>document.querySelectorAll('form[data-action-form]').forEach(function (f) { var s = f.querySelector('select'), b = f.querySelector('[data-go]');
+                    s.addEventListener('change', function () { var o = s.options[s.selectedIndex]; b.textContent = o && o.hasAttribute('data-approval') ? 'Request Lead Approval' : 'Go'; b.classList.toggle('cyan', !!(o && o.hasAttribute('data-approval'))); }); });</script>
+            @endif
             @php $waiting = \App\Models\LeadApproval::pending()->where('customer_id', $c->id)->latest('id')->get(); @endphp
             @if ($waiting->isNotEmpty())
                 <div><h3>Waiting for a Lead</h3>
