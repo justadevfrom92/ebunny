@@ -14,12 +14,12 @@
     <div class="grid-2">
         <form method="post" action="{{ route('admin.account.profile.save') }}" class="panel">@csrf @method('put')
             <div class="panel-head"><h2>Your Details</h2><span class="help">you can change these</span></div>
-            <div class="panel-body">
+            <div class="panel-body form-stack">
                 <div class="field"><label for="name">Name</label><input id="name" name="name" value="{{ old('name', $u->name) }}" required maxlength="120" autocomplete="name">
                     @error('name')<div class="help" style="color:var(--red)">{{ $message }}</div>@enderror</div>
                 <div class="field"><label for="phone_ext">Phone Ext.</label><input id="phone_ext" name="phone_ext" value="{{ old('phone_ext', $u->phone_ext) }}" maxlength="20" inputmode="numeric">
                     @error('phone_ext')<div class="help" style="color:var(--red)">{{ $message }}</div>@enderror</div>
-                <button class="btn cyan" style="margin-top:8px">Save Profile</button>
+                <button class="btn cyan">Save Profile</button>
             </div>
         </form>
 
@@ -41,13 +41,13 @@
 
     {{-- My Activity: everything recorded under your name across the apps --}}
     <div class="panel" id="activity"><div class="panel-head"><h2>My Activity</h2><span class="muted">{{ $items->total() }}</span></div>
-        <form method="get" action="{{ route('admin.account.profile') }}#activity" class="panel-body">
+        <form method="get" action="{{ route('admin.account.profile') }}#activity" class="panel-body form-stack">
             <div class="field"><label for="act-q">Search</label><input id="act-q" type="search" name="q" value="{{ $q }}" placeholder="What you did, e.g. note, refund, ticket"></div>
             <div class="field"><label for="act-group">Type</label><select id="act-group" name="group" onchange="this.form.submit()">
                 <option value="">-- All Types --</option>
                 @foreach ($groups as $g)<option value="{{ $g }}" @selected($group === $g)>{{ $g }}</option>@endforeach
             </select></div>
-            <button class="btn" style="margin-top:8px">Search</button>@if ($q !== '' || $group !== '') <a class="btn ghost" style="margin-top:8px" href="{{ route('admin.account.profile') }}#activity">Clear</a>@endif
+            <div class="btn-row"><button class="btn">Search</button>@if ($q !== '' || $group !== '') <a class="btn ghost" href="{{ route('admin.account.profile') }}#activity">Clear</a>@endif</div>
         </form>
         <div class="table-wrap"><table>
             <thead><tr><th>ID#</th><th>Date</th><th>Type</th><th>What You Did</th><th>Account</th></tr></thead>

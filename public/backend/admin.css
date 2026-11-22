@@ -996,3 +996,13 @@ div.btn.disabled { display: inline-flex; align-items: center; user-select: none;
   .note-selects { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .note-selects > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
+/* A form with its fields one under another (Account pages, Lead Approvals): even space between fields, buttons not stretched */
+.form-stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.form-stack > .btn, .form-stack > button, .form-stack > .btn-row { justify-self: start; }
+.form-stack > .help { margin: 0; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+/* Secure Your Account / Approve or Deny cards: heading, text, field and button evenly spaced */
+.secure-opt { display: grid; gap: 10px; align-content: start; }
+.secure-opt > * { margin: 0; }
+.secure-opt > .btn, .secure-opt > button, .secure-opt > form, .secure-opt > div.btn { justify-self: start; }
+.secure-opt > .field { justify-self: stretch; }

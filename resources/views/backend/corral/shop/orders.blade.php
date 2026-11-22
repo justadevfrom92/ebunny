@@ -4,7 +4,7 @@
 @section('content')
     @include('backend.partials.page-head', ['title' => 'Product Orders', 'sub' => 'Shop orders customers placed in My Account, and orders placed for them by phone.'])
 
-    <select class="pill-select" aria-label="Status" style="margin-bottom:18px" onchange="adminGoTo(this.value)">
+    <select class="pill-select" aria-label="Status" onchange="adminGoTo(this.value)">
         <option value="{{ route('corral.shop.orders') }}">All orders</option>
         @foreach (['Placed', 'Shipped', 'Delivered', 'Canceled'] as $s)<option value="{{ route('corral.shop.orders', ['status' => $s]) }}" @selected($status === $s)>{{ $s }}</option>@endforeach
     </select>

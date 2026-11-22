@@ -4,7 +4,7 @@
 @section('content')
     @include('backend.partials.page-head', ['title' => 'PDFs Made', 'sub' => 'Every PDF made from a template for an account, with the wording it was made from.'])
 
-    <select class="pill-select" aria-label="Template" style="margin-bottom:18px" onchange="adminGoTo(this.value)">
+    <select class="pill-select" aria-label="Template" onchange="adminGoTo(this.value)">
         <option value="{{ route('rodeo.pdfs.generated') }}">All templates</option>
         @foreach ($templates as $t)<option value="{{ route('rodeo.pdfs.generated', ['template' => $t->id]) }}" @selected($only === $t->id)>{{ $t->name }}</option>@endforeach
     </select>

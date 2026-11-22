@@ -12,13 +12,13 @@
                 <form method="post" action="{{ route('corral.approvals.approve', $a) }}" class="secure-opt" data-confirm="Approve request #{{ $a->id }}?|{{ $a->label() }} is done now, under your name.|Approve">@csrf
                     <h3>Approve</h3><p>{{ $a->label() }}@if ($a->details()) · {{ $a->details() }}@endif</p>
                     <div class="field"><label for="ap-note">Note (optional)</label><input id="ap-note" name="decision_note" maxlength="500"></div>
-                    <button class="btn cyan" style="margin-top:8px">Approve</button>
+                    <button class="btn cyan">Approve</button>
                 </form>
                 <form method="post" action="{{ route('corral.approvals.deny', $a) }}" class="secure-opt">@csrf
                     <h3>Deny</h3><p>Say why, so they know what to tell the customer.</p>
                     <div class="field"><label for="dn-note">Why</label><input id="dn-note" name="decision_note" maxlength="500" required value="{{ old('decision_note') }}">
                         @error('decision_note')<div class="help" style="color:var(--red)">{{ $message }}</div>@enderror</div>
-                    <button class="btn danger" style="margin-top:8px">Deny</button>
+                    <button class="btn danger">Deny</button>
                 </form>
             </div>
         </div>

@@ -5,7 +5,7 @@
     @include('backend.partials.page-head', ['title' => 'Products', 'sub' => 'Everything in the website Shop. Open a product to edit it or order it for a customer.',
         'actions' => '<a class="btn ghost" href="'.route('corral.shop.orders').'">Product Orders</a><a class="btn cyan" href="'.route('corral.shop.create').'">New Product</a>'])
 
-    <select class="pill-select" aria-label="Category" style="margin-bottom:18px" onchange="adminGoTo(this.value)">
+    <select class="pill-select" aria-label="Category" onchange="adminGoTo(this.value)">
         <option value="{{ route('corral.shop.index') }}">All categories · {{ $counts->sum() }}</option>
         @foreach ($cats as $k => $label)<option value="{{ route('corral.shop.index', ['cat' => $k]) }}" @selected($cat === $k)>{{ $label }} · {{ $counts[$k] ?? 0 }}</option>@endforeach
     </select>

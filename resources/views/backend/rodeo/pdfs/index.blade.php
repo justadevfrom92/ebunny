@@ -5,7 +5,7 @@
     @include('backend.partials.page-head', ['title' => 'PDF Templates', 'sub' => 'Letters and notices made into PDFs for an account, written like email templates with fill-ins such as <span class="mono">&#123;&#123;first_name&#125;&#125;</span> and <span class="mono">&#123;&#123;balance&#125;&#125;</span>.',
         'actions' => '<a class="btn cyan" href="'.route('rodeo.pdfs.create').'">New PDF Template</a>'])
 
-    <select class="pill-select" aria-label="Category" style="margin-bottom:18px" onchange="adminGoTo(this.value)">
+    <select class="pill-select" aria-label="Category" onchange="adminGoTo(this.value)">
         <option value="{{ route('rodeo.pdfs') }}">All categories · {{ $counts->sum() }}</option>
         @foreach (\App\Models\PdfTemplate::CATEGORIES as $c)<option value="{{ route('rodeo.pdfs', ['category' => $c]) }}" @selected($only === $c)>{{ $c }} · {{ $counts[$c] ?? 0 }}</option>@endforeach
     </select>
