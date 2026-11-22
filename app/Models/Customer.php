@@ -73,20 +73,19 @@ class Customer extends Authenticatable
         return $this->hasMany(CustomerFlag::class)->whereNull('removed_at')->oldest();
     }
 
-    /** The locks (config corral.flag_locks) this account's flags put on it that $user doesn't have the right to pass. */
+    /** The locks (config corral.flag_locks) this account's flags put on it for $user (none for a Lead). */
     public function locksFor(User $user): array
     {
-        return collect(config('corral.flag_locks'))->only($this->flags->pluck('flag')->all())
-            ->reject(fn ($lock) => $user->hasPerm($lock['right']))->values()->all();
+        return $user->isLead() ? [] : collect(config('corral.flag_locks'))->only($this->flags->pluck('flag')->all())->values()->all();
     }
 
-    /** Account actions $user can't run on this account because of its flags (e.g. Friends & Family: Lead only). */
+    /** Account actions that go to a Lead for approval when $user does them on this account (e.g. Friends & Family). */
     public function lockedActionsFor(User $user): array
     {
         return collect($this->locksFor($user))->flatMap(fn ($lock) => $lock['actions'])->unique()->values()->all();
     }
 
-    /** Can $user delete a pending credit or charge on this account? */
+    /** Can $user delete a pending credit or charge on this account without a Lead's approval? */
     public function canDeleteLedger(User $user): bool
     {
         return ! collect($this->locksFor($user))->contains(fn ($lock) => $lock['ledger_delete'] ?? false);

@@ -8,6 +8,7 @@ use App\Models\ContactMessage;
 use App\Models\CrmActivity;
 use App\Models\Heartbeat;
 use App\Models\JobRun;
+use App\Models\LeadApproval;
 use App\Models\LedgerEntry;
 use App\Models\Refund;
 use App\Models\ReportRun;
@@ -146,6 +147,7 @@ class AdminMenu
             $key === 'etl_failed' => collect(array_keys(config('walker.etl')))->filter(fn ($k) => JobRun::where('command', 'etl:'.$k)->latest('started_at')->value('status') === 'Failed')->count(),
             $key === 'report_problems' => ReportRun::inState('problem')->count(),
             $key === 'ai_waiting' => AiConversation::where('status', 'waiting')->count(),
+            $key === 'approvals_pending' => LeadApproval::pending()->count(),
             $key === 'ledger_pending' => LedgerEntry::where('status', 'pending')->count(),
             $key === 'refunds_pending' => Refund::whereIn('status', ['requested', 'approved'])->count(),
             $key === 'crm_due' => CrmActivity::whereNotNull('due_on')->whereNull('done_at')->where('due_on', '<=', today())->count(),

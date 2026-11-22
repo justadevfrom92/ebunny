@@ -31,12 +31,15 @@ iframe{border:0;background:#fff;width:100%;height:100%;box-shadow:0 6px 24px rgb
 .mobile iframe{width:390px;max-width:100%}
 .tablet iframe{width:820px;max-width:100%}
 .laptop iframe{width:1300px;max-width:100%}
+.sizes{background:var(--bar);color:var(--fg);display:flex;justify-content:flex-end;gap:6px 16px;flex-wrap:wrap;padding:0 16px 8px;font-size:12px;font-weight:500;opacity:.9}
+.sizes span.on{color:var(--on);font-weight:700}
 .msg{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);background:var(--note);color:var(--note-fg);padding:10px 16px;border-radius:8px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.2);max-width:90%}
 @media (prefers-reduced-motion: reduce){iframe{transition:none}}
 </style>
 <div class="who" id="who" aria-label="Test sign-ins"></div>
 <div class="bar"><b>Preview &middot; placeholder brand</b><span id="tabs"></span><select id="pagesel" aria-label="Page"></select><span class="sp"></span>
 <button id="dev" class="on">Desktop</button><button id="lap">Laptop</button><button id="tab">Tablet</button><button id="mob">Mobile</button></div>
+<div class="sizes" id="sizes" aria-live="polite"><span data-s="dev">Desktop: full window</span><span data-s="lap">Laptop: 1300px</span><span data-s="tab">Tablet: 820px</span><span data-s="mob">Mobile: 390px</span><span id="now"></span></div>
 <div class="stage" id="stage"><iframe id="f" title="Site preview"></iframe><div class="msg" id="msg" hidden></div></div>
 <script>
 @@DATA@@
@@ -105,6 +108,13 @@ window.addEventListener('message',function(e){if(e.source!==f.contentWindow||!e.
 ['dev','lap','tab','mob'].forEach(function(id){document.getElementById(id).onclick=function(){
  var st=document.getElementById('stage');st.classList.toggle('mobile',id==='mob');st.classList.toggle('tablet',id==='tab');st.classList.toggle('laptop',id==='lap');
  ['dev','lap','tab','mob'].forEach(function(x){document.getElementById(x).classList.toggle('on',x===id)})}});
+// The size the page is showing at right now, under the size buttons
+function showSize(){var f=document.getElementById('f'),r=f.getBoundingClientRect(),on=document.querySelector('.bar button.on');
+ document.querySelectorAll('#sizes [data-s]').forEach(function(x){x.classList.toggle('on',on&&x.dataset.s===on.id)});
+ var d=document.querySelector('#sizes [data-s="dev"]');d.textContent='Desktop: full window ('+window.innerWidth+'px)';
+ document.getElementById('now').textContent='Showing '+Math.round(r.width)+' × '+Math.round(r.height)+' px'}
+['dev','lap','tab','mob'].forEach(function(id){document.getElementById(id).addEventListener('click',function(){setTimeout(showSize,350)})});
+window.addEventListener('resize',showSize);showSize();
 go('/index.html');
 </script>
 

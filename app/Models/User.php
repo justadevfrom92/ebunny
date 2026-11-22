@@ -121,6 +121,12 @@ class User extends Authenticatable
         return in_array($perm, $this->role?->perms ?? [], true) || in_array($perm, $this->extra_perms ?? [], true);
     }
 
+    /** A Customer Service Lead (or Administrator): approves changes on Friends & Family accounts. */
+    public function isLead(): bool
+    {
+        return $this->active && in_array($this->role?->name, config('corral.lead_roles', []), true);
+    }
+
     /** How this person's access differs from their role: [perm => 'added' | 'removed']. */
     public function accessChanges(): array
     {

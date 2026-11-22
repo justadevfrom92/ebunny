@@ -20,20 +20,22 @@ return [
     // Banner shown at the top of the account when the flag is present: [title, message]
     'flag_banners' => [
         'SOLAR CUSTOMER' => ['SOLAR CUSTOMER', 'Handle with care!'],
-        'VIP - Friends & Family' => ['Friends and Family', 'An employee\'s friend or relative. So no one does favors for people they know, only a Customer Service Lead can give credits, move payments or stars, set up payment plans, waive deposits, delete charges or disconnect this account.'],
+        'VIP - Friends & Family' => ['Friends and Family', 'An employee\'s friend or relative.'],
         'VIP - PUC Complaint' => ['PUC Complaint', 'Open PUC complaint. Escalate to a supervisor before making changes.'],
         'VIP - Critical Care' => ['Critical Care', 'Critical care customer. Do not disconnect.'],
         'Fraudulent Order' => ['Fraudulent Order', 'Verify identity before discussing the account.'],
     ],
 
+    // Roles whose people are Leads: they approve the changes below (Corral → Lead Approvals)
+    'lead_roles' => ['Customer Service Lead', 'Administrator'],
+
     /*
-    | Flags that lock account actions: only people with the right can run them on a flagged account (everyone
-    | else sees them as "Lead only"). Friends & Family: an employee's friend or relative, so money and service
-    | changes need a Customer Service Lead (conflict of interest).
+    | Flags whose money and service changes go to a Lead for approval. Friends & Family is an employee's friend
+    | or relative (a conflict of interest), so anyone who isn't a Lead gets "Request Lead Approval" instead of
+    | running these actions, and a Lead approves or denies them in Corral → Lead Approvals.
     */
     'flag_locks' => [
         'VIP - Friends & Family' => [
-            'right' => 'vip_accounts',
             'actions' => ['credit-max-deposit', 'credit-waive-deposit', 'temp-disconnect', 'disconnect', 'cancel-order', 'delete-order',
                 'add-bill-credit', 'balance-adjustment', 'payment-arrangement', 'deferred-payment-plan', 'transfer-payments', 'transfer-stars'],
             'ledger_delete' => true,   // deleting a pending charge or credit

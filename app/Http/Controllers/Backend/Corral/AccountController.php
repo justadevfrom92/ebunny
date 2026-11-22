@@ -47,19 +47,27 @@ class AccountController extends Controller
     public function actionForm(Customer $customer, string $action): View|RedirectResponse
     {
         abort_unless(AccountActions::exists($action), 404);
-        if ($this->lockedFor($customer, $action)) {
-            return redirect(route('corral.customers.show', $customer).'#actions')->withErrors(['action' => 'Only a Customer Service Lead can do that on a Friends and Family account.']);
-        }
         $def = config('corral.actions.status')[$action] ?? config('corral.actions.service')[$action];
 
         return view('backend.corral.account.action', ['c' => $customer, 'action' => $action, 'label' => $def[0], 'fields' => $def[1],
+            'needsApproval' => $this->lockedFor($customer, $action),
             'methods' => $customer->paymentMethods()->whereNull('removed_at')->get(), 'payments' => $customer->payments()->get()]);
     }
 
     public function runAction(Request $request, Customer $customer, string $action): RedirectResponse
     {
         abort_unless(AccountActions::exists($action), 404);
-        abort_if($this->lockedFor($customer, $action), 403, 'Only a Customer Service Lead can do that on a Friends and Family account.');
+        abort_if($this->lockedFor($customer, $action), 403, 'This change needs a Lead\'s approval: use Request Lead Approval.');
+        $input = $request->validate(self::rules($customer, $action));
+
+        [$message, $url] = DB::transaction(fn () => (new AccountActions($customer, $request->user()))->run($action, $input));
+
+        return $url ? redirect($url)->with('status', $message) : $this->back($customer, 'actions', $message);
+    }
+
+    /** What an action's form must have (also used when asking a Lead to approve it). Checks the action's own right. */
+    public static function rules(Customer $customer, string $action): array
+    {
         $def = config('corral.actions.status')[$action] ?? config('corral.actions.service')[$action];
         if (isset($def[2])) {
             Gate::authorize($def[2]);
@@ -77,11 +85,8 @@ class AccountController extends Controller
                 default => ['required', 'string', 'max:200'],
             };
         }
-        $input = $request->validate($rules);
 
-        [$message, $url] = DB::transaction(fn () => (new AccountActions($customer, $request->user()))->run($action, $input));
-
-        return $url ? redirect($url)->with('status', $message) : $this->back($customer, 'actions', $message);
+        return $rules;
     }
 
     // ---------- Flags ----------
@@ -124,7 +129,7 @@ class AccountController extends Controller
 
     public function deleteLedger(LedgerEntry $entry): RedirectResponse
     {
-        abort_unless($entry->customer->canDeleteLedger(request()->user()), 403, 'Only a Customer Service Lead can delete a pending credit or charge on a Friends and Family account.');
+        abort_unless($entry->customer->canDeleteLedger(request()->user()), 403, 'This needs a Lead\'s approval: use Request Lead Approval.');
         $entry->update(['status' => 'deleted']);
 
         return $this->back($entry->customer, 'balances', 'Pending '.$entry->kind.' deleted');

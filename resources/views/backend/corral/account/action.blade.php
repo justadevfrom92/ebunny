@@ -11,7 +11,7 @@
     ])
 
     <div class="panel"><div class="panel-body">
-        <form method="post" action="{{ route('corral.customers.action.run', [$c, $action]) }}" class="form-grid">@csrf
+        <form method="post" action="{{ route($needsApproval ? 'corral.customers.action.request' : 'corral.customers.action.run', [$c, $action]) }}" class="form-grid">@csrf
             @forelse ($fields as $name => [$fLabel, $type])
                 <label for="f-{{ $name }}">{{ $fLabel }}</label>
                 @switch($type)
@@ -46,13 +46,20 @@
                         <input id="f-{{ $name }}" name="{{ $name }}" maxlength="200" value="{{ old($name) }}" required>
                 @endswitch
             @empty
-                <p style="grid-column:1/-1">Run <b>{{ $label }}</b> on {{ $c->name }}'s account? A note is added to the account with your name.</p>
+                @unless ($needsApproval)<p style="grid-column:1/-1">Run <b>{{ $label }}</b> on {{ $c->name }}'s account? A note is added to the account with your name.</p>@endunless
             @endforelse
+            @if ($needsApproval)
+                <label for="approval_note">Why (for the Lead)</label><input id="approval_note" name="approval_note" maxlength="500" value="{{ old('approval_note') }}">
+            @endif
             @if ($action === 'make-payment' && $methods->isEmpty())
                 <p class="help" style="grid-column:1/-1">No payment methods on file. Add one through MyAccount or the customer's next payment.</p>
             @endif
             <div class="actions" style="grid-column:1/-1">
-                <button class="btn {{ in_array($action, ['delete-order', 'disconnect', 'cancel-order']) ? 'red' : '' }}">{{ $fields ? 'Submit' : 'Yes, '.\Illuminate\Support\Str::after($label, ' - ') }}</button>
+                @if ($needsApproval)
+                    <button class="btn cyan">Request Lead Approval</button>
+                @else
+                    <button class="btn {{ in_array($action, ['delete-order', 'disconnect', 'cancel-order']) ? 'red' : '' }}">{{ $fields ? 'Submit' : 'Yes, '.\Illuminate\Support\Str::after($label, ' - ') }}</button>
+                @endif
                 <a class="btn ghost" href="{{ route('corral.customers.show', $c) }}#actions">Cancel</a>
             </div>
         </form>

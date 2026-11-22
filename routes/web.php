@@ -220,6 +220,13 @@ Route::prefix('admin')->group(function () {
             // Account page sections
             Route::get('customers/{customer}/actions/{action}', [Backend\Corral\AccountController::class, 'actionForm'])->name('customers.action');
             Route::post('customers/{customer}/actions/{action}', [Backend\Corral\AccountController::class, 'runAction'])->name('customers.action.run');
+            // Lead Approvals: Friends & Family changes asked for by someone who isn't a Lead
+            Route::post('customers/{customer}/actions/{action}/request', [Backend\Corral\ApprovalController::class, 'requestAction'])->name('customers.action.request');
+            Route::post('ledger/{entry}/request-delete', [Backend\Corral\ApprovalController::class, 'requestLedgerDelete'])->name('ledger.request-delete');
+            Route::get('lead-approvals', [Backend\Corral\ApprovalController::class, 'index'])->name('approvals');
+            Route::get('lead-approvals/{approval}', [Backend\Corral\ApprovalController::class, 'show'])->name('approvals.show');
+            Route::post('lead-approvals/{approval}/approve', [Backend\Corral\ApprovalController::class, 'approve'])->name('approvals.approve');
+            Route::post('lead-approvals/{approval}/deny', [Backend\Corral\ApprovalController::class, 'deny'])->name('approvals.deny');
             Route::get('customers/{customer}/panel-log/{panel}', [Backend\Corral\PanelLogController::class, 'show'])->name('customers.panel-log');
             Route::post('customers/{customer}/flags', [Backend\Corral\AccountController::class, 'addFlag'])->name('customers.flags.add');
             Route::delete('flags/{flag}', [Backend\Corral\AccountController::class, 'removeFlag'])->name('flags.remove');
