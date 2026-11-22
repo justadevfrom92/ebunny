@@ -1,6 +1,6 @@
 @extends('backend.layouts.app')
 
-@section('crumb', $file->name)
+@section('crumb', 'File #'.$file->id.' · '.$file->name)
 
 {{-- One file on the account: its PDF (view, download, regenerate) in English or Spanish, print it, or email it to the customer. --}}
 @section('content')

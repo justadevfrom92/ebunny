@@ -1,6 +1,6 @@
 @extends('backend.layouts.app')
 
-@section('crumb', 'Message from '.$m->first_name)
+@section('crumb', 'Web Message #'.$m->id)
 
 @section('content')
     @include('backend.partials.page-head', ['title' => $m->topicLabel().': '.$m->first_name.' '.$m->last_name,

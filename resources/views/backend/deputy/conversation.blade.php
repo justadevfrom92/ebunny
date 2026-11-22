@@ -1,6 +1,6 @@
 @extends('backend.layouts.app')
 
-@section('crumb', 'Conversation '.$c->id)
+@section('crumb', 'Conversation #'.$c->id)
 
 @section('content')
     @include('backend.partials.page-head', ['title' => $c->topic.($c->customer ? ': '.$c->customer->name : ''),

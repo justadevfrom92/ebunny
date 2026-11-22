@@ -42,8 +42,16 @@
                 </div>
                 <div class="secure-opt">
                     <h3>Block</h3>
-                    <p>I don't recognize this IP Address</p>
-                    <div class="btn disabled" aria-disabled="true">Block</div>
+                    @if ($blocked)
+                        <p>This IP Address and browser are blocked</p>
+                        <div class="btn disabled" aria-disabled="true">Blocked</div>
+                    @elseif ($sameDevice || $d?->current)
+                        <p>This is your own IP Address and browser</p>
+                        <div class="btn disabled" aria-disabled="true">Block</div>
+                    @else
+                        <p>I don't recognize this IP Address</p>
+                        <form method="post" action="{{ route('admin.account.device.block', $s) }}" data-confirm="Block {{ $s->ip }}?|This IP Address with this browser can't sign in to your account until you unblock it on My Profile.|Block">@csrf<button class="btn danger">Block</button></form>
+                    @endif
                 </div>
             @endif
         </div>

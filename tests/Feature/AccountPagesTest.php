@@ -104,12 +104,13 @@ class AccountPagesTest extends TestCase
         $this->actingAs($u)->get('/admin/my/profile')->assertSee(route('admin.account.device', $key), false);
         $this->get(route('admin.account.device', $key))->assertOk()->assertSee('Safari on iOS')->assertSee('10.0.0.9')->assertSee(now()->subHour()->format('n/j/Y g:i A'))
             ->assertSee('Secure Your Account')->assertSee('recognize this device')->assertSee('recognize this IP Address')
-            ->assertSee('<div class="btn disabled" aria-disabled="true">Block</div>', false)->assertDontSee('Report to Administrators');
+            ->assertSee(route('admin.account.device.block', $key), false)->assertDontSee('Report to Administrators');
         $this->post(route('admin.account.device.sign-out', $key))->assertRedirect(route('admin.account.profile').'#signed-in');
         $this->assertFalse(DB::table('sessions')->where('id', 'dev-'.md5('10.0.0.9Mozilla/5.0 (iPhone) Safari/604'))->exists());
         // It stays in the history, ended
         $this->assertSame('Signed out from another device', $key->fresh()->ended_reason);
-        $this->get(route('admin.account.device', $key))->assertOk()->assertSee('Signed out from another device')->assertSee('This sign-in has already ended');
+        $this->get(route('admin.account.device', $key))->assertOk()->assertSee('Signed out from another device')->assertSee('This sign-in has already ended')
+            ->assertSee(route('admin.account.device.block', $key), false);   // an ended sign-in from another IP can still be blocked
         $this->post(route('admin.account.device.sign-out', $key))->assertNotFound();
     }
 
@@ -160,7 +161,9 @@ class AccountPagesTest extends TestCase
         config(['session.driver' => 'database']);
         $u = $this->csr();
         $key = $this->otherDevice($u, '127.0.0.1', 'Symfony');
-        $this->actingAs($u)->post(route('admin.account.device.block', $key))->assertStatus(422);
+        $this->actingAs($u)->get(route('admin.account.device', $key))->assertSee('This is your own IP Address and browser')
+            ->assertSee('<div class="btn disabled" aria-disabled="true">Block</div>', false)->assertDontSee(route('admin.account.device.block', $key), false);
+        $this->post(route('admin.account.device.block', $key))->assertStatus(422);
     }
 
     public function test_signed_in_on_is_the_whole_history_current_first_ten_a_page(): void

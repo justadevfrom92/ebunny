@@ -1,6 +1,6 @@
 @extends('backend.layouts.app')
 
-@section('crumb', '#'.$item->id)
+@section('crumb', 'Activity #'.$item->id)
 
 @section('content')
     @include('backend.partials.page-head', ['title' => $item->summary, 'sub' => e($item->group).' · '.e($item->action).' · '.$item->created_at->format('F jS, Y @ g:i:s A'),

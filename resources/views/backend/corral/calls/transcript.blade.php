@@ -1,6 +1,6 @@
 @extends('backend.layouts.app')
 
-@section('crumb', 'Phone Call')
+@section('crumb', 'Phone Call #'.$call->id)
 
 @section('content')
     @include('backend.partials.page-head', ['title' => 'Phone Call'.($call->customer ? ': '.$call->customer->name : ''),

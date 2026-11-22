@@ -1,9 +1,9 @@
 @extends('backend.layouts.app')
 
-@section('crumb', 'Request #'.$a->id)
+@section('crumb', 'Lead Approval #'.$a->id)
 
 @section('content')
-    @include('backend.partials.page-head', ['title' => 'Request #'.$a->id.' · '.$a->label(), 'sub' => ['pending' => 'Waiting for a Lead', 'approved' => 'Approved', 'denied' => 'Denied'][$a->status],
+    @include('backend.partials.page-head', ['title' => 'Lead Approval #'.$a->id.' · '.$a->label(), 'sub' => ['pending' => 'Waiting for a Lead', 'approved' => 'Approved', 'denied' => 'Denied'][$a->status],
         'actions' => '<a class="btn ghost" href="'.route('corral.approvals').'">Back to Lead Approvals</a>'])
 
     @if ($isLead && $a->status === 'pending')

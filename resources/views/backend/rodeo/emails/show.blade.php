@@ -1,6 +1,6 @@
 @extends('backend.layouts.app')
 
-@section('crumb', $email->template)
+@section('crumb', 'Email #'.$email->id.' · '.$email->template)
 
 @section('content')
     @php $c = $email->customer; @endphp
