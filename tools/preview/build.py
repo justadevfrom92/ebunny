@@ -81,7 +81,7 @@ $cust = App\Models\Customer::orderBy('id')->get()->unique('status')->take(6)->va
 echo json_encode(['roles' => $roles, 'customers' => $cust]);
 """)
 # Friends & Family accounts, the actions a Lead approves on them, and the sample Lead Approvals
-FF = tinker(r"""echo json_encode(['accounts' => App\Models\Customer::whereHas('flags', fn ($q) => $q->where('flag', 'VIP - Friends & Family'))->orderBy('id')->limit(2)->pluck('account'),
+FF = tinker(r"""echo json_encode(['accounts' => App\Models\Customer::whereHas('flags', fn ($q) => $q->where('flag', 'VIP - Friends & Family'))->orderBy('id')->pluck('account'),
   'actions' => config('corral.flag_locks.VIP - Friends & Family.actions'), 'approvals' => App\Models\LeadApproval::orderBy('id')->pluck('id'), 'lead_roles' => config('corral.lead_roles')]);""")
 order_page = tinker(r"""echo json_encode('/myaccount/orders/'.(App\Models\ShopOrder::whereHas('customer', fn ($q) => $q->where('account', '1219000000'))->value('number') ?? App\Models\ShopOrder::value('number')));""")
 
