@@ -147,6 +147,7 @@ class AdminMenu
             $key === 'etl_failed' => collect(array_keys(config('walker.etl')))->filter(fn ($k) => JobRun::where('command', 'etl:'.$k)->latest('started_at')->value('status') === 'Failed')->count(),
             $key === 'report_problems' => ReportRun::inState('problem')->count(),
             $key === 'ai_waiting' => AiConversation::where('status', 'waiting')->count(),
+            $key === 'my_work' => self::myWork(),
             $key === 'approvals_pending' => LeadApproval::pending()->count(),
             $key === 'ledger_pending' => LedgerEntry::where('status', 'pending')->count(),
             $key === 'refunds_pending' => Refund::whereIn('status', ['requested', 'approved'])->count(),
@@ -156,6 +157,19 @@ class AdminMenu
         };
 
         return $n ?: null;
+    }
+
+    /** Your open tickets, follow-ups due and (Leads) approvals waiting: the number by My Work. */
+    private static function myWork(): int
+    {
+        $u = auth()->user();
+        if (! $u) {
+            return 0;
+        }
+
+        return ($u->hasPerm('ranger') ? SupportTicket::active()->where('assigned_to', $u->id)->count() : 0)
+            + ($u->hasPerm('corral') ? CrmActivity::where('user_id', $u->id)->whereNotNull('due_on')->whereNull('done_at')->where('due_on', '<=', today())->count() : 0)
+            + ($u->hasPerm('corral') && $u->isLead() ? LeadApproval::pending()->count() : 0);
     }
 
     /** Open work items per queue, counted once per request. */

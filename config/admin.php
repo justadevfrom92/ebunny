@@ -294,8 +294,12 @@ return [
         'menu' => [
             'Account' => [
                 ['My Profile', 'admin.account.profile'],
+                ['My Work', 'admin.account.work', 'my_work'],
                 ['Notifications', 'admin.notifications.index', 'unread_notifications'],
                 ['My Files', 'admin.files'],
+                ['My Bookmarks', 'admin.account.bookmarks'],
+                ['My Team', 'admin.account.team'],
+                ['Availability', 'admin.account.availability'],
                 ['Settings', 'admin.settings'],
                 ['Change Password', 'admin.account.password'],
             ],

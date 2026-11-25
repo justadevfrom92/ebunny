@@ -24,6 +24,9 @@ class UserSignInSeeder extends Seeder
     public function run(): void
     {
         $admin = User::where('email', 'admin@example.com')->first();
+        // Sample availability (Account → Availability): one person out of office, one busy
+        User::where('email', 'finance@example.com')->update(['availability' => 'out', 'out_until' => now()->addDays(5)->toDateString(), 'out_note' => 'On vacation; ask Admin Demo for anything urgent']);
+        User::where('email', 'marketing@example.com')->update(['availability' => 'busy']);
         foreach (User::where('email', 'like', '%@example.com')->orderBy('id')->get() as $i => $u) {
             $n = $u->email === 'admin@example.com' ? 24 : 12 + $i % 5;
             for ($k = 0; $k < $n; $k++) {

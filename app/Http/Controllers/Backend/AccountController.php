@@ -4,8 +4,13 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdminNotification;
+use App\Models\CrmActivity;
+use App\Models\Customer;
 use App\Models\HistoryItem;
+use App\Models\LeadApproval;
+use App\Models\ReportRun;
 use App\Models\SavedReport;
+use App\Models\SupportTicket;
 use App\Models\User;
 use App\Models\UserBlock;
 use App\Models\UserSignIn;
@@ -337,6 +342,93 @@ class AccountController extends Controller
             'access_note' => ($extra || $denied) ? ($data['access_note'] ?? $u->access_note) : null]);
 
         return redirect()->to(route('admin.account.profile').'#access')->with('status', $name.': '.($u->fresh()->hasPerm($perm) ? 'you can open it' : 'no access').'.');
+    }
+
+    // ---------- My Work, My Bookmarks, My Team, Availability, start page and signature ----------
+
+    /** Everything waiting on you across the apps, newest first, each table 10 a page. */
+    public function work(Request $request): View
+    {
+        $u = $request->user();
+        $can = fn (string $app) => $u->hasPerm($app);
+
+        return view('backend.account.work', [
+            'tickets' => $can('ranger') ? SupportTicket::with('customer')->active()->where('assigned_to', $u->id)->orderByRaw("CASE priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 ELSE 2 END")
+                ->latest('last_activity_at')->paginate(10, ['*'], 'tickets_page')->withQueryString()->fragment('tickets') : null,
+            'toApprove' => $can('corral') && $u->isLead() ? LeadApproval::with(['customer', 'requester'])->pending()->latest('id')->paginate(10, ['*'], 'approve_page')->withQueryString()->fragment('approvals') : null,
+            'myRequests' => $can('corral') && ! $u->isLead() ? LeadApproval::with('customer')->where('requested_by', $u->id)->latest('id')->paginate(10, ['*'], 'requests_page')->withQueryString()->fragment('requests') : null,
+            'followUps' => $can('corral') ? CrmActivity::with(['lead', 'partner'])->where('user_id', $u->id)->whereNotNull('due_on')->whereNull('done_at')->orderBy('due_on')
+                ->paginate(10, ['*'], 'followups_page')->withQueryString()->fragment('follow-ups') : null,
+            'running' => ReportRun::where('user_id', $u->id)->whereIn('status', ['queued', 'running'])->count(),
+        ]);
+    }
+
+    /** The customer accounts you've bookmarked in Corral. */
+    public function bookmarks(Request $request): View
+    {
+        abort_unless($request->user()->hasPerm('corral'), 403);
+
+        return view('backend.account.bookmarks', ['items' => $request->user()->bookmarks()->orderByPivot('created_at', 'desc')->paginate(10)->withQueryString()]);
+    }
+
+    public function removeBookmark(Request $request, Customer $customer): RedirectResponse
+    {
+        $request->user()->bookmarks()->detach($customer->id);
+
+        return redirect()->route('admin.account.bookmarks')->with('status', 'Removed '.$customer->account.' from your bookmarks.');
+    }
+
+    /** Who you report to and who reports to you, with how to reach them and whether they're in. */
+    public function team(Request $request): View
+    {
+        $u = $request->user()->load(['manager.role', 'reports.role']);
+        $peers = $u->manager_id ? User::with('role')->where('manager_id', $u->manager_id)->whereKeyNot($u->id)->where('active', true)->orderBy('name')->get() : collect();
+        $online = collect();
+        if (config('session.driver') === 'database' && Schema::hasTable(config('session.table', 'sessions'))) {
+            $online = DB::table(config('session.table', 'sessions'))->whereNotNull('user_id')->where('last_activity', '>=', now()->subMinutes(15)->timestamp)->pluck('user_id')->unique()->flip();
+        }
+
+        return view('backend.account.team', ['u' => $u, 'peers' => $peers, 'online' => $online]);
+    }
+
+    public function availability(Request $request): View
+    {
+        return view('backend.account.availability', ['u' => $request->user()]);
+    }
+
+    /** Available, Busy, or Out of Office until a date. While you're out, Ranger won't assign you tickets. */
+    public function saveAvailability(Request $request): RedirectResponse
+    {
+        abort_if($request->session()->has('impersonator_id'), 403);
+        $data = $request->validate(['availability' => ['required', 'in:available,busy,out'], 'out_until' => ['nullable', 'required_if:availability,out', 'date', 'after_or_equal:today'],
+            'out_note' => ['nullable', 'string', 'max:250']], ['out_until.required_if' => 'Pick the day you\'re back.']);
+        if ($data['availability'] !== 'out') {
+            $data['out_until'] = $data['out_note'] = null;
+        }
+        $request->user()->update($data);
+        History::record(['model' => 'AdminLogin_model', 'group' => 'Logins', 'record_id' => $request->user()->id, 'action' => 'updated', 'summary' => 'Set themselves '.$request->user()->fresh()->availabilityLabel()]);
+
+        return redirect()->route('admin.account.availability')->with('status', 'You\'re '.$request->user()->fresh()->availabilityLabel().'.');
+    }
+
+    /** Settings → Start Page: where you land after signing in. */
+    public function saveStartPage(Request $request): RedirectResponse
+    {
+        $u = $request->user();
+        $allowed = ['', 'account', ...array_keys(array_filter(AdminApps::all(), fn ($a, $k) => $u->hasPerm($k), ARRAY_FILTER_USE_BOTH))];
+        $data = $request->validate(['start_page' => ['nullable', 'in:'.implode(',', $allowed)]]);
+        $u->update(['start_page' => ($data['start_page'] ?? '') ?: null]);
+
+        return redirect()->to(route('admin.settings').'#start-page')->with('status', 'Start page saved.');
+    }
+
+    /** Settings → Email Signature: added to the emails you send customers (Ranger replies by email, Corral Send Email). */
+    public function saveSignature(Request $request): RedirectResponse
+    {
+        $data = $request->validate(['signature' => ['nullable', 'string', 'max:1000']]);
+        $request->user()->update(['signature' => trim((string) ($data['signature'] ?? '')) ?: null]);
+
+        return redirect()->to(route('admin.settings').'#signature')->with('status', 'Signature saved.');
     }
 
     /** One of your activity entries. */

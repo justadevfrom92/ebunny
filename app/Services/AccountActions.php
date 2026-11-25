@@ -402,7 +402,9 @@ class AccountActions
 
     public function sendEmail(array $in): string
     {
-        return $this->contact('Email', $in['template'], $in['message']);
+        $sig = $this->user?->signature;   // your Email Signature (Account → Settings)
+
+        return $this->contact('Email', $in['template'], rtrim($in['message']).($sig ? "\n\n".$sig : ''));
     }
 
     public function sendText(array $in): string

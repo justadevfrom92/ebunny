@@ -75,7 +75,7 @@ class AuthController extends Controller
         // Only go back to an admin page (not a My Account page left over in the session)
         $intended = (string) $request->session()->pull('url.intended');
 
-        return redirect(str_starts_with($intended, url('admin')) ? $intended : route('admin.launcher'));
+        return redirect(str_starts_with($intended, url('admin')) && rtrim($intended, '/') !== url('admin') ? $intended : $request->user()->startUrl());
     }
 
     /** End "Log in as": switch back to the person who started it. */

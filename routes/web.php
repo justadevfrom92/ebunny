@@ -182,6 +182,14 @@ Route::prefix('admin')->group(function () {
             Route::post('signed-in/{signIn}/block', 'deviceBlock')->whereNumber('signIn')->name('device.block');
             Route::post('signed-in/{signIn}/report', 'deviceReport')->whereNumber('signIn')->name('device.report');
             Route::delete('blocked/{block}', 'unblock')->name('unblock');
+            Route::get('work', 'work')->name('work');
+            Route::get('bookmarks', 'bookmarks')->name('bookmarks');
+            Route::delete('bookmarks/{customer}', 'removeBookmark')->name('bookmarks.remove');
+            Route::get('team', 'team')->name('team');
+            Route::get('availability', 'availability')->name('availability');
+            Route::put('availability', 'saveAvailability')->name('availability.save');
+            Route::put('start-page', 'saveStartPage')->name('start-page.save');
+            Route::put('signature', 'saveSignature')->name('signature.save');
             // Administrators: change your own access to one app or right (What You Can Open)
             Route::get('access/{perm}', 'accessEdit')->where('perm', '[a-z0-9_-]+')->name('access.edit');
             Route::put('access/{perm}', 'accessSave')->where('perm', '[a-z0-9_-]+')->name('access.save');

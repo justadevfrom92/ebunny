@@ -1006,3 +1006,7 @@ div.btn.disabled { display: inline-flex; align-items: center; user-select: none;
 .secure-opt > * { margin: 0; }
 .secure-opt > .btn, .secure-opt > button, .secure-opt > form, .secure-opt > div.btn { justify-self: start; }
 .secure-opt > .field { justify-self: stretch; }
+
+/* Availability by your name in the user menu */
+.up-avail { font-size: .78rem; font-weight: 600; text-decoration: none; margin-top: 2px; }
+.up-avail-available { color: var(--ok); } .up-avail-busy { color: var(--warn); } .up-avail-out { color: var(--bad); }

@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role_id', 'active', 'last_login_at', 'employee_id', 'title', 'department', 'manager_id', 'phone_ext', 'location', 'hired_on', 'company', 'access_ends_on', 'extra_perms', 'denied_perms', 'access_note', 'notification_prefs'])]
+#[Fillable(['name', 'email', 'password', 'role_id', 'active', 'last_login_at', 'employee_id', 'title', 'department', 'manager_id', 'phone_ext', 'location', 'hired_on', 'company', 'access_ends_on', 'extra_perms', 'denied_perms', 'access_note', 'notification_prefs', 'availability', 'out_until', 'out_note', 'start_page', 'signature'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -38,6 +38,7 @@ class User extends Authenticatable
             'extra_perms' => 'array',
             'notification_prefs' => 'array',
             'denied_perms' => 'array',
+            'out_until' => 'date',
         ];
     }
 
@@ -119,6 +120,34 @@ class User extends Authenticatable
         }
 
         return in_array($perm, $this->role?->perms ?? [], true) || in_array($perm, $this->extra_perms ?? [], true);
+    }
+
+    public const AVAILABILITY = ['available' => ['Available', 'ok'], 'busy' => ['Busy', 'warn'], 'out' => ['Out of Office', 'bad']];
+
+    /** Out of office now (an "out" that has passed its return date counts as back). */
+    public function isOut(): bool
+    {
+        return $this->availability === 'out' && (! $this->out_until || $this->out_until->gte(today()));
+    }
+
+    /** "Available", "Busy" or "Out of Office until 12/1". */
+    public function availabilityLabel(): string
+    {
+        if ($this->availability === 'out' && ! $this->isOut()) {
+            return 'Available';
+        }
+
+        return (self::AVAILABILITY[$this->availability][0] ?? 'Available').($this->isOut() && $this->out_until ? ' until '.$this->out_until->format('n/j') : '');
+    }
+
+    /** The page to open after signing in: their chosen app (if they can still open it), the Account app, or the Admin home. */
+    public function startUrl(): string
+    {
+        return match (true) {
+            $this->start_page === 'account' => route('admin.account.profile'),
+            $this->start_page && $this->hasPerm($this->start_page) && ($app = AdminApps::get($this->start_page)) => $app['url'],
+            default => route('admin.launcher'),
+        };
     }
 
     /** A Customer Service Lead (or Administrator): approves changes on Friends & Family accounts. */

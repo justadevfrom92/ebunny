@@ -117,6 +117,9 @@ class TicketController extends Controller
         $this->mayWork($request, $ticket);
         $me = $request->user();
         $via = $data['via'] ?? 'portal';
+        if ($via === 'email' && $me->signature) {
+            $data['body'] = rtrim($data['body'])."\n\n".$me->signature;   // your Email Signature (Account → Settings)
+        }
         $ticket->post('agent', $data['body'], $me, ['via' => $via] + match ($via) {
             'phone' => ['direction' => $data['direction'] ?? 'out', 'duration' => (int) ($data['minutes'] ?? 0) * 60, 'contact' => $ticket->customer?->phone],
             'email' => ['contact' => $ticket->email],
@@ -176,6 +179,10 @@ class TicketController extends Controller
             'assigned_to' => ['nullable', Rule::exists('ranger_agents', 'user_id')->where('active', true)],
         ]);
         $me = $request->user();
+        // Someone who's out of office (Account → Availability) can't be given tickets until they're back
+        if (($to = $data['assigned_to'] ?? null) && (int) $to !== $ticket->assigned_to && ($who = User::find($to))?->isOut()) {
+            return back()->withErrors(['assigned_to' => $who->name.' is '.$who->availabilityLabel().'.']);
+        }
         $changes = [];
         if ($s = $data['status'] ?? null) {
             $changes += ['status' => $s, 'solved_at' => in_array($s, ['solved', 'closed'], true) ? ($ticket->solved_at ?? now()) : null];

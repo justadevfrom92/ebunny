@@ -166,9 +166,10 @@
                     <div class="panel-body" style="display:flex;flex-direction:column;gap:12px">
                         <input type="search" class="search-box" placeholder="Find someone" data-live-filter="#rt-assign" aria-label="Find a team member">
                         <div class="table-wrap pick-list" style="max-height:220px" id="rt-assign"><table class="table"><tbody>
-                            @foreach ($agents as $a)<tr data-filter-row="{{ strtolower($a->user->name.' '.\App\Models\RangerAgent::TEAMS[$a->team]) }}"><td style="width:32px"><input type="radio" id="as{{ $a->user_id }}" name="assigned_to" value="{{ $a->user_id }}" @checked($t->assigned_to === $a->user_id)></td>
-                                <td><label for="as{{ $a->user_id }}"><b>{{ $a->user->name }}</b></label> <span class="help">{{ \App\Models\RangerAgent::TEAMS[$a->team] }}{{ $a->level === 'manager' ? ' · Manager' : '' }}</span></td></tr>@endforeach
+                            @foreach ($agents as $a)<tr data-filter-row="{{ strtolower($a->user->name.' '.\App\Models\RangerAgent::TEAMS[$a->team]) }}"><td style="width:32px"><input type="radio" id="as{{ $a->user_id }}" name="assigned_to" value="{{ $a->user_id }}" @checked($t->assigned_to === $a->user_id) @disabled($a->user->isOut() && $t->assigned_to !== $a->user_id)></td>
+                                <td><label for="as{{ $a->user_id }}"><b>{{ $a->user->name }}</b></label> <span class="help">{{ \App\Models\RangerAgent::TEAMS[$a->team] }}{{ $a->level === 'manager' ? ' · Manager' : '' }}</span>@if ($a->user->isOut()) <span class="pill bad">{{ $a->user->availabilityLabel() }}</span>@elseif ($a->user->availability === 'busy') <span class="pill warn">Busy</span>@endif</td></tr>@endforeach
                         </tbody></table></div>
+                        @error('assigned_to')<div class="alert bad" role="alert">{{ $message }}</div>@enderror
                         <div><button class="btn">Assign</button></div>
                     </div>
                 </form>
